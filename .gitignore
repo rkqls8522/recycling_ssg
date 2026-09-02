@@ -1,0 +1,67 @@
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Python build
+build/
+dist/
+*.egg-info/
+
+# Test / Coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# React
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Local DB
+*.db
+*.sqlite
+*.sqlite3
+
+# AI training outputs
+runs/
+wandb/
+mlruns/
+
+# AI model weights
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Large AI datasets
+data/raw/
+data/processed/
+data/train/
+data/val/
+data/test/
+
+# OS
+.DS_Store
+Thumbs.db
