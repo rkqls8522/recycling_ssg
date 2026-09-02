@@ -1,5 +1,5 @@
-function Home() {
+function LocalSelectPage() {
   pass;
 }
 
-export default Home;
+export default LocalSelectPage;
