@@ -1,0 +1,14 @@
+[project]
+name = "recycling-ssg"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = []
+
+[tool.uv]
+package = false
+required-version = ">=0.12.9,<0.13"
+
+[tool.uv.workspace]
+members = [
+    "backend",
+]
