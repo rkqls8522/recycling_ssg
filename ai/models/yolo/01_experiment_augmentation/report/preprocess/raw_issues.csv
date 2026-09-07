@@ -1,0 +1,14 @@
+﻿issue_type,split,json_member,image_member,detail
+folder_target_not_in_json,Training,Training/labels/도기류/기타/14_X044_C045_0128/14_X044_C045_0128_4.json,Training/images/도기류/기타/14_X044_C045_0128/14_X044_C045_0128_4.jpg,"folder target=도기류/기타, json objects=['도기류/그릇류', '전자제품/기타']"
+unknown_object_class,Training,Training/labels/도기류/기타/14_X044_C045_0128/14_X044_C045_0128_4.json,Training/images/도기류/기타/14_X044_C045_0128/14_X044_C045_0128_4.jpg,unknown objects=['전자제품/기타']
+folder_target_not_in_json,Training,Training/labels/도기류/기타/14_X047_C045_0128/14_X047_C045_0128_0.json,Training/images/도기류/기타/14_X047_C045_0128/14_X047_C045_0128_0.jpg,"folder target=도기류/기타, json objects=['도기류/그릇류', '전자제품/기타']"
+unknown_object_class,Training,Training/labels/도기류/기타/14_X047_C045_0128/14_X047_C045_0128_0.json,Training/images/도기류/기타/14_X047_C045_0128/14_X047_C045_0128_0.jpg,unknown objects=['전자제품/기타']
+folder_target_not_in_json,Training,Training/labels/도기류/기타/14_X051_C045_0128/14_X051_C045_0128_3.json,Training/images/도기류/기타/14_X051_C045_0128/14_X051_C045_0128_3.jpg,"folder target=도기류/기타, json objects=['도기류/그릇류', '전자제품/기타']"
+unknown_object_class,Training,Training/labels/도기류/기타/14_X051_C045_0128/14_X051_C045_0128_3.json,Training/images/도기류/기타/14_X051_C045_0128/14_X051_C045_0128_3.jpg,unknown objects=['전자제품/기타']
+folder_target_not_in_json,Training,Training/labels/비닐/기타/15_X071_C205_1206/15_X071_C205_1206_1.json,Training/images/비닐/기타/15_X071_C205_1206/15_X071_C205_1206_1.jpg,"folder target=비닐/기타, json objects=['비닐/과자봉지']"
+folder_target_not_in_json,Training,Training/labels/비닐/기타/15_X071_C205_1206/15_X071_C205_1206_3.json,Training/images/비닐/기타/15_X071_C205_1206/15_X071_C205_1206_3.jpg,"folder target=비닐/기타, json objects=['비닐/과자봉지']"
+resolution_metadata_mismatch,Training,Training/labels/캔류/음료수캔/22_X017_C509_0512/22_X017_C509_0512_0.json,Training/images/캔류/음료수캔/22_X017_C509_0512/22_X017_C509_0512_0.jpg,"actual=1440x1921, metadata=1921x1440"
+resolution_metadata_mismatch,Training,Training/labels/페트병/기타/23_X004_C509_0511/23_X004_C509_0511_1.json,Training/images/페트병/기타/23_X004_C509_0511/23_X004_C509_0511_1.jpg,"actual=1440x1921, metadata=1921x1440"
+resolution_metadata_mismatch,Training,Training/labels/페트병/기타/23_X013_C509_0511/23_X013_C509_0511_4.json,Training/images/페트병/기타/23_X013_C509_0511/23_X013_C509_0511_4.jpg,"actual=1440x1921, metadata=1921x1440"
+resolution_metadata_mismatch,Training,Training/labels/페트병/기타/23_X020_C509_0511/23_X020_C509_0511_0.json,Training/images/페트병/기타/23_X020_C509_0511/23_X020_C509_0511_0.jpg,"actual=1440x1921, metadata=1921x1440"
+folder_target_not_in_json,Validation,Validation/labels/도기류/병/14_X004_C163_1203/14_X004_C163_1203_4.json,Validation/images/도기류/병/14_X004_C163_1203/14_X004_C163_1203_4.jpg,"folder target=도기류/병, json objects=['도기류/그릇류']"
