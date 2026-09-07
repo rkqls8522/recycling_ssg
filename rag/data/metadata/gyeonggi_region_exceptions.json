@@ -1,0 +1,638 @@
+[
+  {
+    "page_content": "이불류(솜 제외), 신발, 가방류, 전선관, 파이프호스, 장판류, 가정용 카페트, 폐식용유 등은 지역여건에 따라 재활용 가능한 품목으로 별도 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "광주시",
+      "category": "기타",
+      "sub_item": "기타 지역여건에 따라 재활용 가능한 품목",
+      "material": "기타",
+      "exception_type": "신규품목"
+    }
+  },
+  {
+    "page_content": "모든 플라스틱이 재활용되는 것은 아님. 칫솔, 볼펜, 슬리퍼, 고무장갑, 고무공(농구공류), CD 등은 종량제봉투에 배출. 플라스틱 이외 재질이 부착된 유모차·대형 완구류는 대형폐기물로 배출(유모차 2,000원, 5kg 이상 장난감 3,000원).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "양주시",
+      "category": "합성수지 용기·트레이류",
+      "sub_item": "무색 PET병을 제외한 PET·PVC·PE·PP·PS·PSP 재질 용기·트레이류",
+      "material": "플라스틱",
+      "exception_type": "비대상 확장/수수료"
+    }
+  },
+  {
+    "page_content": "유리병 뚜껑은 분리 후 고철류로 배출. 공병 반환금 표기 유리병류는 가까운 주류 판매점에 1인당 1일 30병까지 반환 가능(주류를 판매하지 않는 소매점에는 반환 불가).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "양주시",
+      "category": "유리병",
+      "sub_item": "음료수병, 기타 병류",
+      "material": "유리",
+      "exception_type": "처리방식 차이"
+    }
+  },
+  {
+    "page_content": "집게 차량이 필요 없는 소량(1톤 미만)은 끈으로 묶어 평상시 분리배출 장소에 배출. 1톤 이상 다량은 양주도시공사 재활용선별장(031-828-9726)에 연락하여 수거 요청. 인삼밭 등에 사용하는 차광용 폐비닐은 재활용되지 않아 종량제봉투 또는 끈으로 묶어 대형폐기물 스티커 부착 후 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "양주시",
+      "category": "영농폐기물류",
+      "sub_item": "농촌폐비닐",
+      "material": "영농폐기물",
+      "exception_type": "처리방식 차이"
+    }
+  },
+  {
+    "page_content": "화장품 용기류, 도자기, 사기그릇 등은 재활용되지 않음.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "포천시",
+      "category": "유리병",
+      "sub_item": "음료수병, 기타 병류",
+      "material": "유리",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "오일통, 페인트통 등 유해물질을 담았던 통은 지정폐기물로 처리.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "포천시",
+      "category": "금속캔",
+      "sub_item": "음료·주류캔, 식료품캔",
+      "material": "금속",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "화장품병, 식기 등 유백색 유리, 거울, 도자기류, 내열식기류 등은 재활용 대상에서 제외되어 대형 폐기물로 처리. 전구 및 형광등은 별도 수거함에 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "연천군",
+      "category": "유리병",
+      "sub_item": "음료수병, 기타 병류",
+      "material": "유리",
+      "exception_type": "비대상 확장/처리방식 차이"
+    }
+  },
+  {
+    "page_content": "전자제품(TV, 냉장고, 세탁기, 컴퓨터 등) 구매 시 사용하던 종전 제품을 배출하는 경우, 판매점을 통하여 제조자와 상관없이 동종 제품이면 판매자가 무상으로 회수. 폐기만 할 경우 대형 폐기물로 군청 환경보호과에 신고 후 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "연천군",
+      "category": "전기·전자제품",
+      "sub_item": "대형 전기·전자제품",
+      "material": "전자",
+      "exception_type": "처리방식 차이"
+    }
+  },
+  {
+    "page_content": "세척 후 펼쳐 묶은 종이팩 1kg당 화장지 1줄로 교환 가능(읍·면사무소 방문 교환).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "양평군",
+      "category": "골판지 외 종이류",
+      "sub_item": "종이팩(살균팩, 멸균팩)",
+      "material": "종이",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "흙 등을 제거 후 색깔(흰색, 검정색)별로 구분하여 마을공동집하장 등에 보관. 폐비닐 수거장려금 지원(톤당 11만원, B급 기준).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "양평군",
+      "category": "영농폐기물류",
+      "sub_item": "농촌폐비닐",
+      "material": "영농폐기물",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "운영기간 2024.1~12월, 젤형 아이스팩만 공동주택(아파트) 내 폐아이스팩 수거함에 배출. 오염·훼손된 아이스팩, 튜브형은 종량제봉투로 배출. 종이포장재 및 물성분 아이스팩은 별도 분리배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "양평군",
+      "category": "기타",
+      "sub_item": "폐아이스팩",
+      "material": "기타",
+      "exception_type": "신규품목"
+    }
+  },
+  {
+    "page_content": "종이팩 0.5kg → 화장지 1롤로 교환 가능(읍면동 행정복지센터, 예산 소진 시까지).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "화성시",
+      "category": "골판지 외 종이류",
+      "sub_item": "종이팩(살균팩, 멸균팩)",
+      "material": "종이",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "폐건전지 0.5kg → 새건전지 2개로 교환 가능(예산 소진 시까지). 배터리 일체형 제품(전자담배, 스마트워치 등)은 제품 그대로 배출하며 배터리에 부착된 전선 등을 임의로 분리하지 말 것. 전동킥보드, 파워뱅크 등 크기가 큰 제품은 대형폐기물로 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "화성시",
+      "category": "전지류",
+      "sub_item": "1차전지(수은전지, 산화은전지, 리튬1차전지, 망간·알칼리망간전지 등), 2차전지(니켈·카드뮴전지, 니켈수소전지, 리튬이온전지 등)",
+      "material": "전지",
+      "exception_type": "지역 인센티브/처리방식 차이"
+    }
+  },
+  {
+    "page_content": "깨진 유리제품은 소각용 종량제봉투, 사기·도자기류는 매립용 종량제봉투, 조명기구용 유리·판유리·내열유리는 대형폐기물로 각각 구분하여 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "화성시",
+      "category": "유리병",
+      "sub_item": "음료수병, 기타 병류",
+      "material": "유리",
+      "exception_type": "배출봉투 구분"
+    }
+  },
+  {
+    "page_content": "충전이 가능한 보조배터리(2차전지)도 폐건전지 수거함에 배출. 배터리가 부풀어 오른 경우 긴급 수거가 필요하며, 비닐로 감싸 공기를 차단한 후 생활폐기물 수집·운반 업체에 수거 요청.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "파주시",
+      "category": "전지류",
+      "sub_item": "1차전지(수은전지, 산화은전지, 리튬1차전지, 망간·알칼리망간전지 등), 2차전지(니켈·카드뮴전지, 니켈수소전지, 리튬이온전지 등)",
+      "material": "전지",
+      "exception_type": "안전주의"
+    }
+  },
+  {
+    "page_content": "영수증, 택배전표, 각종 라벨, 색지 등과 금은박·알루미늄·비닐 코팅지, 명함·사진, 방수코팅 포장박스, 벽지(합성수지 소재), 부직포 등은 재활용 불가로 종량제봉투에 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "파주시",
+      "category": "골판지 외 종이류",
+      "sub_item": "기타 종이류",
+      "material": "종이",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "영수증·택배전표·각종라벨·색지 등, 금은박·알루미늄·비닐 코팅지, 명함·사진, 방수코팅 포장박스, 벽지(합성수지 소재), 부직포 등은 재활용 불가로 종량제봉투에 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "용인시",
+      "category": "골판지 외 종이류",
+      "sub_item": "기타 종이류",
+      "material": "종이",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "종이팩 200㎖ 100매, 500㎖ 55매 또는 1,000㎖ 35매를 모으면 화장지 1개로 교환 가능(읍·면·동 주민센터).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "용인시",
+      "category": "골판지 외 종이류",
+      "sub_item": "종이팩(살균팩, 멸균팩)",
+      "material": "종이",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "대형폐기물 스티커를 구매한 뒤 정해진 배출요령에 따라 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "용인시",
+      "category": "기타",
+      "sub_item": "소화기",
+      "material": "기타",
+      "exception_type": "신규품목"
+    }
+  },
+  {
+    "page_content": "충전이 가능한 보조배터리(2차전지) 또한 폐건전지 수거함에 배출. 배터리가 부풀어 오른 경우 긴급 수거가 필요하며, 비닐로 감싸 공기를 차단한 후 생활폐기물 수집·운반 업체에 수거 요청.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "용인시",
+      "category": "전지류",
+      "sub_item": "1차전지(수은전지, 산화은전지, 리튬1차전지, 망간·알칼리망간전지 등), 2차전지(니켈·카드뮴전지, 니켈수소전지, 리튬이온전지 등)",
+      "material": "전지",
+      "exception_type": "안전주의"
+    }
+  },
+  {
+    "page_content": "플라스틱 재질 식별 코드가 부여된 용기에 한정하여 배출. 폐유 용기는 제외.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_1",
+      "region": "안성시",
+      "category": "합성수지 용기·트레이류",
+      "sub_item": "무색 PET병을 제외한 PET·PVC·PE·PP·PS·PSP 재질 용기·트레이류",
+      "material": "플라스틱",
+      "exception_type": "비대상 범위 한정"
+    }
+  },
+  {
+    "page_content": "공동주택은 2020.12.25부터, 단독주택은 2021.12.25부터 투명 페트병 별도 배출 의무화. 전용 수거함 또는 무인회수기에 배출. 투명 과일 용기, 계란 상판, 유색 페트병은 투명해도 일반 플라스틱류에 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "수원시",
+      "category": "무색 폴리에틸렌테레프탈레이트(PET)병",
+      "sub_item": "무색 투명한 먹는샘물, 음료 PET병",
+      "material": "플라스틱",
+      "exception_type": "신규 제도"
+    }
+  },
+  {
+    "page_content": "종이팩(우유·두유·주스팩) 1kg을 화장지 1롤+종량제봉투(10L 1장) 또는 화장지 2롤 또는 종량제봉투(10L 2장) 또는 종량제봉투(20L 1장)로 교환 가능(각 동 행정복지센터, 자원회수시설, 수원체육문화센터).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "수원시",
+      "category": "골판지 외 종이류",
+      "sub_item": "종이팩(살균팩, 멸균팩)",
+      "material": "종이",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "폐건전지는 전용수거함 또는 투명봉투에 담아 배출(일반폐기물과 혼합 배출 시 화재 발생 위험). 건전지 일체형 제품(보조배터리, 전자담배, 손선풍기 등)은 제품 그대로 배출. 폐건전지 0.5kg 또는 15개당 새건전지 1set(2개) 또는 종량제봉투(10L 1장)로 교환 가능.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "수원시",
+      "category": "전지류",
+      "sub_item": "1차전지(수은전지, 산화은전지, 리튬1차전지, 망간·알칼리망간전지 등), 2차전지(니켈·카드뮴전지, 니켈수소전지, 리튬이온전지 등)",
+      "material": "전지",
+      "exception_type": "안전주의/지역 인센티브"
+    }
+  },
+  {
+    "page_content": "백열등은 재활용이 되지 않으니 쓰레기종량제 봉투에 담아 배출. 폐LED조명 재활용 시범 사업 실시 중으로 폐형광등 전용수거함에 배출 가능.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "수원시",
+      "category": "조명제품",
+      "sub_item": "형광등, 발광다이오드(LED) 조명",
+      "material": "조명",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "유색페트병, 투명페트 컵·포장재류, 양념통류·식용유병·물엿병(올리고당)·워셔액병·손세정제병 등 생수·음료병이 아닌 투명 페트병류는 무색페트병이 아닌 일반 플라스틱으로 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "성남시",
+      "category": "무색 폴리에틸렌테레프탈레이트(PET)병",
+      "sub_item": "무색 투명한 먹는샘물, 음료 PET병",
+      "material": "플라스틱",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "원형이 훼손되지 않은 4대 가전제품(냉장고·세탁기·에어컨·TV) 및 1m 이상 제품은 한국전자산업환경협회(1599-0903)에서 무상 방문수거. 휴대폰은 전지를 분리하지 말고 본체·충전기와 함께 신제품 교환 시 해당 대리점을 통해 배출하거나 소형가전제품으로 분리배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "의정부시",
+      "category": "전기·전자제품",
+      "sub_item": "대형 전기·전자제품",
+      "material": "전자",
+      "exception_type": "처리방식 차이"
+    }
+  },
+  {
+    "page_content": "농약병은 물로 헹군 후 음료수병 등과 섞이지 않도록 별도 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "안양시",
+      "category": "유리병",
+      "sub_item": "음료수병, 기타 병류",
+      "material": "유리",
+      "exception_type": "신규 품목"
+    }
+  },
+  {
+    "page_content": "용기 밑면이나 측면에 재활용 분리배출 표시가 있는 제품만 재활용 가능. 필기구(볼펜), 칫솔, 열에 잘 녹지 않는 플라스틱(전화기, 도마 등)은 재활용 불가.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "안양시",
+      "category": "합성수지 용기·트레이류",
+      "sub_item": "무색 PET병을 제외한 PET·PVC·PE·PP·PS·PSP 재질 용기·트레이류",
+      "material": "플라스틱",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "1회용 컵라면, 도시락용기 등 압축된 폐스티로폼과 건축용 단열재로 사용된 스티로폼은 재활용 불가.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "안양시",
+      "category": "발포 합성수지",
+      "sub_item": "스티로폼 완충재",
+      "material": "플라스틱(발포)",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "캐시밀론 솜, 이불류는 재활용되지 않음(종량제봉투 배출).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "안양시",
+      "category": "의류",
+      "sub_item": "의류, 잡화",
+      "material": "섬유",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "재활용표시가 되어 있는 플라스틱만 배출. 장난감, 문구류, 가전제품, 가구, 옷걸이, 비디오 테이프, 고무호스 등은 일반 생활쓰레기 및 대형 생활폐기물로 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "광명시",
+      "category": "합성수지 용기·트레이류",
+      "sub_item": "무색 PET병을 제외한 PET·PVC·PE·PP·PS·PSP 재질 용기·트레이류",
+      "material": "플라스틱",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "백열구, 삼파장 전구 등은 생활쓰레기와 함께 쓰레기 종량제 봉투에 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "광명시",
+      "category": "조명제품",
+      "sub_item": "형광등, 발광다이오드(LED) 조명",
+      "material": "조명",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "케첩·마요네즈병 등 내용물·이물질이 담긴 용기, 재떨이·쟁반·전화기 등 열에 잘 녹지 않는 플라스틱, 유독물·화공약품 용기, 고무발판, 완구류, 젖병, 카세트테이프, 컴퓨터용 디스켓, CD, 비디오테이프 등은 대형폐기물 스티커 부착 후 별도 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "평택시",
+      "category": "합성수지 용기·트레이류",
+      "sub_item": "무색 PET병을 제외한 PET·PVC·PE·PP·PS·PSP 재질 용기·트레이류",
+      "material": "플라스틱",
+      "exception_type": "처리방식 차이"
+    }
+  },
+  {
+    "page_content": "깨진 형광등, 차유리, 도자기류, 전구, 내열식기류 등은 마대 등에 담아 스티커 부착 후 별도 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "평택시",
+      "category": "유리병",
+      "sub_item": "음료수병, 기타 병류",
+      "material": "유리",
+      "exception_type": "처리방식 차이"
+    }
+  },
+  {
+    "page_content": "이물질이 담긴 캔류, 내용물이 담긴 페인트통·식용유통·폐유 용기 등은 마대 등에 담아 별도 배출(대형폐기물 스티커 부착, 다량일 경우 위탁 처리).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "평택시",
+      "category": "금속캔",
+      "sub_item": "음료·주류캔, 식료품캔",
+      "material": "금속",
+      "exception_type": "처리방식 차이"
+    }
+  },
+  {
+    "page_content": "색깔, 그림 등이 코팅된 완충재는 재활용 불가.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "동두천시",
+      "category": "합성수지류",
+      "sub_item": "스티로폼 완충재",
+      "material": "플라스틱(발포)",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "내부에 흰색 종이가 보이는 일반팩과 내부 은박 코팅된 쥬스팩(멸균팩) 모두 재활용 가능. 동 행정복지센터에서 휴지 교환 사업 진행.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "안산시",
+      "category": "골판지 외 종이류",
+      "sub_item": "종이팩(살균팩, 멸균팩)",
+      "material": "종이",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "색상별 수거용기가 설치되어 있는 경우 색상별로 분리배출 가능.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "고양시",
+      "category": "유리병",
+      "sub_item": "음료수병, 그 밖의 병류",
+      "material": "유리",
+      "exception_type": "처리방식 차이"
+    }
+  },
+  {
+    "page_content": "폐전지 10개(충전식 배터리는 1개)를 새 건전지 2개 또는 종량제봉투 10L 2매로 교환 가능(가까운 행정복지센터).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "과천시",
+      "category": "전지류",
+      "sub_item": "1차전지(수은전지, 산화은전지, 리튬1차전지, 망간·알칼리망간전지 등), 2차전지(니켈·카드뮴전지, 니켈수소전지, 리튬이온전지 등)",
+      "material": "전지",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "종이팩 200㎖ 50개, 500㎖ 25개 또는 1,000㎖ 15개를 모으면 화장지 2개 또는 종량제봉투 10L 2매로 교환 가능.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "과천시",
+      "category": "골판지 외 종이류",
+      "sub_item": "종이팩(살균팩, 멸균팩)",
+      "material": "종이",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "오염된 비닐류, 음식물이 묻은 일회용 용기, 유색 스티로폼, 건축용 단열재, 영수증, 택배 송장, 코팅된 광고지·전단지, 돗자리, 일회용 면도기, 파일철, 오염된 컵라면 용기, 내용물이 제거되지 않은 마요네즈통·케첩통·기름통, 기저귀, 화장지, 노끈, CD/DVD, 고무장갑, 슬리퍼, 음식물이 묻은 비닐, 분리 불가능한 보온·보냉백은 일반 종량제 봉투에 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "과천시",
+      "category": "기타",
+      "sub_item": "재활용 불가 일반품목",
+      "material": "기타",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "단독주택은 수요일 저녁 20:00~24:00에 배출(목요일 수거), 아파트는 해당 분리배출 요일에 맞춰 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "구리시",
+      "category": "무색 폴리에틸렌테레프탈레이트(PET)병",
+      "sub_item": "무색 투명한 먹는샘물, 음료 PET병",
+      "material": "플라스틱",
+      "exception_type": "배출시간 규정"
+    }
+  },
+  {
+    "page_content": "은박지로 된 병뚜껑을 반드시 제거하여 요구르트병만 따로 모아서 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "구리시",
+      "category": "기타",
+      "sub_item": "요구르트병",
+      "material": "플라스틱",
+      "exception_type": "신규 품목"
+    }
+  },
+  {
+    "page_content": "재활용 가능자원 수거장려금 지원사업: 종이팩 kg당 300원 지급(수집자가 동 행정복지센터에 접수 → 자원순환과에서 개인별 계좌 입금).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "구리시",
+      "category": "골판지 외 종이류",
+      "sub_item": "종이팩(살균팩, 멸균팩)",
+      "material": "종이",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "가정 내 발생되는 망간, 알칼리, 산화은전지 등 소형 폐건전지 수거장려금: kg당 300원 지급(동 행정복지센터 접수).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "구리시",
+      "category": "전지류",
+      "sub_item": "1차전지(수은전지, 산화은전지, 리튬1차전지, 망간·알칼리망간전지 등), 2차전지(니켈·카드뮴전지, 니켈수소전지, 리튬이온전지 등)",
+      "material": "전지",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "재활용품 보상교환사업: 무색 PET병 30개 → 종량제봉투 10L 1장으로 교환 가능(동 주민센터 및 시청).",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "군포시",
+      "category": "무색 PET병",
+      "sub_item": "무색 투명한 먹는샘물, 음료 PET병",
+      "material": "플라스틱",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "재활용품 보상교환사업: 종이팩 0.5kg → 종량제봉투 10L 1장으로 교환 가능.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "군포시",
+      "category": "골판지 외 종이류",
+      "sub_item": "종이팩(살균팩, 멸균팩)",
+      "material": "종이",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "재활용품 보상교환사업: 폐건전지 20개(0.5kg) → 종량제봉투 10L 1장으로 교환 가능.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "군포시",
+      "category": "전지류",
+      "sub_item": "1차전지(수은전지, 산화은전지, 리튬1차전지, 망간·알칼리망간전지 등), 2차전지(니켈·카드뮴전지, 니켈수소전지, 리튬이온전지 등)",
+      "material": "전지",
+      "exception_type": "지역 인센티브"
+    }
+  },
+  {
+    "page_content": "코팅종이, 부직포, 은박지, 영수증, 이물질이 묻은 종이, 1회용 기저귀는 재활용 불가로 종량제봉투에 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "의왕시",
+      "category": "골판지 외 종이류",
+      "sub_item": "기타 종이류",
+      "material": "종이",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "판유리는 별도 분리배출. 거울, 도자기·사기그릇, 화분, 깨진 유리, 내열식기류, 전구는 재활용 불가.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "의왕시",
+      "category": "유리병",
+      "sub_item": "음료수병, 기타 병류",
+      "material": "유리",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "코팅종이, 부직포, 은박지, 영수증, 이물질이 묻은 종이, 1회용 기저귀는 재활용 불가로 종량제봉투에 배출.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "하남시",
+      "category": "골판지 외 종이류",
+      "sub_item": "기타 종이류",
+      "material": "종이",
+      "exception_type": "비대상 확장"
+    }
+  },
+  {
+    "page_content": "판유리는 별도 분리배출. 거울, 도자기·사기그릇, 화분, 깨진 유리, 내열식기류, 전구는 재활용 불가.",
+    "metadata": {
+      "doc_type": "region_exception",
+      "source": "경기도_시별_분리수거_규정_모음_2",
+      "region": "하남시",
+      "category": "유리병",
+      "sub_item": "음료수병, 기타 병류",
+      "material": "유리",
+      "exception_type": "비대상 확장"
+    }
+  }
+]
