@@ -3,25 +3,35 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from typing_extensions import List, TypedDict
 from langchain_core.documents import Document
 from src.prompts.templates import get_rag_prompt
+from configs.config import load_config
 
+config = load_config()
 
 # State 생성하기
 class AgentState(TypedDict):
     query: str # 사용자의 질문
     context : List[Document] # LLM이 답변에 참고할 문서
+    region : str
     answer: str 
+
 
 # retrieve node
 def make_retrieve_node(retriever):
     def retrieve(state: AgentState):
-        docs = retriever.invoke(state["query"])
+        query = state["query"]
+        region = state["region"]
+        k=config["retriever_k"]
+        filter_dict = {"region": region} if region else None
+        docs = retriever.vectorstore.similarity_search(query, k=k, filter=filter_dict)
+
         return {"context":docs}
     return retrieve
 
+
 # generage node
-def make_generate_node(llm_config: dict):
+def make_generate_node(model_name:str):
     llm = ChatNVIDIA(
-    model="nvidia/nemotron-3.5-lightning-30b-a3b",
+    model=model_name,
     temperature=0.7,
     top_p=0.95,
     max_tokens=1024,
