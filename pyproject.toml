@@ -2,7 +2,16 @@
 name = "recycling-ssg"
 version = "0.1.0"
 requires-python = ">=3.13,<3.14"
-dependencies = []
+dependencies = [
+    "matplotlib>=3.11.1",
+    "numpy>=2.5.2",
+    "opencv-python>=5.0.0.93",
+    "pandas>=3.0.5",
+    "pyyaml>=6.0.3",
+    "torch",
+    "torchvision",
+    "ultralytics>=8.4.138",
+]
 
 [tool.uv]
 package = false
@@ -11,4 +20,22 @@ required-version = ">=0.12.9,<0.13"
 [tool.uv.workspace]
 members = [
     "backend",
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'win32'" },
+]
+torchvision = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.3.0",
 ]
