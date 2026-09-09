@@ -8,5 +8,6 @@ class AgentState(TypedDict):
     sub_item : str       # 소분류
     item_list : List[Dict]   # 분류 이미지별 유사도 리스트
     region : str             # 지역명
+    img_url : str
     retry_count : int        # 3 <-> 4 노드 루프 횟수 
     answer: str 
