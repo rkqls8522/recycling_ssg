@@ -1,19 +1,10 @@
 
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from typing_extensions import List, TypedDict
-from langchain_core.documents import Document
 from src.prompts.templates import get_rag_prompt
 from configs.config import load_config
+from state import AgentState
 
 config = load_config()
-
-# State 생성하기
-class AgentState(TypedDict):
-    query: str # 사용자의 질문
-    context : List[Document] # LLM이 답변에 참고할 문서
-    region : str
-    answer: str 
-
 
 # retrieve node
 def make_retrieve_node(retriever):
