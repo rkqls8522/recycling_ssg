@@ -1,0 +1,2 @@
+﻿baseline_id,baseline_name,baseline_precision,baseline_recall,baseline_mAP50,baseline_mAP50_95,best_id,best_name,best_checkpoint_seed,best_checkpoint_precision,best_checkpoint_recall,best_checkpoint_mAP50,best_checkpoint_mAP50_95,mAP50_95_improvement
+B01,yolo_default_baseline,0.2666035471595867,0.2139513998062236,0.2194251735809382,0.2119456577362829,B01,yolo_default_baseline,777,0.3367497910788168,0.2435135778309453,0.2422871037247078,0.2343790207869948,0.02243336305071189

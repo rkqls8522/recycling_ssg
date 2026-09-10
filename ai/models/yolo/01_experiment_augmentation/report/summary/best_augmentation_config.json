@@ -1,0 +1,11 @@
+{
+  "best_id": "B01",
+  "best_name": "yolo_default_baseline",
+  "checkpoint": "C:\\ai_challingers\\recycling_ssg\\ai\\models\\yolo\\01_experiment_augmentation\\runs\\B01_yolo_default_baseline_seed777\\weights\\best.pt",
+  "selection_rule": "highest multi-seed mean mAP50-95, then best checkpoint for visualization",
+  "ultralytics_version": "8.4.138",
+  "model_name": "yolo26n.pt",
+  "epochs": 50,
+  "imgsz": 640,
+  "batch": 8
+}

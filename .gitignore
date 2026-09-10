@@ -1,3 +1,7 @@
+# ============================================
+# Python
+# ============================================
+
 # Python virtual environment
 .venv/
 
@@ -7,61 +11,150 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+*.pyc
 
 # Python build
 build/
 dist/
 *.egg-info/
 
+
+# ============================================
 # Test / Coverage
+# ============================================
+
 .coverage
 .coverage.*
 htmlcov/
 coverage.xml
 
+
+# ============================================
 # Environment variables
+# ============================================
+
 .env
 .env.*
 !.env.example
 
+
+# ============================================
 # IDE
+# ============================================
+
 .vscode/
 .idea/
 
-# React
+
+# ============================================
+# React / Frontend
+# ============================================
+
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
+
+# ============================================
 # Jupyter
+# ============================================
+
 .ipynb_checkpoints/
 
+
+# ============================================
 # Logs
+# ============================================
+
 *.log
 
+
+# ============================================
 # Local DB
+# ============================================
+
 *.db
 *.sqlite
 *.sqlite3
 
-# AI training outputs
+
+# ============================================
+# AI Training Outputs
+# ============================================
+
 runs/
 wandb/
 mlruns/
 
-# AI model weights
+
+# ============================================
+# AI Model Weights / Exported Models
+# ============================================
+
+# PyTorch / YOLO
 *.pt
 *.pth
 *.ckpt
+
+# ONNX
 *.onnx
 
-# Large AI datasets
-data/raw/
-data/processed/
-data/train/
-data/val/
-data/test/
+# TensorRT
+*.engine
+*.trt
 
+# Other serialized AI artifacts
+*.npy
+*.npz
+*.pkl
+*.joblib
+
+
+# ============================================
+# Large AI Datasets
+# ============================================
+
+data/
+# data/raw/
+# data/processed/
+# data/train/
+# data/val/
+# data/test/
+
+# ============================================
+# Generated AI Experiment Reports
+# ============================================
+
+# YOLO validation / prediction images and
+# other large final visualization outputs
+**/report/final_best/
+
+# Detailed OpenCV augmentation generation logs
+**/report/summary/opencv_generation_*.csv
+
+
+# ============================================
+# Dataset / Large Archives
+# ============================================
+
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+
+# ============================================
+# Temporary Files
+# ============================================
+
+*.tmp
+*.temp
+~$*
+
+
+# ============================================
 # OS
+# ============================================
+
 .DS_Store
 Thumbs.db
