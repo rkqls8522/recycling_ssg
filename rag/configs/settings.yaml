@@ -1,4 +1,4 @@
 embedding_model: solar-embedding-2-passage
 pinecone_index: recycling-ssg
 retriever_k: 3
-llm: nvidia/nemotron-3.5-lightning-30b-a3b
+llm: gemini-3.8-flash
