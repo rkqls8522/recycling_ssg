@@ -1,68 +1,60 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import type { User } from "../../types"
-import { updateUserRegion } from "../../api/api"
-import { saveUser } from "../../utils/storage"
-import { PROVINCES } from "../../api/mockData"
-import { useAuthContext } from "../AuthScreen/AuthContext"
-
-function ChevronIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-muted-foreground" aria-hidden="true">
-      <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06z" clipRule="evenodd" />
-    </svg>
-  )
-}
-
-function MapPinIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" aria-hidden="true">
-      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" strokeWidth="1.5" fill="none" />
-      <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  )
-}
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import type { User } from "../../types";
+import { updateUserRegion } from "../../api/api";
+import { saveUser } from "../../utils/storage";
+import { PROVINCES } from "../../api/mockData";
+import { useAuthContext } from "../AuthScreen/AuthContext";
+import { ChevronIcon, MapPinIcon } from "@/components/common/Icons";
 
 export default function RegionScreen() {
-  const { user, setUser } = useAuthContext()
-  const navigate = useNavigate()
+  const { user, setUser } = useAuthContext();
+  const navigate = useNavigate();
   const [selectedProvince, setSelectedProvince] = useState(() => {
     if (user?.regionCode) {
-      return PROVINCES.find((p) => user.regionCode!.startsWith(p.code)) ?? null
+      return PROVINCES.find((p) => user.regionCode!.startsWith(p.code)) ?? null;
     }
-    return null
-  })
-  const [selectedDistrictCode, setSelectedDistrictCode] = useState(user?.regionCode ?? "")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+    return null;
+  });
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState(
+    user?.regionCode ?? "",
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  if (!user) return null
+  if (!user) return null;
 
-  const isFirstSetup = !user.regionCode
-  const selectedDistrict = selectedProvince?.districts.find((d) => d.code === selectedDistrictCode) ?? null
+  const isFirstSetup = !user.regionCode;
+  const selectedDistrict =
+    selectedProvince?.districts.find((d) => d.code === selectedDistrictCode) ??
+    null;
 
   function onSaved(updated: User) {
-    setUser(updated)
-    navigate("/home")
+    setUser(updated);
+    navigate("/home");
   }
 
   async function handleSave() {
     if (!selectedProvince || !selectedDistrictCode) {
-      setError("시/도와 시/군/구를 모두 선택해 주세요")
-      return
+      setError("시/도와 시/군/구를 모두 선택해 주세요");
+      return;
     }
-    setError("")
-    setLoading(true)
+    setError("");
+    setLoading(true);
     try {
-      const regionName = `${selectedProvince.name} ${selectedDistrict?.name ?? ""}`
-      await updateUserRegion({ regionCode: selectedDistrictCode, regionName })
-      const updated: User = { ...user!, regionCode: selectedDistrictCode, regionName }
-      saveUser(updated)
-      onSaved(updated)
+      const regionName = `${selectedProvince.name} ${selectedDistrict?.name ?? ""}`;
+      await updateUserRegion({ regionCode: selectedDistrictCode, regionName });
+      const updated: User = {
+        ...user!,
+        regionCode: selectedDistrictCode,
+        regionName,
+      };
+      saveUser(updated);
+      onSaved(updated);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "저장에 실패했습니다")
+      setError(err instanceof Error ? err.message : "저장에 실패했습니다");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -96,10 +88,10 @@ export default function RegionScreen() {
             <select
               value={selectedProvince?.code ?? ""}
               onChange={(e) => {
-                const found = PROVINCES.find((p) => p.code === e.target.value)
-                setSelectedProvince(found ?? null)
-                setSelectedDistrictCode("")
-                setError("")
+                const found = PROVINCES.find((p) => p.code === e.target.value);
+                setSelectedProvince(found ?? null);
+                setSelectedDistrictCode("");
+                setError("");
               }}
               className="w-full appearance-none px-4 py-4 rounded-xl border border-border bg-card text-foreground text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
             >
@@ -124,7 +116,10 @@ export default function RegionScreen() {
           <div className="relative">
             <select
               value={selectedDistrictCode}
-              onChange={(e) => { setSelectedDistrictCode(e.target.value); setError("") }}
+              onChange={(e) => {
+                setSelectedDistrictCode(e.target.value);
+                setError("");
+              }}
               disabled={!selectedProvince}
               className="w-full appearance-none px-4 py-4 rounded-xl border border-border bg-card text-foreground text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -167,8 +162,7 @@ export default function RegionScreen() {
         {/* Info note */}
         <div className="px-4 py-3 bg-muted rounded-xl mt-2">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            현재 샘플 데이터로 제공: <strong>서울특별시</strong>, <strong>경기도</strong>, <strong>부산광역시</strong>
-            {/* TODO: 전체 지자체 데이터 연동 후 제거 */}
+            현재 서울시와 경기도만 제공
           </p>
         </div>
       </div>
@@ -182,15 +176,32 @@ export default function RegionScreen() {
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              <svg
+                className="animate-spin h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
               </svg>
               저장 중...
             </span>
-          ) : "이 지역으로 설정하기"}
+          ) : (
+            "이 지역으로 설정하기"
+          )}
         </button>
       </div>
     </div>
-  )
+  );
 }

@@ -8,6 +8,7 @@ import RegionScreen from "./pages/RegionScreen";
 import HomeScreen from "./pages/HomeScreen";
 import PhotoCaptureScreen from "./pages/PhotoCaptureScreen";
 import ResultScreen from "./pages/ResultScreen";
+import MyPageScreen from "./pages/MyPageScreen";
 
 // Routes:
 // / → redirect based on auth state
@@ -19,15 +20,16 @@ export default function App() {
       <AuthProvider>
         <MobileLayout>
           <Routes>
-            <Route path="/" element={<RootRedirect />} />
+            {/* <Route path="/" element={<RootRedirect />} /> */}
             <Route path="/login" element={<AuthScreen />} />
-            <Route element={<RequireAuth />}>
-              <Route path="/region" element={<RegionScreen />} />
-              <Route path="/home" element={<HomeScreen />} />
-              <Route path="/capture" element={<PhotoCaptureScreen />} />
-              <Route path="/result" element={<ResultScreen />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* <Route element={<RequireAuth />}> */}
+            <Route path="/region" element={<RegionScreen />} />
+            <Route path="/home" element={<HomeScreen />} />
+            <Route path="/capture" element={<PhotoCaptureScreen />} />
+            <Route path="/result" element={<ResultScreen />} />
+            <Route path="/mypage" element={<MyPageScreen />} />
+            {/* </Route> */}
+            {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
           </Routes>
         </MobileLayout>
       </AuthProvider>

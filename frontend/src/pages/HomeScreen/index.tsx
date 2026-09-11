@@ -3,89 +3,14 @@ import { useNavigate } from "react-router-dom";
 import type { ClassificationResult } from "../../types";
 import { classifyImage, CLASSIFY_STEPS } from "../../api/api";
 import { useAuthContext } from "../AuthScreen/AuthContext";
-
-function CameraIcon({ size = 32 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
-function GalleryIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" aria-hidden="true">
-      <rect
-        x="3"
-        y="3"
-        width="18"
-        height="18"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <circle
-        cx="8.5"
-        cy="8.5"
-        r="1.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M21 15l-5-5L5 21"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className="w-4 h-4"
-      aria-hidden="true"
-    >
-      <path
-        fillRule="evenodd"
-        d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className="w-4 h-4"
-      aria-hidden="true"
-    >
-      <path
-        fillRule="evenodd"
-        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
+import {
+  ChevronDownIcon,
+  CheckIcon,
+  GalleryIcon,
+  CameraIcon,
+  SearchIcon,
+  UserIcon,
+} from "@/components/common/Icons";
 
 export default function HomeScreen() {
   const { user, logout } = useAuthContext();
@@ -184,18 +109,7 @@ export default function HomeScreen() {
           <h1 className="text-lg font-bold tracking-tight">분리쏙</h1>
           {user.regionName ? (
             <div className="flex items-center gap-1 mt-0.5">
-              <svg
-                viewBox="0 0 16 16"
-                fill="currentColor"
-                className="w-3 h-3 opacity-70"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8 1.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM2 6a6 6 0 1 1 10.174 4.31l3.258 3.257a.75.75 0 0 1-1.06 1.061l-3.258-3.257A6 6 0 0 1 2 6zm6 3.5a.75.75 0 0 1 .75.75v2a.75.75 0 0 1-1.5 0v-2A.75.75 0 0 1 8 9.5z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <SearchIcon />
               <span className="text-xs opacity-70">{user.regionName}</span>
             </div>
           ) : (
@@ -206,78 +120,12 @@ export default function HomeScreen() {
         {/* Menu */}
         <div className="relative">
           <button
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => navigate("/mypage")}
             className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary-foreground/10 active:bg-primary-foreground/20 transition-colors"
             aria-label="메뉴"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-5 h-5"
-              aria-hidden="true"
-            >
-              <path
-                d="M4 6h16M4 12h16M4 18h16"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                fill="none"
-              />
-            </svg>
+            <UserIcon />
           </button>
-
-          {menuOpen && (
-            <div className="absolute right-0 top-12 z-20 w-48 bg-white rounded-xl shadow-xl border border-border overflow-hidden">
-              <button
-                onClick={() => {
-                  onChangeRegion();
-                  setMenuOpen(false);
-                }}
-                className="w-full text-left px-4 py-3.5 text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2.5"
-              >
-                <svg
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="w-4 h-4 text-muted-foreground"
-                  aria-hidden="true"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                지역 변경
-              </button>
-              <div className="h-px bg-border mx-4" />
-              <button
-                onClick={() => {
-                  onLogout();
-                  setMenuOpen(false);
-                }}
-                className="w-full text-left px-4 py-3.5 text-sm text-destructive hover:bg-red-50 transition-colors flex items-center gap-2.5"
-              >
-                <svg
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="w-4 h-4"
-                  aria-hidden="true"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M3 4.25A2.25 2.25 0 0 1 5.25 2h5.5A2.25 2.25 0 0 1 13 4.25v2a.75.75 0 0 1-1.5 0v-2a.75.75 0 0 0-.75-.75h-5.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 0 0 .75-.75v-2a.75.75 0 0 1 1.5 0v2A2.25 2.25 0 0 1 10.75 18h-5.5A2.25 2.25 0 0 1 3 15.75V4.25z"
-                    clipRule="evenodd"
-                  />
-                  <path
-                    fillRule="evenodd"
-                    d="M19 10a.75.75 0 0 0-.75-.75H8.704l1.048-1.069a.75.75 0 1 0-1.064-1.057l-2.5 2.53a.75.75 0 0 0 0 1.057l2.5 2.53a.75.75 0 1 0 1.064-1.057L8.704 10.75H18.25A.75.75 0 0 0 19 10z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                로그아웃
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
