@@ -1,10 +1,9 @@
-# LangGraph 그래프 조립 (노드 연결)
-
 from langgraph.graph import StateGraph, START, END
 from src.agents.confidence_router import confidence_router
 from src.agents.rule_node import make_rule_node
 from src.agents.classify_node import make_classify_node
 from src.agents.rag_node import AgentState, make_retrieve_node, make_generate_node
+from IPython.display import Image, display
 
 
 def build_graph(retriever, llm_config:dict):
@@ -22,3 +21,8 @@ def build_graph(retriever, llm_config:dict):
     graph_builder.add_edge('generate', END)
 
     return graph_builder.compile()
+
+graph = build_graph()
+display(Image(graph.get_graph().draw_mermaid_png()))
+
+

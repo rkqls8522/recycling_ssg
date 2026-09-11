@@ -1,26 +1,21 @@
 
+import os
 import json
 from google import genai
 from google.genai import types
+from dotenv import load_dotenv
 from configs.config import load_config
-from agents.state import VerificationSubState
-from retrieval import get_retriever
-from prompts.templates import get_generate_prompt, get_judge_prompt
+from src.agents.state import VerificationSubState
+from src.retrieval.retriever import get_retriever
+from src.prompts.templates import get_generate_prompt, get_judge_prompt
 
+load_dotenv()
 config = load_config()
-client = genai.Client()
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+client = genai.Client(api_key=GOOGLE_API_KEY)
 
 MAX_SUB_RETRY = 2
-model_name = config['vision_llm']
-
-llm = client.models.generate_content(
-    model=model_name,
-    config=types.GenerateContentConfig(
-        temperature=0.7,
-        top_p=0.95,
-        max_output_tokens=1024,
-    ),
-)
+model_name = config['llm']
 
 
 # retrieve node
@@ -36,6 +31,15 @@ def retrive_node(state: VerificationSubState) -> VerificationSubState:
 
 # generage node
 def generate_node(state: VerificationSubState) -> VerificationSubState:
+    llm = client.models.generate_content(
+    model=model_name,
+    config=types.GenerateContentConfig(
+        temperature=0.7,
+        top_p=0.95,
+        max_output_tokens=1024,
+        ),
+    )
+    
     prompt = get_generate_prompt(state)
     response = llm.invoke(prompt)
     state["generated_answer"] = response.content
@@ -44,14 +48,20 @@ def generate_node(state: VerificationSubState) -> VerificationSubState:
 
 
 # judge node
-def judgenode(state: VerificationSubState) -> VerificationSubState:
-    if state["retry_count"] > MAX_SUB_RETRY : return "END"
-
+def judge_node(state: VerificationSubState) -> VerificationSubState:
     prompt = get_judge_prompt(state)
-
     verdict = json.loads(llm.invoke(prompt).content)
+
     state["is_valid"] = verdict["is_valid"]
     state["failure_reason"] = verdict.get("failure_reason", "")
 
     if not state["is_valid"]:
-        state["retry_count"] += 1
+        state["retry_count"] = state.get("retry_count", 0) + 1
+
+    return state
+
+
+def route_after_judge(state: VerificationSubState) -> str:
+    if state["is_valid"] or state["retry_count"] >= MAX_SUB_RETRY:
+        return "end"
+    return "retry"

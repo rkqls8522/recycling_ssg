@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from src.ingestion.embeddings import get_embeddings
 from src.vectorstore.pinecone_vectorstore import load_existing_index
 from src.retrieval.retriever import get_retriever
-from src.graph import build_graph
+from rag.src.graph.main_graph import build_graph
 from configs.config import load_config
 
 load_dotenv()

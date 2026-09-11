@@ -1,4 +1,4 @@
-from agents.state import VerificationSubState
+from src.agents.state import VerificationSubState
 
 
 # 3. LLM NODE
