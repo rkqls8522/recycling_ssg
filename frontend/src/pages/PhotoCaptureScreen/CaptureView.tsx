@@ -1,4 +1,6 @@
 import { useRef } from "react"
+import BackButton from "../../components/common/BackButton"
+import FlowIndicator from "../../components/common/FlowIndicator"
 
 interface Props {
   previewUrl: string | null
@@ -20,47 +22,6 @@ function CornerMarks() {
   )
 }
 
-function FlowIndicator({ currentStep }: { currentStep: 0 | 1 | 2 }) {
-  const steps = ["촬영", "분석", "결과"]
-  return (
-    <div className="flex items-center gap-0">
-      {steps.map((label, i) => (
-        <div key={i} className="flex items-center">
-          <div className="flex flex-col items-center gap-0.5">
-            <div
-              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
-                i < currentStep
-                  ? "bg-primary text-primary-foreground"
-                  : i === currentStep
-                  ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                  : "bg-primary-foreground/20 text-primary-foreground/50"
-              }`}
-            >
-              {i < currentStep ? (
-                <svg viewBox="0 0 12 12" fill="currentColor" className="w-2.5 h-2.5">
-                  <path d="M10 3L5 8.5 2 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                </svg>
-              ) : (
-                i + 1
-              )}
-            </div>
-            <span className={`text-[9px] font-semibold transition-colors ${
-              i === currentStep ? "text-primary-foreground" : "text-primary-foreground/50"
-            }`}>
-              {label}
-            </span>
-          </div>
-          {i < steps.length - 1 && (
-            <div className={`w-8 h-px mx-1 mb-3 transition-colors ${
-              i < currentStep ? "bg-primary-foreground/60" : "bg-primary-foreground/20"
-            }`} />
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
 export default function CaptureView({ previewUrl, onFileSelected, onAnalyze, onReset, onBack }: Props) {
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
@@ -76,15 +37,7 @@ export default function CaptureView({ previewUrl, onFileSelected, onAnalyze, onR
       {/* Header */}
       <div className="bg-primary text-primary-foreground px-5 pt-12 pb-4">
         <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={onBack}
-            className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center active:bg-primary-foreground/20 transition-colors"
-            aria-label="홈으로 돌아가기"
-          >
-            <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" aria-hidden="true">
-              <path fillRule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10z" clipRule="evenodd" />
-            </svg>
-          </button>
+          <BackButton onClick={onBack} ariaLabel="홈으로 돌아가기" />
           <FlowIndicator currentStep={0} />
           <div className="w-9" />
         </div>

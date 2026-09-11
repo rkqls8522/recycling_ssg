@@ -1,17 +1,8 @@
 import { useRef, useState } from "react";
-import type { ClassificationResult, User } from "../types";
-import { classifyImage, CLASSIFY_STEPS } from "../lib/api";
-
-interface Props {
-  user: User;
-  onResult: (result: ClassificationResult, imageUrl: string) => void;
-  onChangeRegion: () => void;
-  onLogout: () => void;
-  onStartCapture?: () => void;
-  onDemoAnalyzing?: () => void;
-  onDemoAgentThinking?: () => void;
-  onDemoFail?: () => void;
-}
+import { useNavigate } from "react-router-dom";
+import type { ClassificationResult } from "../../types";
+import { classifyImage, CLASSIFY_STEPS } from "../../api/api";
+import { useAuthContext } from "../AuthScreen/AuthContext";
 
 function CameraIcon({ size = 32 }: { size?: number }) {
   return (
@@ -96,16 +87,9 @@ function CheckIcon() {
   );
 }
 
-export default function HomeScreen({
-  user,
-  onResult,
-  onChangeRegion,
-  onLogout,
-  onStartCapture,
-  onDemoAnalyzing,
-  onDemoAgentThinking,
-  onDemoFail,
-}: Props) {
+export default function HomeScreen() {
+  const { user, logout } = useAuthContext();
+  const navigate = useNavigate();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isClassifying, setIsClassifying] = useState(false);
@@ -116,6 +100,25 @@ export default function HomeScreen({
 
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
+
+  if (!user) return null;
+
+  function onResult(result: ClassificationResult, imageUrl: string) {
+    navigate("/result", { state: { result, imageUrl } });
+  }
+
+  function onChangeRegion() {
+    navigate("/region");
+  }
+
+  function onLogout() {
+    logout();
+    navigate("/login", { replace: true });
+  }
+
+  function onStartCapture() {
+    navigate("/capture", { state: { demoState: "uncertain" } });
+  }
 
   function handleFileSelected(file: File) {
     if (!file.type.startsWith("image/")) {
@@ -132,7 +135,7 @@ export default function HomeScreen({
 
   async function handleClassify() {
     if (!selectedFile) return;
-    if (!user.regionCode || !user.regionName) {
+    if (!user!.regionCode || !user!.regionName) {
       setError("먼저 지역을 설정해 주세요");
       return;
     }
@@ -145,8 +148,8 @@ export default function HomeScreen({
     try {
       const result = await classifyImage(
         selectedFile,
-        user.regionCode,
-        user.regionName,
+        user!.regionCode,
+        user!.regionName,
         (stepIndex) => {
           setCompletedSteps((prev) => [...prev, stepIndex]);
           setCurrentStep(stepIndex + 1);

@@ -1,36 +1,36 @@
 import { useState } from "react"
-import type { ClassificationResult } from "../types"
+import { Navigate, useLocation, useNavigate } from "react-router-dom"
+import type { ClassificationResult } from "../../types"
 import ChatDrawer from "./ChatDrawer"
+import BackButton from "../../components/common/BackButton"
 
-interface Props {
+interface ResultLocationState {
   result: ClassificationResult
   imageUrl: string
-  onBack: () => void
 }
 
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" aria-hidden="true">
-      <path fillRule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10z" clipRule="evenodd" />
-    </svg>
-  )
-}
-
-export default function ResultScreen({ result, imageUrl, onBack }: Props) {
-  const { itemName, guidelines, regionName } = result
+export default function ResultScreen() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [chatOpen, setChatOpen] = useState(false)
+  const state = location.state as ResultLocationState | null
+
+  if (!state) {
+    return <Navigate to="/home" replace />
+  }
+
+  const { result, imageUrl } = state
+  const { itemName, guidelines, regionName } = result
+
+  function onBack() {
+    navigate("/capture")
+  }
 
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="bg-primary text-primary-foreground px-5 pt-12 pb-4 flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center active:bg-primary-foreground/20 transition-colors"
-          aria-label="뒤로 가기"
-        >
-          <BackIcon />
-        </button>
+        <BackButton onClick={onBack} ariaLabel="뒤로 가기" />
         <div className="flex-1">
           <h2 className="text-base font-bold">분석 결과</h2>
           <p className="text-xs opacity-70">{regionName} 기준</p>

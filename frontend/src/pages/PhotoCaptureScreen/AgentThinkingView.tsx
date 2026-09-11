@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import BackButton from "../../components/common/BackButton"
 
 interface Props {
   onBack: () => void
@@ -158,15 +159,7 @@ export default function AgentThinkingView({ onBack }: Props) {
       {/* Header */}
       <div className="bg-primary text-primary-foreground px-5 pt-12 pb-4">
         <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={onBack}
-            className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center active:bg-primary-foreground/20 transition-colors"
-            aria-label="취소"
-          >
-            <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" aria-hidden="true">
-              <path fillRule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10z" clipRule="evenodd" />
-            </svg>
-          </button>
+          <BackButton onClick={onBack} ariaLabel="취소" />
           <div className="text-center">
             <p className="text-xs font-semibold opacity-70 uppercase tracking-widest">심층 분석</p>
           </div>

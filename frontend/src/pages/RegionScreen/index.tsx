@@ -1,14 +1,10 @@
 import { useState } from "react"
-import type { User } from "../types"
-import { updateUserRegion } from "../lib/api"
-import { saveUser } from "../lib/storage"
-import { PROVINCES } from "../lib/mockData"
-
-interface Props {
-  user: User
-  onSaved: (user: User) => void
-  isFirstSetup?: boolean
-}
+import { useNavigate } from "react-router-dom"
+import type { User } from "../../types"
+import { updateUserRegion } from "../../api/api"
+import { saveUser } from "../../utils/storage"
+import { PROVINCES } from "../../api/mockData"
+import { useAuthContext } from "../AuthScreen/AuthContext"
 
 function ChevronIcon() {
   return (
@@ -27,18 +23,28 @@ function MapPinIcon() {
   )
 }
 
-export default function RegionScreen({ user, onSaved, isFirstSetup = true }: Props) {
+export default function RegionScreen() {
+  const { user, setUser } = useAuthContext()
+  const navigate = useNavigate()
   const [selectedProvince, setSelectedProvince] = useState(() => {
-    if (user.regionCode) {
+    if (user?.regionCode) {
       return PROVINCES.find((p) => user.regionCode!.startsWith(p.code)) ?? null
     }
     return null
   })
-  const [selectedDistrictCode, setSelectedDistrictCode] = useState(user.regionCode ?? "")
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState(user?.regionCode ?? "")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  if (!user) return null
+
+  const isFirstSetup = !user.regionCode
   const selectedDistrict = selectedProvince?.districts.find((d) => d.code === selectedDistrictCode) ?? null
+
+  function onSaved(updated: User) {
+    setUser(updated)
+    navigate("/home")
+  }
 
   async function handleSave() {
     if (!selectedProvince || !selectedDistrictCode) {
@@ -50,7 +56,7 @@ export default function RegionScreen({ user, onSaved, isFirstSetup = true }: Pro
     try {
       const regionName = `${selectedProvince.name} ${selectedDistrict?.name ?? ""}`
       await updateUserRegion({ regionCode: selectedDistrictCode, regionName })
-      const updated: User = { ...user, regionCode: selectedDistrictCode, regionName }
+      const updated: User = { ...user!, regionCode: selectedDistrictCode, regionName }
       saveUser(updated)
       onSaved(updated)
     } catch (err) {
@@ -61,7 +67,7 @@ export default function RegionScreen({ user, onSaved, isFirstSetup = true }: Pro
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-background">
+    <div className="flex flex-col h-full overflow-y-auto no-scrollbar bg-background">
       {/* Header */}
       <div className="bg-primary px-6 pt-14 pb-8">
         <div className="flex items-center gap-3 text-primary-foreground mb-2">

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import type { ClassificationResult } from "../../types"
+import FlowIndicator from "../../components/common/FlowIndicator"
 
 interface Props {
   result: ClassificationResult
@@ -114,30 +115,20 @@ export default function ResultUncertainView({ result, imageUrl, onReanalyzed, on
       <div className="bg-amber-600 text-white px-5 pt-12 pb-4">
         <div className="flex items-center justify-between mb-4">
           <div className="w-9" />
-          <div className="flex items-center gap-1.5">
-            {["촬영", "분석", "결과"].map((label, i) => (
-              <div key={i} className="flex items-center">
-                <div className="flex flex-col items-center gap-0.5">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                    i < 2 ? "bg-white/20 text-white/60" : "bg-white text-amber-600 ring-2 ring-white/30"
-                  }`}>
-                    {i < 2 ? (
-                      <svg viewBox="0 0 12 12" fill="none" className="w-2.5 h-2.5">
-                        <path d="M10 3L5 8.5 2 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    ) : reanalyzing ? (
-                      <svg className="animate-spin w-2.5 h-2.5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                    ) : "?"}
-                  </div>
-                  <span className={`text-[9px] font-semibold ${i === 2 ? "text-white" : "text-white/50"}`}>{label}</span>
-                </div>
-                {i < 2 && <div className="w-8 h-px mx-1 mb-3 bg-white/30" />}
-              </div>
-            ))}
-          </div>
+          <FlowIndicator
+            currentStep={2}
+            tone="amber"
+            currentIcon={
+              reanalyzing ? (
+                <svg className="animate-spin w-2.5 h-2.5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                "?"
+              )
+            }
+          />
           <div className="w-9" />
         </div>
       </div>

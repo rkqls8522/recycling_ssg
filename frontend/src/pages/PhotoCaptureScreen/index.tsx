@@ -1,31 +1,33 @@
 import { useRef, useState } from "react"
-import type { ClassificationResult, CaptureState, User } from "../types"
-import { classifyImage, CLASSIFY_STEPS } from "../lib/api"
-import CaptureView from "./capture/CaptureView"
-import AnalyzingView from "./capture/AnalyzingView"
-import ResultUncertainView from "./capture/ResultUncertainView"
-import ResultFailView from "./capture/ResultFailView"
-import AgentThinkingView from "./capture/AgentThinkingView"
+import { useLocation, useNavigate } from "react-router-dom"
+import type { ClassificationResult, CaptureState } from "../../types"
+import { classifyImage, CLASSIFY_STEPS } from "../../api/api"
+import { useAuthContext } from "../AuthScreen/AuthContext"
+import CaptureView from "./CaptureView"
+import AnalyzingView from "./AnalyzingView"
+import ResultUncertainView from "./ResultUncertainView"
+import ResultFailView from "./ResultFailView"
+import AgentThinkingView from "./AgentThinkingView"
 
 // Gray placeholder used when previewing demo states without a real photo
 const DEMO_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23f3f4f6'/%3E%3Ctext x='200' y='200' text-anchor='middle' dy='.3em' fill='%239ca3af' font-size='18' font-family='sans-serif'%3E샘플 이미지%3C/text%3E%3C/svg%3E"
 
-interface Props {
-  user: User
-  onViewGuidelines: (result: ClassificationResult, imageUrl: string) => void
-  onBack: () => void
-  demoState?: "analyzing" | "agent_thinking" | "fail" | "uncertain"
-}
+type DemoState = "analyzing" | "agent_thinking" | "fail" | "uncertain"
 
-export default function PhotoCaptureScreen({ user, onViewGuidelines, onBack, demoState }: Props) {
+export default function PhotoCaptureScreen() {
+  const { user } = useAuthContext()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const demoState = (location.state as { demoState?: DemoState } | null)?.demoState
+
   const [captureState, setCaptureState] = useState<CaptureState>(demoState ?? "capture")
   const [previewUrl, setPreviewUrl] = useState<string | null>(demoState ? DEMO_IMAGE : null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [result, setResult] = useState<ClassificationResult | null>(
     demoState === "fail"
-      ? { itemName: "", itemCategory: "", itemCategoryEn: "unclear", confidence: 32, confidenceLevel: "low", failureHint: "blurry", guidelines: { steps: [], notes: [], collectionDays: "", source: "", sourceUrl: "" }, regionCode: user.regionCode ?? "", regionName: user.regionName ?? "" }
+      ? { itemName: "", itemCategory: "", itemCategoryEn: "unclear", confidence: 32, confidenceLevel: "low", failureHint: "blurry", guidelines: { steps: [], notes: [], collectionDays: "", source: "", sourceUrl: "" }, regionCode: user?.regionCode ?? "", regionName: user?.regionName ?? "" }
       : demoState === "uncertain"
-      ? { itemName: "투명 페트병", itemCategory: "플라스틱류", itemCategoryEn: "plastic", confidence: 71, confidenceLevel: "uncertain", guidelines: { steps: [], notes: [], collectionDays: "화·목·토", source: "", sourceUrl: "" }, regionCode: user.regionCode ?? "", regionName: user.regionName ?? "" }
+      ? { itemName: "투명 페트병", itemCategory: "플라스틱류", itemCategoryEn: "plastic", confidence: 71, confidenceLevel: "uncertain", guidelines: { steps: [], notes: [], collectionDays: "화·목·토", source: "", sourceUrl: "" }, regionCode: user?.regionCode ?? "", regionName: user?.regionName ?? "" }
       : null
   )
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
@@ -33,6 +35,16 @@ export default function PhotoCaptureScreen({ user, onViewGuidelines, onBack, dem
 
   const galleryRef = useRef<HTMLInputElement>(null)
   const prevUrl = useRef<string | null>(null)
+
+  if (!user) return null
+
+  function onBack() {
+    navigate("/home")
+  }
+
+  function onViewGuidelines(r: ClassificationResult, imageUrl: string) {
+    navigate("/result", { state: { result: r, imageUrl } })
+  }
 
   function setPreviewWithCleanup(url: string | null) {
     if (prevUrl.current) URL.revokeObjectURL(prevUrl.current)
@@ -50,7 +62,7 @@ export default function PhotoCaptureScreen({ user, onViewGuidelines, onBack, dem
   }
 
   async function handleAnalyze() {
-    if (!selectedFile || !user.regionCode || !user.regionName) return
+    if (!selectedFile || !user!.regionCode || !user!.regionName) return
 
     setCaptureState("analyzing")
     setCompletedSteps([])
@@ -59,8 +71,8 @@ export default function PhotoCaptureScreen({ user, onViewGuidelines, onBack, dem
     try {
       const classifyResult = await classifyImage(
         selectedFile,
-        user.regionCode,
-        user.regionName,
+        user!.regionCode,
+        user!.regionName,
         (stepIndex) => {
           setCompletedSteps((prev) => [...prev, stepIndex])
           setCurrentStep(stepIndex + 1)

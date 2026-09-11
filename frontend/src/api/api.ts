@@ -1,5 +1,5 @@
 import type { ClassificationResult, ConfidenceLevel, FailureHint } from "../types"
-import { getToken, saveToken, saveUser, getUser } from "./storage"
+import { getToken, saveToken, saveUser, getUser } from "../utils/storage"
 import { getRandomWasteItem, getGuidelineForRegion } from "./mockData"
 
 // TODO: Replace with actual Spring backend URL
