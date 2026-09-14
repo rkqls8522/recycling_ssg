@@ -23,7 +23,7 @@ from schemas.feedback import (
     SelectCandidateRequest,
     SelectCandidateResponse,
 )
-from services import gemini_service, s3_service
+from services import gemini_service, storage
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/feedback", tags=["feedback"])
@@ -133,13 +133,13 @@ def not_in_list(
             message="피드백 정보를 찾을 수 없습니다.",
         )
 
-    image_bytes = s3_service.download_image(image.s3_key)
+    image_bytes = storage.download_image(image.s3_key)
     allowed_classes = db.query(WasteClass).all()
 
     try:
         final_class_id = gemini_service.reanalyze_image(
             image_bytes=image_bytes,
-            mime_type="image/jpeg",
+            mime_type=image.content_type,
             allowed_classes=allowed_classes,
         )
     except gemini_service.GeminiNotConfiguredError as exc:

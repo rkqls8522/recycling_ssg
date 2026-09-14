@@ -1,4 +1,10 @@
-"""Shared multipart image validation used by POST /api/v1/analyze."""
+"""Shared multipart image validation used by POST /api/v1/analyze.
+
+This only validates the *raw upload as the client sent it* (declared
+Content-Type, byte size). What actually gets decoded, resized and stored
+is decided afterwards by ``services.image_processing`` -- see that module
+for why the two are kept separate (short version: these checks must run
+against what the client uploaded, before any re-encoding decision)."""
 
 from __future__ import annotations
 
@@ -7,17 +13,10 @@ from fastapi import UploadFile
 from core.config import settings
 from core.exceptions import AppError
 
-_EXTENSION_BY_CONTENT_TYPE = {
-    "image/jpeg": "jpg",
-    "image/jpg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-}
 
-
-def validate_and_read(file: UploadFile) -> tuple[bytes, str, str]:
-    """Returns (file_bytes, content_type, extension). Raises AppError for
-    every failure case defined in 섹션 8.1's 오류 응답 table."""
+def validate_and_read(file: UploadFile) -> tuple[bytes, str]:
+    """Returns (file_bytes, content_type). Raises AppError for every
+    upload-level failure case defined in 섹션 8.1's 오류 응답 table."""
     content_type = (file.content_type or "").lower()
     if content_type not in settings.allowed_image_content_type_set:
         raise AppError(
@@ -42,5 +41,4 @@ def validate_and_read(file: UploadFile) -> tuple[bytes, str, str]:
             message="업로드 가능한 이미지 크기를 초과했습니다.",
         )
 
-    extension = _EXTENSION_BY_CONTENT_TYPE.get(content_type, "jpg")
-    return file_bytes, content_type, extension
+    return file_bytes, content_type

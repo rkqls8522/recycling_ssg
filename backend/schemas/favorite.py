@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from pydantic import BaseModel, ConfigDict, Field
+
+from schemas.common import UtcDatetime
 
 
 class FavoriteItemOut(BaseModel):
@@ -12,7 +12,7 @@ class FavoriteItemOut(BaseModel):
     class_id: int
     major_category: str
     minor_category: str
-    created_at: datetime
+    created_at: UtcDatetime
 
 
 class FavoriteListResponse(BaseModel):

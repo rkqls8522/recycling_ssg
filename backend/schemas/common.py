@@ -2,9 +2,25 @@
 
 from __future__ import annotations
 
-from typing import Any
+from datetime import UTC, datetime
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
+
+
+def _to_utc_iso8601(value: datetime) -> str:
+    """Serializes datetimes as ``2026-09-11T09:00:00Z`` (섹션 3.3).
+
+    Naive values are assumed to be UTC: everything written by this service
+    is stamped with ``models.timestamps.utcnow``, and emitting an explicit
+    ``Z`` keeps clients from re-interpreting the value as local time.
+    """
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+UtcDatetime = Annotated[datetime, PlainSerializer(_to_utc_iso8601, return_type=str)]
 
 
 class ErrorDetail(BaseModel):

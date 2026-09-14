@@ -43,7 +43,7 @@ def test_disposal_schedule_requires_region_then_succeeds(client, signup_and_logi
 def test_chat_ownership_and_region_checks(client, db_session, signup_and_login, monkeypatch):
     headers, user_id = signup_and_login()
 
-    image = Image(user_id=user_id, s3_key="feedback/test/chat.jpg")
+    image = Image(s3_key="feedback/test/chat.jpg")
     db_session.add(image)
     db_session.flush()
     feedback = Feedback(

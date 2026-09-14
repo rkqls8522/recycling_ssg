@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from pydantic import BaseModel, ConfigDict, Field
 
-from schemas.common import RegionOut
+from schemas.common import RegionOut, UtcDatetime
 
 
 class UserProfileOut(BaseModel):
@@ -13,8 +11,8 @@ class UserProfileOut(BaseModel):
     user_id: int
     email: str
     region: RegionOut | None = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: UtcDatetime
+    updated_at: UtcDatetime
 
 
 class RegionUpdateRequest(BaseModel):

@@ -4,6 +4,7 @@ from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
+from models.timestamps import utcnow
 
 
 class User(Base):
@@ -16,12 +17,12 @@ class User(Base):
         ForeignKey("regions.region_id"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=utcnow, server_default=func.now(),
+        onupdate=utcnow,
         nullable=False,
     )
 

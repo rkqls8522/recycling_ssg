@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-from schemas.common import RegionOut
+from schemas.common import RegionOut, UtcDatetime
 from schemas.user import UserProfileOut
 
 
@@ -24,7 +22,7 @@ class SignupResponse(BaseModel):
     user_id: int
     email: str
     region: RegionOut | None = None
-    created_at: datetime
+    created_at: UtcDatetime
 
 
 class LoginRequest(BaseModel):

@@ -26,7 +26,7 @@ from models.user import User
 from models.waste_class import WasteClass
 from schemas.analyze import AnalyzeRetakeResponse, AnalyzeSuccessResponse
 from schemas.common import RegionOut
-from services import s3_service, vision_client
+from services import image_processing, storage, vision_client
 from services.disposal_service import get_disposal_info_or_warn
 from services.image_validation import validate_and_read
 
@@ -47,12 +47,17 @@ def analyze_image(
         raise user_region_required("분석 전에 거주 지역을 선택해주세요.")
     region = current_user.region
 
-    file_bytes, content_type, extension = validate_and_read(image)
+    # 1) Validate the raw upload as the client sent it (type/size/empty).
+    raw_bytes, _upload_content_type = validate_and_read(image)
+    # 2) Decode + EXIF-correct + downscale (<=1920px, 비율 유지) + re-encode.
+    #    The Vision Server and S3 both receive these SAME processed bytes,
+    #    so the stored image is exactly what Vision analyzed.
+    file_bytes, content_type, extension = image_processing.process_upload(raw_bytes)
 
     try:
         prediction = vision_client.predict(
             image_bytes=file_bytes,
-            filename=image.filename or f"upload.{extension}",
+            filename=f"upload.{extension}",
             content_type=content_type,
             request_id=request_id,
         )
@@ -81,7 +86,7 @@ def analyze_image(
             request_id=request_id,
         )
 
-    s3_key = s3_service.upload_image(
+    s3_key = storage.upload_image(
         file_bytes=file_bytes,
         content_type=content_type,
         user_id=current_user.user_id,
@@ -89,7 +94,7 @@ def analyze_image(
     )
 
     try:
-        image_row = Image(user_id=current_user.user_id, s3_key=s3_key)
+        image_row = Image(s3_key=s3_key, content_type=content_type)
         db.add(image_row)
         db.flush()
 
@@ -122,7 +127,7 @@ def analyze_image(
     except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("analyze DB transaction failed, compensating S3 delete key=%s", s3_key)
-        s3_service.delete_object(s3_key)
+        storage.delete_object(s3_key)
         raise database_error() from exc
 
     # Best-effort disposal-day lookup: never fails the request (섹션 15.1).

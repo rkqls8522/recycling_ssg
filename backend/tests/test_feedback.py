@@ -14,7 +14,7 @@ from models.image import Image
 def seeded_feedback(db_session, signup_and_login):
     headers, user_id = signup_and_login()
 
-    image = Image(user_id=user_id, s3_key="feedback/test/fake.jpg")
+    image = Image(s3_key="feedback/test/fake.jpg")
     db_session.add(image)
     db_session.flush()
 

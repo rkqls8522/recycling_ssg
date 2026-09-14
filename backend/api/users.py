@@ -30,7 +30,12 @@ def update_my_region(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> RegionUpdateResponse:
-    region = db.get(Region, payload.region_id)
+    try:
+        region = db.get(Region, payload.region_id)
+    except SQLAlchemyError as exc:
+        logger.exception("region lookup DB error")
+        raise database_error() from exc
+
     if region is None:
         raise AppError(
             status_code=404,
@@ -41,10 +46,10 @@ def update_my_region(
     current_user.region_id = region.region_id
     try:
         db.commit()
+        db.refresh(current_user)
     except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("update region DB error")
         raise database_error() from exc
 
-    db.refresh(current_user)
     return RegionUpdateResponse(user_id=current_user.user_id, region=region)

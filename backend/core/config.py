@@ -1,13 +1,20 @@
 """Application settings loaded from environment variables / .env file."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Resolved as an absolute path (not ".env") so this works the same whether
+# the process is launched with cwd=backend/ or cwd=<repo root> -- the repo
+# root's .env is the single source of truth for Backend settings (vision/
+# keeps its own separate vision/.env for Vision-only settings).
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(_REPO_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -40,9 +47,27 @@ class Settings(BaseSettings):
     aws_s3_endpoint_url: str | None = None  # for local/minio testing
     s3_request_timeout_seconds: float = 10.0
 
+    # "s3" (production, 섹션 15.2) or "local" (local development only:
+    # writes under local_storage_dir instead of calling AWS, keeping the
+    # exact same s3_key semantics so no other layer changes). Use "local"
+    # to run the full stack without AWS credentials.
+    storage_backend: str = "s3"
+    local_storage_dir: str = "./.local_storage"
+
     # --- Image upload constraints ---
     max_image_size_mb: int = 10
     allowed_image_content_types: str = "image/jpeg,image/jpg,image/png,image/webp"
+
+    # --- Image processing (resize + re-encode before Vision/S3, 요청사항) ---
+    # 업로드된 원본이 아무리 커도, 가로/세로 중 긴 변을 이 값 이하로 축소한다
+    # (비율은 유지). 이미 이보다 작으면 확대하지 않는다.
+    image_max_dimension: int = 1920
+    # 저장 시 재인코딩할 포맷. "jpeg"(기본, 호환성 최우선) 또는 "webp"(더 작은
+    # 용량, 대부분의 최신 브라우저/Gemini 에서 지원).
+    image_output_format: str = "jpeg"
+    # JPEG/WEBP 인코딩 품질 (1~100). 85 는 육안상 원본과 거의 구분되지 않으면서
+    # 파일 크기를 크게 줄이는 통상적인 절충값이다.
+    image_output_quality: int = 85
 
     # --- Vision Server (internal) ---
     vision_server_base_url: str = "http://localhost:8100/internal/v1"

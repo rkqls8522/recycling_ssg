@@ -7,13 +7,17 @@ request_id) defined in the API spec (섹션 4.1, 16).
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger(__name__)
 
 REQUEST_ID_HEADER = "X-Request-ID"
 
@@ -96,11 +100,17 @@ def internal_server_error() -> AppError:
     )
 
 
-def validation_error(details: list[dict[str, str]] | None = None) -> AppError:
+def validation_error(
+    details: list[dict[str, str]] | None = None,
+    message: str = "요청 값이 올바르지 않습니다.",
+) -> AppError:
+    """``message`` defaults to the section-16 catalog string, but some
+    endpoints pin their own wording for REQUEST_VALIDATION_ERROR (e.g.
+    GET /api/v1/regions in 섹션 7.2), so it is overridable."""
     return AppError(
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         code="REQUEST_VALIDATION_ERROR",
-        message="요청 값이 올바르지 않습니다.",
+        message=message,
         details=details,
     )
 
@@ -176,6 +186,31 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=exc.status_code,
             content=_error_body(
                 code=code, message=message, details=None, request_id=request_id
+            ),
+        )
+        response.headers[REQUEST_ID_HEADER] = request_id
+        return response
+
+    @app.exception_handler(SQLAlchemyError)
+    async def sqlalchemy_error_handler(
+        request: Request, exc: SQLAlchemyError
+    ) -> JSONResponse:
+        """Safety net so a DB failure always surfaces as 503 DATABASE_ERROR.
+
+        Endpoints still catch SQLAlchemyError locally where they need to roll
+        back or run a compensating action; this only guarantees that any path
+        we did not wrap (e.g. a read executed before the try block) still
+        honours the contract instead of leaking a 500.
+        """
+        request_id = _request_id(request)
+        logger.exception("unhandled database error on %s %s", request.method, request.url.path)
+        response = JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=_error_body(
+                code="DATABASE_ERROR",
+                message="데이터베이스 처리 중 오류가 발생했습니다.",
+                details=None,
+                request_id=request_id,
             ),
         )
         response.headers[REQUEST_ID_HEADER] = request_id

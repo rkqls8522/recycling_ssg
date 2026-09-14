@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import logging
+
 from fastapi import Depends, Header
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from core import security
@@ -11,9 +14,12 @@ from core.exceptions import (
     auth_required,
     auth_token_expired,
     auth_token_invalid,
+    database_error,
     user_not_found,
 )
 from models.user import User
+
+logger = logging.getLogger(__name__)
 
 
 def get_current_user(
@@ -36,7 +42,14 @@ def get_current_user(
     except security.TokenInvalidError as exc:
         raise auth_token_invalid() from exc
 
-    user = db.get(User, user_id)
+    # 인증 API 의 오류 표에는 503 DATABASE_ERROR 가 포함되어 있으므로,
+    # 사용자 조회 실패는 500 이 아니라 503 으로 보고한다.
+    try:
+        user = db.get(User, user_id)
+    except SQLAlchemyError as exc:
+        logger.exception("current user lookup DB error")
+        raise database_error() from exc
+
     if user is None:
         raise user_not_found()
 

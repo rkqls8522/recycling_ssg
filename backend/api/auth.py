@@ -21,7 +21,12 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 @router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
 def signup(payload: SignupRequest, db: Session = Depends(get_db)) -> SignupResponse:
-    existing = db.query(User).filter(User.email == payload.email).first()
+    try:
+        existing = db.query(User).filter(User.email == payload.email).first()
+    except SQLAlchemyError as exc:
+        logger.exception("signup duplicate-check DB error")
+        raise database_error() from exc
+
     if existing is not None:
         raise AppError(
             status_code=409,
@@ -37,6 +42,7 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)) -> SignupRespo
     db.add(user)
     try:
         db.commit()
+        db.refresh(user)
     except IntegrityError as exc:
         db.rollback()
         raise AppError(
@@ -49,7 +55,6 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)) -> SignupRespo
         logger.exception("signup DB error")
         raise database_error() from exc
 
-    db.refresh(user)
     return SignupResponse(
         user_id=user.user_id,
         email=user.email,
