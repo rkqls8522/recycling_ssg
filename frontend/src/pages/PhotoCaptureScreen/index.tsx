@@ -9,7 +9,6 @@ import type {
 } from "../../types";
 import useAxios from "../../hooks/useAxios";
 import {
-  authHeaders,
   buildAnalyzeResult,
   FALLBACK_GUIDELINE,
   mapDisposalSchedule,
@@ -21,6 +20,7 @@ import CaptureView from "./CaptureView";
 import AnalyzingView from "./AnalyzingView";
 import ResultFailView from "./ResultFailView";
 import AgentThinkingView from "./AgentThinkingView";
+import { authHeaders } from "@/utils/get-auth-headers";
 
 function buildFailResult(user: User | null): ClassificationResult {
   return {
@@ -86,6 +86,7 @@ export default function PhotoCaptureScreen() {
 
   function handleFileSelected(file: File) {
     const url = URL.createObjectURL(file);
+
     setSelectedFile(file);
     setPreviewWithCleanup(url);
     setCaptureState("capture");

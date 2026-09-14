@@ -1,17 +1,39 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import type { AxiosError } from "axios";
 import { v4 as uuidv4 } from "uuid";
 import type { AuthMode } from "../../types";
 import type {
   SignupPayload,
   SignupResponse,
+  LoginResponse,
   ApiErrorBody,
+  User,
 } from "../../types/index";
-import { getUser } from "../../utils/storage";
-import { RecycleIcon } from "../../components/common/Icons";
+import { saveToken, saveUser } from "../../utils/storage";
+import { LoadingIcon, RecycleIcon } from "../../components/common/Icons";
 import { useAuthContext, resolveHomeRoute } from "./AuthContext";
 import useAxios from "../../hooks/useAxios";
+
+// 로그인 응답에만 access_token이 있으므로 이걸로 구분한다.
+function isLoginResponse(
+  data: LoginResponse | SignupResponse,
+): data is LoginResponse {
+  return "access_token" in data;
+}
+
+// 백엔드의 {user_id, email, region} 형태를 화면에서 쓰는 User로 변환.
+// region_id 체계는 아직 화면 쪽에서 문자열 code로 다루고 있어 임시로 문자열화한다.
+function mapUser(apiUser: LoginResponse["user"]): User {
+  return {
+    id: String(apiUser.user_id),
+    email: apiUser.email,
+    regionCode: apiUser.region ? String(apiUser.region.region_id) : undefined,
+    regionName: apiUser.region
+      ? `${apiUser.region.sido_name} ${apiUser.region.sgg_name}`
+      : undefined,
+  };
+}
 
 export default function AuthScreen() {
   const { user, setUser } = useAuthContext();
@@ -21,20 +43,29 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [formError, setFormError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const {
-    loading,
-    error: apiError,
-    refetch: authRequest,
-  } = useAxios<SignupResponse>("", { method: "post" }, false);
+  const { loading, refetch: authRequest } = useAxios<
+    LoginResponse | SignupResponse
+  >("", { method: "post" }, false);
 
   if (user) {
     // return <Navigate to={resolveHomeRoute(user)} replace />;
   }
 
+  function resetForm() {
+    setEmail("");
+    setPassword("");
+    setConfirm("");
+    setMode("login");
+    setFormError("");
+    setSuccessMessage("");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError("");
+    setSuccessMessage("");
 
     if (!email.trim() || !password.trim()) {
       setFormError("이메일과 비밀번호를 입력해 주세요");
@@ -50,12 +81,13 @@ export default function AuthScreen() {
       return;
     }
 
-    const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
+    const endpoint =
+      mode === "login" ? "/api/v1/auth/login" : "/api/v1/auth/signup";
 
     try {
       const payload: SignupPayload = { email: email.trim(), password };
 
-      await authRequest({
+      const data = await authRequest({
         url: endpoint,
         data: payload,
         headers: {
@@ -65,11 +97,26 @@ export default function AuthScreen() {
         },
       });
 
-      const loggedInUser = getUser();
-      if (loggedInUser) {
-        setUser(loggedInUser);
-        navigate(resolveHomeRoute(loggedInUser), { replace: true });
+      if (mode === "signup") {
+        // 서비스 이용은 로그인 후에만 가능 — 가입 완료 후 자동 로그인하지 않고 로그인 화면으로 전환
+        setMode("login");
+        setPassword("");
+        setConfirm("");
+        setSuccessMessage("회원가입이 완료되었습니다. 로그인해 주세요.");
+        return;
       }
+
+      if (!isLoginResponse(data)) {
+        setFormError("로그인에 실패했습니다");
+        return;
+      }
+
+      saveToken(data.access_token);
+      const loggedInUser = mapUser(data.user);
+      saveUser(loggedInUser);
+      setUser(loggedInUser);
+      // 지역이 설정되어 있으면 바로 촬영 화면으로, 아니면 지역 설정 화면으로 (resolveHomeRoute가 분기)
+      navigate(resolveHomeRoute(loggedInUser), { replace: true });
     } catch (err) {
       const axiosErr = err as AxiosError<ApiErrorBody>;
       const body = axiosErr.response?.data;
@@ -109,11 +156,7 @@ export default function AuthScreen() {
         <button
           type="button"
           onClick={() => {
-            setEmail("");
-            setPassword("");
-            setConfirm("");
-            setMode("login");
-            setFormError("");
+            resetForm();
           }}
           className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
             mode === "login"
@@ -128,6 +171,7 @@ export default function AuthScreen() {
           onClick={() => {
             setMode("signup");
             setFormError("");
+            setSuccessMessage("");
           }}
           className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
             mode === "signup"
@@ -187,6 +231,12 @@ export default function AuthScreen() {
           </div>
         )}
 
+        {successMessage && (
+          <p className="text-sm text-primary bg-green-50 px-4 py-3 rounded-lg border border-green-100">
+            {successMessage}
+          </p>
+        )}
+
         {displayError && (
           <p className="text-sm text-destructive bg-red-50 px-4 py-3 rounded-lg border border-red-100">
             {displayError}
@@ -200,25 +250,7 @@ export default function AuthScreen() {
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <svg
-                className="animate-spin h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
-              </svg>
+              <LoadingIcon />
               처리 중...
             </span>
           ) : mode === "login" ? (

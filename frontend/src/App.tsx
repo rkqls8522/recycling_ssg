@@ -23,12 +23,10 @@ export default function App() {
             <Route path="/login" element={<AuthScreen />} />
             {/* <Route element={<RequireAuth />}> */}
             <Route path="/region" element={<RegionScreen />} />
-            {/* HomeScreen 제거 — /home도 PhotoCaptureScreen을 그대로 렌더링 (촬영 화면이 곧 홈) */}
             <Route path="/home" element={<PhotoCaptureScreen />} />
             <Route path="/capture" element={<PhotoCaptureScreen />} />
             <Route path="/result" element={<ResultScreen />} />
             <Route path="/mypage" element={<MyPageScreen />} />
-            {/* </Route> */}
             {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
           </Routes>
         </MobileLayout>

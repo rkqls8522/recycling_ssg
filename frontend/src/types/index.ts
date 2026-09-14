@@ -182,3 +182,24 @@ export interface FeedbackNotInListResponse {
   minor_category: string;
   message: string;
 }
+
+export type RegionItem = {
+  region_id: number;
+  sido_name: string;
+  sgg_name: string;
+};
+
+export type GetRegionResponse = {
+  items: RegionItem[];
+};
+
+export type Region = {
+  region_id: number;
+  sido_name: string;
+  sgg_name: string;
+};
+
+export type UserRegionResponse = {
+  user_id: number;
+  region: Region;
+};
