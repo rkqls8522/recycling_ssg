@@ -5,7 +5,6 @@ import RootRedirect from "./pages/AuthScreen/RootRedirect";
 import MobileLayout from "./components/layout/MobileLayout";
 import AuthScreen from "./pages/AuthScreen";
 import RegionScreen from "./pages/RegionScreen";
-import HomeScreen from "./pages/HomeScreen";
 import PhotoCaptureScreen from "./pages/PhotoCaptureScreen";
 import ResultScreen from "./pages/ResultScreen";
 import MyPageScreen from "./pages/MyPageScreen";
@@ -24,7 +23,8 @@ export default function App() {
             <Route path="/login" element={<AuthScreen />} />
             {/* <Route element={<RequireAuth />}> */}
             <Route path="/region" element={<RegionScreen />} />
-            <Route path="/home" element={<HomeScreen />} />
+            {/* HomeScreen 제거 — /home도 PhotoCaptureScreen을 그대로 렌더링 (촬영 화면이 곧 홈) */}
+            <Route path="/home" element={<PhotoCaptureScreen />} />
             <Route path="/capture" element={<PhotoCaptureScreen />} />
             <Route path="/result" element={<ResultScreen />} />
             <Route path="/mypage" element={<MyPageScreen />} />

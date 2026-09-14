@@ -1,11 +1,24 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import type { ClassificationResult } from "../../types";
+import type {
+  CandidateScore,
+  ClassificationResult,
+  DisposalScheduleResponse,
+  FeedbackConfirmResponse,
+  FeedbackNotInListResponse,
+  FeedbackSelectCandidateResponse,
+} from "../../types";
 import {
   DEMO_IMAGE,
   WASTE_ITEMS,
   getGuidelineForRegion,
 } from "../../api/mockData";
+import {
+  authHeaders,
+  FALLBACK_GUIDELINE,
+  mapDisposalSchedule,
+} from "../../api/analyze";
+import useAxios from "../../hooks/useAxios";
 import { useAuthContext } from "../AuthScreen/AuthContext";
 import ChatDrawer from "./ChatDrawer";
 import BackButton from "../../components/common/BackButton";
@@ -60,7 +73,19 @@ export default function ResultScreen() {
   const [result, setResult] = useState<ClassificationResult>(initialResult);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [agentThinkingOpen, setAgentThinkingOpen] = useState(false);
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
   const { itemName, guidelines, regionName } = result;
+
+  // feedbackId가 있으면 실제 /api/v1/analyze 응답으로 만들어진 결과 — 피드백 API로 연동.
+  // feedbackId가 없으면 mock fallback(buildMockResult 등)이므로 기존 mock 동작을 그대로 유지.
+  const isRealResult = result.feedbackId != null;
+
+  // 실제 백엔드 연동 — PhotoCaptureScreen과 동일하게 useAxios(hooks/useAxios.tsx)로 호출한다.
+  const { refetch: confirmRequest } = useAxios<FeedbackConfirmResponse>("", { method: "post" }, false);
+  const { refetch: selectCandidateRequest } = useAxios<FeedbackSelectCandidateResponse>("", { method: "post" }, false);
+  const { refetch: notInListRequest } = useAxios<FeedbackNotInListResponse>("", { method: "post" }, false);
+  const { refetch: disposalRequest } = useAxios<DisposalScheduleResponse>("", { method: "get" }, false);
 
   function onBack() {
     navigate("/capture");
@@ -68,9 +93,11 @@ export default function ResultScreen() {
 
   function handlePickerOpen() {
     setChatOpen(false);
+    setFeedbackError("");
     setPickerOpen(true);
   }
 
+  // mock 결과일 때: WASTE_ITEMS 목록에서 직접 선택
   function handlePickItem(wasteKey: string) {
     const item = WASTE_ITEMS.find((w) => w.itemCategoryEn === wasteKey);
     if (!item) return;
@@ -86,14 +113,112 @@ export default function ResultScreen() {
     setPickerOpen(false);
   }
 
+  // 실제 결과일 때: /analyze가 준 candidate_scores 중 다른 후보를 선택
+  // (predicted_class_id와 같은 후보를 다시 고르면 백엔드가 FEEDBACK_SAME_AS_PREDICTION을 반환하므로 confirm으로 처리)
+  async function handlePickCandidate(candidate: CandidateScore) {
+    if (!result.feedbackId) return;
+
+    if (candidate.class_id === result.classId) {
+      setPickerOpen(false);
+      await handleConfirmCorrect();
+      return;
+    }
+
+    setFeedbackBusy(true);
+    setFeedbackError("");
+    try {
+      await selectCandidateRequest({
+        url: `/api/v1/feedback/${result.feedbackId}/select-candidate`,
+        data: { class_id: candidate.class_id },
+        headers: authHeaders(),
+      });
+      const [major, minor] = candidate.category.split("_");
+      let gl = FALLBACK_GUIDELINE;
+      try {
+        const schedule = await disposalRequest({
+          url: "/api/v1/disposal/schedule",
+          params: { class_id: candidate.class_id },
+          headers: authHeaders(),
+        });
+        gl = mapDisposalSchedule(schedule);
+      } catch {
+        // 배출정보 조회가 실패해도 품목 수정 자체는 반영한다
+      }
+      setResult({
+        ...result,
+        itemName: minor ?? candidate.category,
+        itemCategory: major ?? candidate.category,
+        classId: candidate.class_id,
+        confidenceLevel: "high",
+        guidelines: gl,
+      });
+      setPickerOpen(false);
+    } catch {
+      setFeedbackError("품목 수정 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setFeedbackBusy(false);
+    }
+  }
+
   function handleRetake() {
     handlePickerOpen();
   }
 
+  // "맞아요" — 실제 결과면 최초 예측이 맞다고 서버에 확정(confirm)한 뒤 이동
+  async function handleConfirmCorrect() {
+    if (result.feedbackId) {
+      try {
+        await confirmRequest({
+          url: `/api/v1/feedback/${result.feedbackId}/confirm`,
+          headers: authHeaders(),
+        });
+      } catch {
+        // 피드백 저장 실패는 조용히 무시 — 사용자 플로우(뒤로가기)는 막지 않는다
+      }
+    }
+    onBack();
+  }
+
   // "여기 없어요" → escalate to the LLM agent for a deeper look
-  function handleNotListed() {
+  async function handleNotListed() {
     setPickerOpen(false);
+    setFeedbackError("");
     setAgentThinkingOpen(true);
+
+    if (!isRealResult || !result.feedbackId) {
+      // mock 결과일 때는 실제 재분류 결과가 없으므로 사용자가 직접 닫을 때까지 대기
+      return;
+    }
+
+    try {
+      const res = await notInListRequest({
+        url: `/api/v1/feedback/${result.feedbackId}/not-in-list`,
+        headers: authHeaders(),
+      });
+      let gl = FALLBACK_GUIDELINE;
+      try {
+        const schedule = await disposalRequest({
+          url: "/api/v1/disposal/schedule",
+          params: { class_id: res.final_class_id },
+          headers: authHeaders(),
+        });
+        gl = mapDisposalSchedule(schedule);
+      } catch {
+        // 배출정보 조회가 실패해도 재분류 결과 자체는 반영한다
+      }
+      setResult((prev) => ({
+        ...prev,
+        itemName: res.minor_category,
+        itemCategory: res.major_category,
+        classId: res.final_class_id,
+        confidenceLevel: "high",
+        guidelines: gl,
+      }));
+      setAgentThinkingOpen(false);
+    } catch {
+      setFeedbackError("추가 분석에 실패했습니다. 다시 시도해주세요.");
+      setAgentThinkingOpen(false);
+    }
   }
 
   if (agentThinkingOpen) {
@@ -220,6 +345,9 @@ export default function ResultScreen() {
         <p className="text-sm font-semibold text-foreground text-center">
           인식된 품목이 맞습니까?
         </p>
+        {feedbackError && !pickerOpen && (
+          <p className="text-xs text-destructive text-center">{feedbackError}</p>
+        )}
         <div className="flex gap-2.5">
           <button
             onClick={handleRetake}
@@ -228,7 +356,7 @@ export default function ResultScreen() {
             다시 촬영
           </button>
           <button
-            onClick={onBack}
+            onClick={handleConfirmCorrect}
             className="flex-1 py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm active:scale-[0.98] transition-all shadow-md shadow-primary/20"
           >
             맞아요
@@ -340,34 +468,64 @@ export default function ResultScreen() {
               </p>
             </div>
 
-            {/* Items list — top 3 candidates */}
+            {/* Items list — top candidates */}
             <div className="px-5 pt-3 pb-2 flex flex-col gap-1">
-              {WASTE_ITEMS.slice(0, 3).map((item) => {
-                const color =
-                  CATEGORY_COLOR[item.itemCategory] ??
-                  "bg-muted text-muted-foreground";
-                return (
-                  <button
-                    key={item.itemCategoryEn}
-                    onClick={() => handlePickItem(item.itemCategoryEn)}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl active:bg-muted transition-colors text-left"
-                  >
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${color}`}
-                    >
-                      {item.itemCategory}
-                    </span>
-                    <p className="text-sm font-medium text-foreground flex-1">
-                      {item.itemName}
-                    </p>
-                  </button>
-                );
-              })}
+              {feedbackError && (
+                <p className="text-xs text-destructive px-1 pb-1">{feedbackError}</p>
+              )}
+              {isRealResult
+                ? (result.candidateScores ?? []).map((candidate) => {
+                    const [major, minor] = candidate.category.split("_");
+                    const color =
+                      CATEGORY_COLOR[major] ?? "bg-muted text-muted-foreground";
+                    return (
+                      <button
+                        key={candidate.class_id}
+                        onClick={() => handlePickCandidate(candidate)}
+                        disabled={feedbackBusy}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl active:bg-muted transition-colors text-left disabled:opacity-50"
+                      >
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${color}`}
+                        >
+                          {major}
+                        </span>
+                        <p className="text-sm font-medium text-foreground flex-1">
+                          {minor ?? candidate.category}
+                        </p>
+                        <span className="text-[10px] text-muted-foreground flex-shrink-0">
+                          {Math.round(candidate.score * 100)}%
+                        </span>
+                      </button>
+                    );
+                  })
+                : WASTE_ITEMS.slice(0, 3).map((item) => {
+                    const color =
+                      CATEGORY_COLOR[item.itemCategory] ??
+                      "bg-muted text-muted-foreground";
+                    return (
+                      <button
+                        key={item.itemCategoryEn}
+                        onClick={() => handlePickItem(item.itemCategoryEn)}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl active:bg-muted transition-colors text-left"
+                      >
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${color}`}
+                        >
+                          {item.itemCategory}
+                        </span>
+                        <p className="text-sm font-medium text-foreground flex-1">
+                          {item.itemName}
+                        </p>
+                      </button>
+                    );
+                  })}
 
               {/* 여기 없어요 */}
               <button
                 onClick={handleNotListed}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl active:bg-muted transition-colors text-left"
+                disabled={feedbackBusy}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl active:bg-muted transition-colors text-left disabled:opacity-50"
               >
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 bg-muted text-muted-foreground">
                   AI 판단

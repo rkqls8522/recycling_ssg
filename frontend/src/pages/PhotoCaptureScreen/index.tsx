@@ -1,56 +1,72 @@
 import { useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import type { ClassificationResult, CaptureState } from "../../types";
-import { classifyImage } from "../../api/api";
-import { DEMO_IMAGE } from "../../api/mockData";
+import { useNavigate } from "react-router-dom";
+import type {
+  AnalyzeApiResponse,
+  CaptureState,
+  ClassificationResult,
+  DisposalScheduleResponse,
+  User,
+} from "../../types";
+import useAxios from "../../hooks/useAxios";
+import {
+  authHeaders,
+  buildAnalyzeResult,
+  FALLBACK_GUIDELINE,
+  mapDisposalSchedule,
+  startProgressTicker,
+  type AnalyzeOutcome,
+} from "../../api/analyze";
 import { useAuthContext } from "../AuthScreen/AuthContext";
 import CaptureView from "./CaptureView";
 import AnalyzingView from "./AnalyzingView";
 import ResultFailView from "./ResultFailView";
 import AgentThinkingView from "./AgentThinkingView";
 
-type DemoState = "analyzing" | "agent_thinking" | "fail";
+function buildFailResult(user: User | null): ClassificationResult {
+  return {
+    itemName: "",
+    itemCategory: "",
+    itemCategoryEn: "unclear",
+    confidence: 32,
+    confidenceLevel: "low",
+    failureHint: "blurry",
+    guidelines: {
+      steps: [],
+      notes: [],
+      collectionDays: "",
+      source: "",
+      sourceUrl: "",
+    },
+    regionCode: user?.regionCode ?? "",
+    regionName: user?.regionName ?? "",
+  };
+}
 
 export default function PhotoCaptureScreen() {
   const { user } = useAuthContext();
   const navigate = useNavigate();
-  const location = useLocation();
-  const demoState = (location.state as { demoState?: DemoState } | null)
-    ?.demoState;
 
-  const [captureState, setCaptureState] = useState<CaptureState>(
-    demoState ?? "capture",
-  );
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    demoState ? DEMO_IMAGE : null,
-  );
+  const [captureState, setCaptureState] = useState<CaptureState>("capture");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [result, setResult] = useState<ClassificationResult | null>(
-    demoState === "fail"
-      ? {
-          itemName: "",
-          itemCategory: "",
-          itemCategoryEn: "unclear",
-          confidence: 32,
-          confidenceLevel: "low",
-          failureHint: "blurry",
-          guidelines: {
-            steps: [],
-            notes: [],
-            collectionDays: "",
-            source: "",
-            sourceUrl: "",
-          },
-          regionCode: user?.regionCode ?? "",
-          regionName: user?.regionName ?? "",
-        }
-      : null,
-  );
+  const [result, setResult] = useState<ClassificationResult | null>(null);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [currentStep, setCurrentStep] = useState(-1);
 
   const galleryRef = useRef<HTMLInputElement>(null);
   const prevUrl = useRef<string | null>(null);
+
+  // 실제 백엔드 연동 — AuthScreen/MyPageScreen과 동일하게 useAxios(hooks/useAxios.tsx)로 호출한다.
+  const { refetch: analyzeRequest } = useAxios<AnalyzeApiResponse>(
+    "",
+    { method: "post" },
+    false,
+  );
+  const { refetch: disposalRequest } = useAxios<DisposalScheduleResponse>(
+    "",
+    { method: "get" },
+    false,
+  );
 
   if (!user) return null;
 
@@ -77,6 +93,49 @@ export default function PhotoCaptureScreen() {
     setCurrentStep(-1);
   }
 
+  // 실제 /api/v1/analyze 호출 — useAxios로 요청하고, SUCCESS면 이어서 배출정보(/disposal/schedule)까지 조회한다.
+  async function runRealAnalyze(
+    onProgress: (stepIndex: number) => void,
+  ): Promise<AnalyzeOutcome> {
+    const ticker = startProgressTicker(onProgress);
+    try {
+      const form = new FormData();
+      form.append("image", selectedFile!);
+
+      const data = await analyzeRequest({
+        url: "/api/v1/analyze",
+        data: form,
+        headers: authHeaders(),
+      });
+
+      if (data.status === "RETAKE_REQUIRED") {
+        return { status: "RETAKE_REQUIRED", retakeMessage: data.message };
+      }
+
+      const top1 = data.candidate_scores[0];
+      let guidelines = FALLBACK_GUIDELINE;
+      if (top1) {
+        try {
+          const schedule = await disposalRequest({
+            url: "/api/v1/disposal/schedule",
+            params: { class_id: top1.class_id },
+            headers: authHeaders(),
+          });
+          guidelines = mapDisposalSchedule(schedule);
+        } catch {
+          // 배출정보 조회가 실패해도 분석 결과 자체는 보여준다
+        }
+      }
+
+      return {
+        status: "SUCCESS",
+        result: buildAnalyzeResult(data, user!.regionCode!, guidelines),
+      };
+    } finally {
+      ticker.finish();
+    }
+  }
+
   async function handleAnalyze() {
     if (!selectedFile || !user!.regionCode || !user!.regionName) return;
 
@@ -84,16 +143,22 @@ export default function PhotoCaptureScreen() {
     setCompletedSteps([]);
     setCurrentStep(0);
 
+    const onProgress = (stepIndex: number) => {
+      setCompletedSteps((prev) => [...prev, stepIndex]);
+      setCurrentStep(stepIndex + 1);
+    };
+
     try {
-      const classifyResult = await classifyImage(
-        selectedFile,
-        user!.regionCode,
-        user!.regionName,
-        (stepIndex) => {
-          setCompletedSteps((prev) => [...prev, stepIndex]);
-          setCurrentStep(stepIndex + 1);
-        },
-      );
+      const outcome = await runRealAnalyze(onProgress);
+
+      if (outcome.status === "RETAKE_REQUIRED") {
+        // 정상 비즈니스 분기(HTTP 200) — 재촬영 안내
+        setResult({ ...buildFailResult(user), failureHint: "unclear" });
+        setCaptureState("fail");
+        return;
+      }
+
+      const classifyResult = outcome.result!;
       setResult(classifyResult);
 
       if (classifyResult.confidenceLevel === "high") {
@@ -119,15 +184,6 @@ export default function PhotoCaptureScreen() {
     setCurrentStep(-1);
   }
 
-  function handleReanalyzed(newResult: ClassificationResult) {
-    setResult(newResult);
-    if (newResult.confidenceLevel === "high") {
-      onViewGuidelines(newResult, previewUrl!);
-    } else {
-      setCaptureState("fail");
-    }
-  }
-
   function handleOpenGallery() {
     setCaptureState("capture");
     // Small delay to let state settle before triggering gallery
@@ -144,12 +200,15 @@ export default function PhotoCaptureScreen() {
           onAnalyze={handleAnalyze}
           onReset={handleReset}
           onBack={onBack}
+          hasRegion={!!user.regionCode}
+          onOpenMyPage={() => navigate("/mypage")}
+          onSetRegion={() => navigate("/region")}
         />
       )}
 
-      {captureState === "analyzing" && (previewUrl ?? DEMO_IMAGE) && (
+      {captureState === "analyzing" && previewUrl && (
         <AnalyzingView
-          previewUrl={previewUrl ?? DEMO_IMAGE}
+          previewUrl={previewUrl}
           completedSteps={completedSteps}
           currentStep={currentStep}
         />
@@ -162,7 +221,7 @@ export default function PhotoCaptureScreen() {
       {captureState === "fail" && (
         <ResultFailView
           failureHint={result?.failureHint}
-          imageUrl={previewUrl ?? DEMO_IMAGE}
+          imageUrl={previewUrl ?? ""}
           onRetake={handleReset}
           onGallery={handleOpenGallery}
         />

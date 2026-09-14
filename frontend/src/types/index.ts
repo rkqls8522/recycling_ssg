@@ -35,6 +35,11 @@ export interface ClassificationResult {
   guidelines: DisposalGuideline;
   regionCode: string;
   regionName: string;
+  // 실제 백엔드(/api/v1/analyze) 연동 시에만 채워지는 필드 —
+  // mock 플로우(buildMockResult 등)에서는 undefined로 유지되어 기존 동작을 그대로 보존한다.
+  feedbackId?: number;
+  classId?: number;
+  candidateScores?: CandidateScore[];
 }
 
 export interface DisposalGuideline {
@@ -66,8 +71,21 @@ export interface SignupPayload {
 export interface SignupResponse {
   user_id: number;
   email: string;
-  region: string | null; // Region 타입이 별도로 있다면 그걸로 교체
+  region: RegionInfo | null;
   created_at: string;
+}
+
+// POST /api/v1/auth/login 응답 — signup과 달리 access_token을 함께 내려준다.
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user: {
+    user_id: number;
+    email: string;
+    region: RegionInfo | null;
+    created_at: string;
+    updated_at: string;
+  };
 }
 
 export interface ApiErrorBody {
@@ -88,4 +106,79 @@ export interface FavoriteResponse {
       created_at: Date;
     },
   ];
+}
+
+// ─── /api/v1/analyze, /api/v1/feedback/*, /api/v1/disposal/schedule ───────────
+// Notion "프론트 - 백 api" 명세서 기준 (2026-09-14 정리)
+
+export interface RegionInfo {
+  region_id: number;
+  sido_name: string;
+  sgg_name: string;
+}
+
+export interface CandidateScore {
+  class_id: number;
+  category: string; // 예: "플라스틱류_욕실용품" (major_minor)
+  score: number;
+}
+
+export interface AnalyzeSuccessBody {
+  status: "SUCCESS";
+  major_category: string;
+  minor_category: string;
+  candidate_scores: CandidateScore[];
+  user_region: RegionInfo;
+  disposal_day: string | null;
+  image_id: number;
+  feedback_id: number;
+  warnings: string[];
+}
+
+export interface AnalyzeRetakeBody {
+  status: "RETAKE_REQUIRED";
+  code: string;
+  message: string;
+  threshold?: number;
+  request_id: string;
+}
+
+export type AnalyzeApiResponse = AnalyzeSuccessBody | AnalyzeRetakeBody;
+
+export interface DisposalScheduleResponse {
+  class_id: number;
+  major_category: string;
+  minor_category: string;
+  region: RegionInfo;
+  disposal_day: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  disposal_method: string | null;
+  source: string;
+}
+
+export interface FeedbackConfirmResponse {
+  feedback_id: number;
+  is_correct: true;
+  final_class_id: number;
+  correction_source: null;
+  message: string;
+}
+
+export interface FeedbackSelectCandidateResponse {
+  feedback_id: number;
+  is_correct: false;
+  final_class_id: number;
+  correction_source: "USER";
+  message: string;
+}
+
+export interface FeedbackNotInListResponse {
+  feedback_id: number;
+  is_correct: false;
+  final_class_id: number;
+  correction_source: "GEMINI";
+  major_category: string;
+  minor_category: string;
+  message: string;
 }

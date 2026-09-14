@@ -1,12 +1,7 @@
 import type { ClassificationResult, ConfidenceLevel, FailureHint } from "../types"
 import { getToken, saveToken, saveUser, getUser } from "../utils/storage"
 import { getRandomWasteItem, getGuidelineForRegion } from "./mockData"
-
-// TODO: Replace with actual Spring backend URL
-const API_BASE = import.meta.env.VITE_API_URL ?? ""
-
-// Mock mode when no backend URL is configured
-const MOCK_MODE = !API_BASE
+import { API_BASE, MOCK_MODE } from "./config"
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken()
