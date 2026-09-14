@@ -1,4 +1,4 @@
-# recycling_ssg - 로컬 개발 서버 2개(Backend :8000, Vision :8100) 기동 (PowerShell)
+﻿# recycling_ssg - 로컬 개발 서버 2개(Backend :8000, Vision :8100) 기동 (PowerShell)
 #
 # AWS/MySQL/외부 API 키 없이도 전체 흐름이 동작하도록 개발용 설정을 사용한다:
 #   - DB: SQLite 파일 (backend\dev.sqlite3)
@@ -49,19 +49,37 @@ Write-Host "  API 문서: http://127.0.0.1:8000/docs"
 Write-Host "  로그     : $LogDir\{vision,backend}.log"
 Write-Host "=============================================="
 
-# --- Vision (:8100) ---
-$visionEnv = @{
-    MODEL_PATH    = $ModelPath
-    MODEL_VERSION = $ModelVersion
+# --- 이전 세션의 잔여 프로세스 정리 ---
+# 이전에는 Start-Process 로 wrapper powershell 을 띄우고 그 안에서 `& python`
+# 으로 uvicorn 을 실행했다. wrapper 를 Stop-Process 로 죽여도 자식인 uvicorn
+# 프로세스는 안 죽고 남아 포트를 계속 점유하는 경우가 있었다. 그 상태로 다시
+# run-dev.ps1 을 실행하면: 새 uvicorn 은 바인딩 실패로 즉시 종료되지만, 헬스체크는
+# 죽지 않은 이전 프로세스에 응답해버려 "준비 완료"로 오판하고, 다음 순간 새
+# 프로세스가 죽은 걸 감지해 곧바로 "서버 프로세스가 종료되었습니다"가 뜨는
+# 문제가 있었다. 시작 전에 포트 점유 프로세스를 정리해서 이를 막는다.
+function Stop-StaleListener {
+    param([int]$Port)
+    $conns = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+    $found = $false
+    foreach ($c in $conns) {
+        $proc = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue
+        Write-Host "WARNING: 포트 $Port 를 이전 세션의 잔여 프로세스(PID $($c.OwningProcess), $($proc.ProcessName))가 점유하고 있어 종료합니다." -ForegroundColor Yellow
+        Stop-Process -Id $c.OwningProcess -Force -ErrorAction SilentlyContinue
+        $found = $true
+    }
+    return $found
 }
-$visionScript = @"
-`$env:MODEL_PATH='$($visionEnv.MODEL_PATH)'
-`$env:MODEL_VERSION='$($visionEnv.MODEL_VERSION)'
-Set-Location '$RepoRoot'
-& '$Py' -m uvicorn vision.main:app --host 127.0.0.1 --port 8100
-"@
-$visionProc = Start-Process powershell.exe `
-    -ArgumentList "-NoProfile", "-Command", $visionScript `
+$hadStale = (Stop-StaleListener -Port 8100) -or (Stop-StaleListener -Port 8000)
+if ($hadStale) { Start-Sleep -Milliseconds 500 }
+
+# --- Vision (:8100) ---
+# wrapper powershell 없이 python.exe 를 직접 기동한다: $visionProc.Id 가 곧
+# uvicorn 프로세스 자신이므로, 나중에 Stop-Process 로 확실하게 종료된다(고아 프로세스 방지).
+$env:MODEL_PATH    = $ModelPath
+$env:MODEL_VERSION = $ModelVersion
+$visionProc = Start-Process -FilePath $Py `
+    -ArgumentList @("-m", "uvicorn", "vision.main:app", "--host", "127.0.0.1", "--port", "8100") `
+    -WorkingDirectory $RepoRoot `
     -RedirectStandardOutput "$LogDir\vision.log" `
     -RedirectStandardError "$LogDir\vision.err.log" `
     -PassThru -WindowStyle Hidden
@@ -73,19 +91,16 @@ $storage      = if ($env:STORAGE_BACKEND) { $env:STORAGE_BACKEND } else { "local
 $storageDir   = if ($env:LOCAL_STORAGE_DIR) { $env:LOCAL_STORAGE_DIR } else { "../.local_storage" }
 $visionUrl    = if ($env:VISION_SERVER_BASE_URL) { $env:VISION_SERVER_BASE_URL } else { "http://127.0.0.1:8100/internal/v1" }
 
-$backendScript = @"
-`$env:DATABASE_URL='$dbUrl'
-`$env:JWT_SECRET_KEY='$jwtSecret'
-`$env:STORAGE_BACKEND='$storage'
-`$env:LOCAL_STORAGE_DIR='$storageDir'
-`$env:VISION_SERVER_BASE_URL='$visionUrl'
-`$env:AUTO_CREATE_TABLES='true'
-`$env:AUTO_SEED_MASTER_DATA='true'
-Set-Location '$RepoRoot\backend'
-& '$Py' -m uvicorn main:app --host 127.0.0.1 --port 8000
-"@
-$backendProc = Start-Process powershell.exe `
-    -ArgumentList "-NoProfile", "-Command", $backendScript `
+$env:DATABASE_URL           = $dbUrl
+$env:JWT_SECRET_KEY         = $jwtSecret
+$env:STORAGE_BACKEND        = $storage
+$env:LOCAL_STORAGE_DIR      = $storageDir
+$env:VISION_SERVER_BASE_URL = $visionUrl
+$env:AUTO_CREATE_TABLES     = "true"
+$env:AUTO_SEED_MASTER_DATA  = "true"
+$backendProc = Start-Process -FilePath $Py `
+    -ArgumentList @("-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000") `
+    -WorkingDirectory (Join-Path $RepoRoot "backend") `
     -RedirectStandardOutput "$LogDir\backend.log" `
     -RedirectStandardError "$LogDir\backend.err.log" `
     -PassThru -WindowStyle Hidden

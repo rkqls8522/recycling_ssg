@@ -47,11 +47,10 @@ def test_authenticated_endpoint_reports_503_when_db_is_down(client, signup_and_l
     assert resp.json()["code"] == "DATABASE_ERROR"
 
 
-def test_regions_reports_503_when_db_is_down(client, signup_and_login, monkeypatch):
-    headers, _ = signup_and_login()
+def test_regions_reports_503_when_db_is_down(client, monkeypatch):
     monkeypatch.setattr(Query, "all", _boom)
 
-    resp = client.get("/api/v1/regions", headers=headers)
+    resp = client.get("/api/v1/regions")
 
     assert resp.status_code == 503
     assert resp.json()["code"] == "DATABASE_ERROR"
