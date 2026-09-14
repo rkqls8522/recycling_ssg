@@ -1,10 +1,11 @@
-# API 테스트 명령어 모음 (19개 전체)
+﻿# API 테스트 명령어 모음 (19개 전체)
 
 터미널에서 Postman 없이 모든 API를 검증할 수 있는 명령어 모음입니다.
 모든 명령어는 실제로 실행해 응답을 확인한 것입니다.
 
-- 전체를 한 번에 자동 검증: [`bash scripts/smoke-test.sh`](../scripts/smoke-test.sh) (99개 검사)
+- 전체를 한 번에 자동 검증: [`bash scripts/smoke-test.sh`](../scripts/smoke-test.sh) (100개 검사)
 - 아래는 엔드포인트별로 하나씩 실행해 보는 용도입니다.
+- 필드 정의·오류 코드 전체 명세는 → [`API_SPEC.md`](API_SPEC.md)
 
 ---
 
@@ -16,6 +17,7 @@
 # Git Bash
 bash scripts/run-dev.sh
 ```
+
 ```powershell
 # PowerShell
 .\scripts\run-dev.ps1
@@ -33,6 +35,7 @@ BACKEND=http://127.0.0.1:8000
 VISION=http://127.0.0.1:8100
 IMG="ai/models/yolo/01_experiment_augmentation/report/final_best/prediction_samples/12_X001_C185_0929_4.jpg"
 ```
+
 ```powershell
 # PowerShell
 $BACKEND = "http://127.0.0.1:8000"
@@ -42,15 +45,16 @@ $IMG     = "ai\models\yolo\01_experiment_augmentation\report\final_best\predicti
 
 ### 0-3. ⚠️ 셸별 함정 (실제로 겪은 것들)
 
-| 상황 | 증상 | 해결 |
-|---|---|---|
-| **PowerShell**에서 `curl` | `Invoke-WebRequest` 별칭이라 문법이 다름 | 반드시 **`curl.exe`** 로 호출 |
-| **Git Bash**에서 `-F "image=@/c/..."` | `status 000` (연결 실패) | `C:/...` 형식 사용 → `$(cygpath -m "$IMG")` 또는 **상대 경로** |
-| **Git Bash**에서 `-d '{"message":"한글"}'` | `400 There was an error parsing the body` | 본문을 **파일로 저장**해 `--data-binary "@body.json"` |
-| **PowerShell**에서 `curl.exe -d "...한글..."` | `422` (필드 깨짐) | `Invoke-RestMethod -Body (@{...}\|ConvertTo-Json)` 사용 |
-| **PowerShell**에서 응답 한글 | `ë¶ìë í...` 로 깨져 보임 | PS 5.1 버그. 아래 UTF-8 디코딩 스니펫 사용 |
+| 상황                                          | 증상                                      | 해결                                                           |
+| --------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------- |
+| **PowerShell**에서 `curl`                     | `Invoke-WebRequest` 별칭이라 문법이 다름  | 반드시 **`curl.exe`** 로 호출                                  |
+| **Git Bash**에서 `-F "image=@/c/..."`         | `status 000` (연결 실패)                  | `C:/...` 형식 사용 → `$(cygpath -m "$IMG")` 또는 **상대 경로** |
+| **Git Bash**에서 `-d '{"message":"한글"}'`    | `400 There was an error parsing the body` | 본문을 **파일로 저장**해 `--data-binary "@body.json"`          |
+| **PowerShell**에서 `curl.exe -d "...한글..."` | `422` (필드 깨짐)                         | `Invoke-RestMethod -Body (@{...}\|ConvertTo-Json)` 사용        |
+| **PowerShell**에서 응답 한글                  | `ë¶ìë í...` 로 깨져 보임                  | PS 5.1 버그. 아래 UTF-8 디코딩 스니펫 사용                     |
 
 **PowerShell에서 한글 응답 올바르게 보기**
+
 ```powershell
 function Invoke-Api($Method, $Url, $Headers = @{}, $Body = $null) {
     $p = @{ Uri = $Url; Method = $Method; Headers = $Headers; UseBasicParsing = $true }
@@ -68,14 +72,17 @@ function Invoke-Api($Method, $Url, $Headers = @{}, $Body = $null) {
 ```bash
 curl -i "$BACKEND/health"
 ```
+
 ```powershell
 curl.exe -i "$BACKEND/health"
 ```
 
 **실제 응답** `200 OK`
+
 ```json
-{"status":"ok","service":"backend"}
+{ "status": "ok", "service": "backend" }
 ```
+
 > 모든 응답에는 `X-Request-ID` 헤더가 항상 포함됩니다 (`-i` 로 확인).
 
 ---
@@ -87,9 +94,11 @@ curl -s "$BACKEND/ready"
 ```
 
 **실제 응답** `200 OK`
+
 ```json
-{"status":"ready","database":true}
+{ "status": "ready", "database": true }
 ```
+
 > DB 연결 실패 시 → `503 SERVICE_NOT_READY`
 
 ---
@@ -102,12 +111,14 @@ curl -s -X POST "$BACKEND/api/v1/auth/signup" \
   -H "Accept: application/json" \
   -d '{"email":"test@example.com","password":"Example123!"}'
 ```
+
 ```powershell
 $body = @{ email = "test@example.com"; password = "Example123!" } | ConvertTo-Json
 Invoke-RestMethod "$BACKEND/api/v1/auth/signup" -Method Post -ContentType "application/json" -Body $body
 ```
 
 **실제 응답** `201 Created`
+
 ```json
 {
   "user_id": 1,
@@ -116,9 +127,11 @@ Invoke-RestMethod "$BACKEND/api/v1/auth/signup" -Method Post -ContentType "appli
   "created_at": "2026-09-12T14:18:42Z"
 }
 ```
+
 > `region` 은 **회원가입 시 받지 않으므로 항상 null** 입니다 (명세 6.1).
 
 **오류 케이스**
+
 ```bash
 # 409 AUTH_EMAIL_EXISTS — 같은 요청을 두 번
 curl -s -X POST "$BACKEND/api/v1/auth/signup" -H "Content-Type: application/json" \
@@ -128,14 +141,21 @@ curl -s -X POST "$BACKEND/api/v1/auth/signup" -H "Content-Type: application/json
 curl -s -X POST "$BACKEND/api/v1/auth/signup" -H "Content-Type: application/json" \
   -d '{"email":"not-an-email","password":"short"}'
 ```
+
 ```json
 {
   "success": false,
   "code": "REQUEST_VALIDATION_ERROR",
   "message": "요청 값이 올바르지 않습니다.",
   "details": [
-    {"field": "email", "message": "value is not a valid email address: An email address must have an @-sign."},
-    {"field": "password", "message": "String should have at least 8 characters"}
+    {
+      "field": "email",
+      "message": "value is not a valid email address: An email address must have an @-sign."
+    },
+    {
+      "field": "password",
+      "message": "String should have at least 8 characters"
+    }
   ],
   "request_id": "0c76a039-f005-43bb-9cdd-3d116e167471"
 }
@@ -157,6 +177,7 @@ TOKEN=$(curl -s -X POST "$BACKEND/api/v1/auth/login" \
   | .venv/Scripts/python.exe -c "import json,sys;print(json.load(sys.stdin)['access_token'])")
 echo "$TOKEN"
 ```
+
 ```powershell
 $body  = @{ email = "test@example.com"; password = "Example123!" } | ConvertTo-Json
 $login = Invoke-RestMethod "$BACKEND/api/v1/auth/login" -Method Post -ContentType "application/json" -Body $body
@@ -165,6 +186,7 @@ $H     = @{ Authorization = "Bearer $TOKEN" }
 ```
 
 **실제 응답** `200 OK`
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIs...",
@@ -180,11 +202,13 @@ $H     = @{ Authorization = "Bearer $TOKEN" }
 ```
 
 **오류 케이스**
+
 ```bash
 # 401 AUTH_INVALID_CREDENTIALS
 curl -s -X POST "$BACKEND/api/v1/auth/login" -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"WrongPassword1!"}'
 ```
+
 > 계정이 없을 때와 비밀번호가 틀릴 때 **동일한 메시지**를 반환합니다(계정 존재 여부 노출 방지).
 
 ---
@@ -194,6 +218,7 @@ curl -s -X POST "$BACKEND/api/v1/auth/login" -H "Content-Type: application/json"
 ```bash
 curl -i -X POST "$BACKEND/api/v1/auth/logout" -H "Authorization: Bearer $TOKEN"
 ```
+
 ```powershell
 curl.exe -i -X POST "$BACKEND/api/v1/auth/logout" -H "Authorization: Bearer $TOKEN"
 ```
@@ -201,10 +226,12 @@ curl.exe -i -X POST "$BACKEND/api/v1/auth/logout" -H "Authorization: Bearer $TOK
 **실제 응답** `204 No Content` (Body 없음)
 
 **오류 케이스**
+
 ```bash
 curl -s -X POST "$BACKEND/api/v1/auth/logout"                                   # 401 AUTH_REQUIRED
 curl -s -X POST "$BACKEND/api/v1/auth/logout" -H "Authorization: Bearer bad"    # 401 AUTH_TOKEN_INVALID
 ```
+
 > Stateless JWT 이므로 서버 상태 변경은 없고, Frontend 가 토큰을 삭제합니다.
 
 ---
@@ -214,23 +241,31 @@ curl -s -X POST "$BACKEND/api/v1/auth/logout" -H "Authorization: Bearer bad"    
 ```bash
 curl -s "$BACKEND/api/v1/users/me" -H "Authorization: Bearer $TOKEN"
 ```
+
 ```powershell
 Invoke-Api GET "$BACKEND/api/v1/users/me" $H
 ```
 
 **실제 응답** `200 OK`
+
 ```json
 {
   "user_id": 1,
   "email": "test@example.com",
-  "region": {"region_id": 23, "sido_name": "서울특별시", "sgg_name": "강남구"},
+  "region": {
+    "region_id": 23,
+    "sido_name": "서울특별시",
+    "sgg_name": "강남구"
+  },
   "created_at": "2026-09-12T14:18:42Z",
   "updated_at": "2026-09-12T14:19:03Z"
 }
 ```
+
 > 지역 미선택 시 `"region": null`. `password_hash` 는 절대 응답에 포함되지 않습니다.
 
 **오류 케이스**
+
 ```bash
 curl -s "$BACKEND/api/v1/users/me"                                     # 401 AUTH_REQUIRED
 curl -s "$BACKEND/api/v1/users/me" -H "Authorization: Bearer not-a-jwt" # 401 AUTH_TOKEN_INVALID
@@ -239,43 +274,55 @@ curl -s "$BACKEND/api/v1/users/me" -H "Authorization: Bearer not-a-jwt" # 401 AU
 
 ---
 
-## 7. `GET /api/v1/regions` — 지역 목록 (인증 필요)
+## 7. `GET /api/v1/regions` — 지역 목록 (인증 불필요)
+
+> 지역 Master 는 공개 데이터이고 로그인 전 지역 선택 UI 에서도 필요하므로 토큰을 받지 않습니다.
+> 명세 7.2 의 "인증 필요 / 401 AUTH_REQUIRED" 에서 **의도적으로 벗어난 부분**입니다.
+> `Authorization` 헤더를 붙여 보내도 무시되므로, 프론트가 만료된 토큰을 그대로 보내도 200 입니다.
 
 ```bash
-# 전체 56개 (서울 25 + 경기 31)
-curl -s "$BACKEND/api/v1/regions" -H "Authorization: Bearer $TOKEN"
+# 전체 56개 (서울 25 + 경기 31) — 토큰 없이
+curl -s "$BACKEND/api/v1/regions"
 
 # 시·도 필터 — 한글은 URL 인코딩 권장
-curl -s -G "$BACKEND/api/v1/regions" --data-urlencode "sido_name=서울특별시" \
-  -H "Authorization: Bearer $TOKEN"
-curl -s -G "$BACKEND/api/v1/regions" --data-urlencode "sido_name=경기도" \
-  -H "Authorization: Bearer $TOKEN"
+curl -s -G "$BACKEND/api/v1/regions" --data-urlencode "sido_name=서울특별시"
+curl -s -G "$BACKEND/api/v1/regions" --data-urlencode "sido_name=경기도"
 ```
+
 ```powershell
-Invoke-Api GET "$BACKEND/api/v1/regions" $H
-Invoke-Api GET "$BACKEND/api/v1/regions?sido_name=경기도" $H
+Invoke-Api GET "$BACKEND/api/v1/regions"
+Invoke-Api GET "$BACKEND/api/v1/regions?sido_name=경기도"
 ```
 
 **실제 응답** `200 OK` (items 56개)
+
 ```json
-{"items": [
-  {"region_id": 1,  "sido_name": "서울특별시", "sgg_name": "종로구"},
-  {"region_id": 23, "sido_name": "서울특별시", "sgg_name": "강남구"},
-  {"region_id": 38, "sido_name": "경기도",     "sgg_name": "수원시"}
-]}
+{
+  "items": [
+    { "region_id": 1, "sido_name": "서울특별시", "sgg_name": "종로구" },
+    { "region_id": 23, "sido_name": "서울특별시", "sgg_name": "강남구" },
+    { "region_id": 38, "sido_name": "경기도", "sgg_name": "수원시" }
+  ]
+}
 ```
 
 **오류 케이스** — 지원하지 않는 시·도
+
 ```bash
-curl -s -G "$BACKEND/api/v1/regions" --data-urlencode "sido_name=부산광역시" \
-  -H "Authorization: Bearer $TOKEN"
+curl -s -G "$BACKEND/api/v1/regions" --data-urlencode "sido_name=부산광역시"
 ```
+
 ```json
 {
   "success": false,
   "code": "REQUEST_VALIDATION_ERROR",
   "message": "지원하지 않는 시·도입니다. 서울특별시 또는 경기도를 선택해주세요.",
-  "details": [{"field": "sido_name", "message": "지원하지 않는 시·도입니다. 서울특별시 또는 경기도를 선택해주세요."}],
+  "details": [
+    {
+      "field": "sido_name",
+      "message": "지원하지 않는 시·도입니다. 서울특별시 또는 경기도를 선택해주세요."
+    }
+  ],
   "request_id": "..."
 }
 ```
@@ -290,19 +337,22 @@ curl -s -X PATCH "$BACKEND/api/v1/users/me/region" \
   -H "Content-Type: application/json" \
   -d '{"region_id":23}'
 ```
+
 ```powershell
 Invoke-Api PATCH "$BACKEND/api/v1/users/me/region" $H (@{region_id=23}|ConvertTo-Json)
 ```
 
 **실제 응답** `200 OK`
+
 ```json
 {
   "user_id": 1,
-  "region": {"region_id": 23, "sido_name": "서울특별시", "sgg_name": "강남구"}
+  "region": { "region_id": 23, "sido_name": "서울특별시", "sgg_name": "강남구" }
 }
 ```
 
 **오류 케이스**
+
 ```bash
 # 404 REGION_NOT_FOUND — "지원하지 않는 지역입니다."
 curl -s -X PATCH "$BACKEND/api/v1/users/me/region" -H "Authorization: Bearer $TOKEN" \
@@ -328,31 +378,39 @@ curl -s -X POST "$BACKEND/api/v1/analyze" \
   -H "Authorization: Bearer $TOKEN" \
   -F "image=@$IMG;type=image/jpeg"
 ```
+
 ```powershell
 curl.exe -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" -F "image=@$IMG;type=image/jpeg"
 ```
 
 **실제 응답** `200 OK`
+
 ```json
 {
   "status": "SUCCESS",
   "major_category": "고철류",
   "minor_category": "철옷걸이",
   "candidate_scores": [
-    {"class_id": 6,  "category": "고철류_철옷걸이", "score": 0.6439},
-    {"class_id": 2,  "category": "고철류_기타",     "score": 0.0521}
+    { "class_id": 6, "category": "고철류_철옷걸이", "score": 0.6439 },
+    { "class_id": 2, "category": "고철류_기타", "score": 0.0521 }
   ],
-  "user_region": {"region_id": 23, "sido_name": "서울특별시", "sgg_name": "강남구"},
+  "user_region": {
+    "region_id": 23,
+    "sido_name": "서울특별시",
+    "sgg_name": "강남구"
+  },
   "disposal_day": null,
   "image_id": 1,
   "feedback_id": 1,
   "warnings": ["PUBLIC_WASTE_UNAVAILABLE"]
 }
 ```
+
 > 공공데이터 API 키가 없으면 **분석은 성공 처리**되고 `disposal_day: null` + `warnings` 에
 > 경고 코드가 담깁니다 (명세 15.1). 키를 설정하면 `disposal_day: "화, 목"` 처럼 채워집니다.
 
 **다음 단계에 쓸 값 저장**
+
 ```bash
 FEEDBACK_ID=1   # 응답의 feedback_id
 CLASS_ID=6      # candidate_scores[0].class_id
@@ -365,7 +423,9 @@ LOW="ai/models/yolo/01_experiment_augmentation/report/final_best/prediction_samp
 curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   -F "image=@$LOW;type=image/jpeg"
 ```
+
 **실제 응답** `200 OK` ← 오류가 아닌 정상 비즈니스 분기
+
 ```json
 {
   "status": "RETAKE_REQUIRED",
@@ -375,6 +435,7 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   "request_id": "..."
 }
 ```
+
 > 이 경로에서는 **S3/DB 에 아무것도 저장하지 않습니다** (feedback_id 없음).
 
 ### 9-C. RETAKE_REQUIRED — 중앙 객체 없음 (HTTP 200)
@@ -384,6 +445,7 @@ NOOBJ="ai/models/yolo/01_experiment_augmentation/report/final_best/prediction_sa
 curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   -F "image=@$NOOBJ;type=image/jpeg"
 ```
+
 ```json
 {
   "status": "RETAKE_REQUIRED",
@@ -414,6 +476,7 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
 # 422 REQUEST_VALIDATION_ERROR — image 필드 누락
 curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN"
 ```
+
 > Vision 서버를 끄고 호출하면 `502 VISION_UNAVAILABLE`, 응답이 늦으면 `504 VISION_TIMEOUT` 입니다.
 
 ---
@@ -424,11 +487,13 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN"
 curl -s -X POST "$BACKEND/api/v1/feedback/$FEEDBACK_ID/confirm" \
   -H "Authorization: Bearer $TOKEN"
 ```
+
 ```powershell
 Invoke-Api POST "$BACKEND/api/v1/feedback/1/confirm" $H
 ```
 
 **실제 응답** `200 OK`
+
 ```json
 {
   "feedback_id": 1,
@@ -440,6 +505,7 @@ Invoke-Api POST "$BACKEND/api/v1/feedback/1/confirm" $H
 ```
 
 **오류 케이스**
+
 ```bash
 # 409 FEEDBACK_ALREADY_COMPLETED — 같은 요청 재시도
 curl -s -X POST "$BACKEND/api/v1/feedback/$FEEDBACK_ID/confirm" -H "Authorization: Bearer $TOKEN"
@@ -462,11 +528,13 @@ curl -s -X POST "$BACKEND/api/v1/feedback/3/select-candidate" \
   -H "Content-Type: application/json" \
   -d '{"class_id":2}'
 ```
+
 ```powershell
 Invoke-Api POST "$BACKEND/api/v1/feedback/3/select-candidate" $H (@{class_id=2}|ConvertTo-Json)
 ```
 
 **실제 응답** `200 OK`
+
 ```json
 {
   "feedback_id": 3,
@@ -478,6 +546,7 @@ Invoke-Api POST "$BACKEND/api/v1/feedback/3/select-candidate" $H (@{class_id=2}|
 ```
 
 **오류 케이스**
+
 ```bash
 # 400 FEEDBACK_SAME_AS_PREDICTION — Top-1 과 같은 class_id
 curl -s -X POST "$BACKEND/api/v1/feedback/4/select-candidate" -H "Authorization: Bearer $TOKEN" \
@@ -498,6 +567,7 @@ curl -s -X POST "$BACKEND/api/v1/feedback/5/not-in-list" \
 ```
 
 **실제 응답 (GEMINI_API_KEY 미설정)** `503`
+
 ```json
 {
   "success": false,
@@ -509,6 +579,7 @@ curl -s -X POST "$BACKEND/api/v1/feedback/5/not-in-list" \
 ```
 
 **키 설정 시 응답** `200 OK`
+
 ```json
 {
   "feedback_id": 5,
@@ -520,6 +591,7 @@ curl -s -X POST "$BACKEND/api/v1/feedback/5/not-in-list" \
   "message": "추가 이미지 분석 결과로 수정되었습니다."
 }
 ```
+
 > 키 설정: `.env` 에 `GEMINI_API_KEY=...` 추가 후 서버 재시작.
 > Gemini 결과는 항상 `waste_classes` 의 86개 class_id 중 하나로 제한됩니다.
 > 그 외 오류: `502 GEMINI_UNAVAILABLE` / `502 GEMINI_BAD_RESPONSE` / `504 GEMINI_TIMEOUT` / `502 S3_DOWNLOAD_FAILED`
@@ -532,11 +604,13 @@ curl -s -X POST "$BACKEND/api/v1/feedback/5/not-in-list" \
 curl -s "$BACKEND/api/v1/disposal/schedule?class_id=$CLASS_ID" \
   -H "Authorization: Bearer $TOKEN"
 ```
+
 ```powershell
 Invoke-Api GET "$BACKEND/api/v1/disposal/schedule?class_id=6" $H
 ```
 
 **실제 응답 (공공데이터 키 미설정)** `502`
+
 ```json
 {
   "success": false,
@@ -548,12 +622,17 @@ Invoke-Api GET "$BACKEND/api/v1/disposal/schedule?class_id=6" $H
 ```
 
 **키 설정 시 응답** `200 OK`
+
 ```json
 {
   "class_id": 6,
   "major_category": "고철류",
   "minor_category": "철옷걸이",
-  "region": {"region_id": 23, "sido_name": "서울특별시", "sgg_name": "강남구"},
+  "region": {
+    "region_id": 23,
+    "sido_name": "서울특별시",
+    "sgg_name": "강남구"
+  },
   "disposal_day": "화, 목",
   "start_time": "18:00",
   "end_time": "24:00",
@@ -561,9 +640,11 @@ Invoke-Api GET "$BACKEND/api/v1/disposal/schedule?class_id=6" $H
   "source": "행정안전부 생활쓰레기배출정보"
 }
 ```
+
 > 키 설정: `.env` 에 `PUBLIC_WASTE_API_SERVICE_KEY=...` (인코딩/디코딩 키 모두 허용).
 
 **오류 케이스**
+
 ```bash
 curl -s "$BACKEND/api/v1/disposal/schedule?class_id=99999" -H "Authorization: Bearer $TOKEN"  # 404 CLASS_NOT_FOUND
 curl -s "$BACKEND/api/v1/disposal/schedule" -H "Authorization: Bearer $TOKEN"                 # 422 REQUEST_VALIDATION_ERROR
@@ -588,6 +669,7 @@ curl -s -X POST "$BACKEND/api/v1/chat" \
   -H "Content-Type: application/json" \
   --data-binary "@$(cygpath -m "$PWD/chat.json" 2>/dev/null || echo chat.json)"
 ```
+
 ```powershell
 # PowerShell 은 Invoke-RestMethod 가 가장 안전
 $body = @{ feedback_id = 1; message = "라벨이 안 떨어지면 어떻게 버려?" } | ConvertTo-Json
@@ -595,6 +677,7 @@ Invoke-Api POST "$BACKEND/api/v1/chat" $H $body
 ```
 
 **실제 응답** `200 OK`
+
 ```json
 {
   "feedback_id": 1,
@@ -602,10 +685,12 @@ Invoke-Api POST "$BACKEND/api/v1/chat" $H $body
   "warnings": ["PUBLIC_WASTE_UNAVAILABLE"]
 }
 ```
+
 > `GEMINI_API_KEY` 가 없으면 분석 컨텍스트 + RAG 지식으로 구성한 **결정적 답변**을 반환합니다
 > (키가 있으면 Gemini 가 자연어로 생성). 대화 내용은 **DB에 저장하지 않습니다**(Stateless).
 
 **오류 케이스**
+
 ```bash
 # 404 FEEDBACK_NOT_FOUND — "분석 정보를 찾을 수 없습니다." (feedback API 와 문구가 다름)
 echo '{"feedback_id":99999999,"message":"test"}' > c.json
@@ -630,17 +715,21 @@ curl -s "$BACKEND/api/v1/favorites" -H "Authorization: Bearer $TOKEN"
 ```
 
 **실제 응답** `200 OK`
+
 ```json
-{"items": [
-  {
-    "favorite_id": 1,
-    "class_id": 6,
-    "major_category": "고철류",
-    "minor_category": "철옷걸이",
-    "created_at": "2026-09-12T14:22:10Z"
-  }
-]}
+{
+  "items": [
+    {
+      "favorite_id": 1,
+      "class_id": 6,
+      "major_category": "고철류",
+      "minor_category": "철옷걸이",
+      "created_at": "2026-09-12T14:22:10Z"
+    }
+  ]
+}
 ```
+
 > 다른 사용자의 즐겨찾기는 절대 조회되지 않습니다.
 
 ---
@@ -653,11 +742,13 @@ curl -s -X POST "$BACKEND/api/v1/favorites" \
   -H "Content-Type: application/json" \
   -d '{"class_id":6}'
 ```
+
 ```powershell
 Invoke-Api POST "$BACKEND/api/v1/favorites" $H (@{class_id=6}|ConvertTo-Json)
 ```
 
 **실제 응답** `201 Created`
+
 ```json
 {
   "favorite_id": 1,
@@ -669,6 +760,7 @@ Invoke-Api POST "$BACKEND/api/v1/favorites" $H (@{class_id=6}|ConvertTo-Json)
 ```
 
 **오류 케이스**
+
 ```bash
 # 409 FAVORITE_ALREADY_EXISTS — 같은 class_id 재등록
 curl -s -X POST "$BACKEND/api/v1/favorites" -H "Authorization: Bearer $TOKEN" \
@@ -690,6 +782,7 @@ curl -i -X DELETE "$BACKEND/api/v1/favorites/1" -H "Authorization: Bearer $TOKEN
 **실제 응답** `204 No Content` (Body 없음)
 
 **오류 케이스**
+
 ```bash
 # 404 FAVORITE_NOT_FOUND — 없는 ID 또는 타인 소유(존재 자체를 숨김)
 curl -s -X DELETE "$BACKEND/api/v1/favorites/1" -H "Authorization: Bearer $TOKEN"
@@ -707,29 +800,33 @@ curl -s -X POST "$VISION/internal/v1/predict" \
   -H "Accept: application/json" \
   -F "image=@$IMG;type=image/jpeg"
 ```
+
 ```powershell
 curl.exe -s -X POST "$VISION/internal/v1/predict" -H "X-Request-ID: 550e8400-e29b-41d4-a716-446655440000" -F "image=@$IMG;type=image/jpeg"
 ```
 
 **실제 응답** `200 OK`
+
 ```json
 {
   "major_category": "고철류",
   "minor_category": "철옷걸이",
   "candidate_scores": [
-    {"class_id": 6, "category": "고철류_철옷걸이", "score": 0.6439},
-    {"class_id": 2, "category": "고철류_기타",     "score": 0.0521}
+    { "class_id": 6, "category": "고철류_철옷걸이", "score": 0.6439 },
+    { "class_id": 2, "category": "고철류_기타", "score": 0.0521 }
   ],
   "internal_meta": {
-    "bbox": {"x1": 0.2485, "y1": 0.2534, "x2": 0.8284, "y2": 0.6240},
+    "bbox": { "x1": 0.2485, "y1": 0.2534, "x2": 0.8284, "y2": 0.624 },
     "model_version": "B01_yolo_default_baseline_seed42",
     "inference_ms": 42.18
   }
 }
 ```
+
 > `bbox` 는 0~1 정규화 XYXY, `candidate_scores` 는 score 내림차순입니다.
 
 **오류 케이스**
+
 ```bash
 # 422 VISION_NO_MAIN_OBJECT — Backend 가 200 RETAKE_REQUIRED 로 변환
 curl -s -X POST "$VISION/internal/v1/predict" -F "image=@$NOOBJ;type=image/jpeg"
@@ -755,16 +852,18 @@ curl -s "$VISION/internal/v1/classes" \
 ```
 
 **실제 응답** `200 OK` (classes 86개)
+
 ```json
 {
   "model_version": "B01_yolo_default_baseline_seed42",
   "classes": [
-    {"class_id": 0,  "major_category": "고철류", "minor_category": "고철"},
-    {"class_id": 6,  "major_category": "고철류", "minor_category": "철옷걸이"},
-    {"class_id": 85, "major_category": "형광등", "minor_category": "환형"}
+    { "class_id": 0, "major_category": "고철류", "minor_category": "고철" },
+    { "class_id": 6, "major_category": "고철류", "minor_category": "철옷걸이" },
+    { "class_id": 85, "major_category": "형광등", "minor_category": "환형" }
   ]
 }
 ```
+
 > `class_id` 는 YOLO 클래스 인덱스와 `waste_classes` 테이블이 공유하는 값입니다.
 
 **오류 케이스**: `503 VISION_MODEL_NOT_READY`
@@ -776,9 +875,15 @@ curl -s "$VISION/internal/v1/classes" \
 ```bash
 curl -s "$VISION/health"
 ```
+
 ```json
-{"status":"ok","model_loaded":true,"model_version":"B01_yolo_default_baseline_seed42"}
+{
+  "status": "ok",
+  "model_loaded": true,
+  "model_version": "B01_yolo_default_baseline_seed42"
+}
 ```
+
 > 모델 로드 실패 시 `{"status":"ok","model_loaded":false,"model_version":null}`
 
 ## 부록 B. 전체 플로우 한 번에 (복사해서 실행)
@@ -875,8 +980,7 @@ curl -s -X PATCH $BACKEND/api/v1/users/me/region -H "Authorization: Bearer $TOKE
   -H "Content-Type: application/json" -d '{"region_id":9999}'
 
 # ── 422 REQUEST_VALIDATION_ERROR ── 지원하지 않는 시·도 (message 가 다름!)
-curl -s -G $BACKEND/api/v1/regions --data-urlencode "sido_name=부산광역시" \
-  -H "Authorization: Bearer $TOKEN"
+curl -s -G $BACKEND/api/v1/regions --data-urlencode "sido_name=부산광역시"
 
 # ── 404 CLASS_NOT_FOUND ──
 curl -s "$BACKEND/api/v1/disposal/schedule?class_id=99999" -H "Authorization: Bearer $TOKEN"
@@ -988,23 +1092,23 @@ run_with() {  # 예: run_with "VISION_REQUEST_TIMEOUT_SECONDS=0.001"
 }
 ```
 
-| 재현할 오류 | 실행 환경변수 | 확인 요청 |
-|---|---|---|
-| **401 AUTH_TOKEN_EXPIRED** | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES=-1` | 로그인 후 그 토큰으로 아무 인증 API |
-| **502 VISION_UNAVAILABLE** | `VISION_SERVER_BASE_URL=http://127.0.0.1:9999/internal/v1` | `POST /analyze` |
-| **504 VISION_TIMEOUT** | `VISION_REQUEST_TIMEOUT_SECONDS=0.001` | `POST /analyze` |
-| **502 VISION_BAD_RESPONSE** | `VISION_SERVER_BASE_URL=http://127.0.0.1:8000` (스키마가 다른 서버) | `POST /analyze` |
-| **502 S3_UPLOAD_FAILED** | `STORAGE_BACKEND=s3 AWS_ACCESS_KEY_ID=AKIAINVALID AWS_SECRET_ACCESS_KEY=invalid AWS_S3_BUCKET=no-such-bucket-xyz` | `POST /analyze` |
-| **502 GEMINI_UNAVAILABLE** | `GEMINI_API_KEY=invalid-key-for-testing` | `POST /feedback/{id}/not-in-list` |
-| **503 GEMINI_NOT_CONFIGURED** | `GEMINI_API_KEY=` (비움) | `POST /feedback/{id}/not-in-list` |
-| **504 GEMINI_TIMEOUT** | 유효한 키 + `GEMINI_VISION_TIMEOUT_SECONDS=0.001` | `POST /feedback/{id}/not-in-list` |
-| **502 PUBLIC_WASTE_AUTH_ERROR** | `PUBLIC_WASTE_API_SERVICE_KEY=invalid-service-key` | `GET /disposal/schedule?class_id=6` |
-| **502 PUBLIC_WASTE_UNAVAILABLE** | `PUBLIC_WASTE_API_SERVICE_KEY=` (비움) | `GET /disposal/schedule?class_id=6` |
-| **504 PUBLIC_WASTE_TIMEOUT** | 유효한 키 + `PUBLIC_WASTE_API_TIMEOUT_SECONDS=0.001` | `GET /disposal/schedule?class_id=6` |
-| **503 DATABASE_ERROR** | `DATABASE_URL=mysql+pymysql://bad:bad@127.0.0.1:3399/nope AUTO_CREATE_TABLES=false AUTO_SEED_MASTER_DATA=false` | 아무 DB 사용 API (`signup` 등) |
-| **503 SERVICE_NOT_READY** | 위와 동일 | `GET /ready` |
-| **502 AGENT_UNAVAILABLE** | `GEMINI_API_KEY=invalid-key-for-testing` | `POST /chat` |
-| **504 AGENT_TIMEOUT** | 유효한 키 + `GEMINI_CHAT_TIMEOUT_SECONDS=0.001` | `POST /chat` |
+| 재현할 오류                      | 실행 환경변수                                                                                                     | 확인 요청                           |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| **401 AUTH_TOKEN_EXPIRED**       | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES=-1`                                                                              | 로그인 후 그 토큰으로 아무 인증 API |
+| **502 VISION_UNAVAILABLE**       | `VISION_SERVER_BASE_URL=http://127.0.0.1:9999/internal/v1`                                                        | `POST /analyze`                     |
+| **504 VISION_TIMEOUT**           | `VISION_REQUEST_TIMEOUT_SECONDS=0.001`                                                                            | `POST /analyze`                     |
+| **502 VISION_BAD_RESPONSE**      | `VISION_SERVER_BASE_URL=http://127.0.0.1:8000` (스키마가 다른 서버)                                               | `POST /analyze`                     |
+| **502 S3_UPLOAD_FAILED**         | `STORAGE_BACKEND=s3 AWS_ACCESS_KEY_ID=AKIAINVALID AWS_SECRET_ACCESS_KEY=invalid AWS_S3_BUCKET=no-such-bucket-xyz` | `POST /analyze`                     |
+| **502 GEMINI_UNAVAILABLE**       | `GEMINI_API_KEY=invalid-key-for-testing`                                                                          | `POST /feedback/{id}/not-in-list`   |
+| **503 GEMINI_NOT_CONFIGURED**    | `GEMINI_API_KEY=` (비움)                                                                                          | `POST /feedback/{id}/not-in-list`   |
+| **504 GEMINI_TIMEOUT**           | 유효한 키 + `GEMINI_VISION_TIMEOUT_SECONDS=0.001`                                                                 | `POST /feedback/{id}/not-in-list`   |
+| **502 PUBLIC_WASTE_AUTH_ERROR**  | `PUBLIC_WASTE_API_SERVICE_KEY=invalid-service-key`                                                                | `GET /disposal/schedule?class_id=6` |
+| **502 PUBLIC_WASTE_UNAVAILABLE** | `PUBLIC_WASTE_API_SERVICE_KEY=` (비움)                                                                            | `GET /disposal/schedule?class_id=6` |
+| **504 PUBLIC_WASTE_TIMEOUT**     | 유효한 키 + `PUBLIC_WASTE_API_TIMEOUT_SECONDS=0.001`                                                              | `GET /disposal/schedule?class_id=6` |
+| **503 DATABASE_ERROR**           | `DATABASE_URL=mysql+pymysql://bad:bad@127.0.0.1:3399/nope AUTO_CREATE_TABLES=false AUTO_SEED_MASTER_DATA=false`   | 아무 DB 사용 API (`signup` 등)      |
+| **503 SERVICE_NOT_READY**        | 위와 동일                                                                                                         | `GET /ready`                        |
+| **502 AGENT_UNAVAILABLE**        | `GEMINI_API_KEY=invalid-key-for-testing`                                                                          | `POST /chat`                        |
+| **504 AGENT_TIMEOUT**            | 유효한 키 + `GEMINI_CHAT_TIMEOUT_SECONDS=0.001`                                                                   | `POST /chat`                        |
 
 실행 예시 — Vision 서버 장애:
 
@@ -1019,10 +1123,15 @@ env DATABASE_URL="sqlite:///./dev.sqlite3" JWT_SECRET_KEY="dev-only-insecure-sec
 # 터미널 2
 curl -s -X POST $BACKEND/api/v1/analyze -H "Authorization: Bearer $TOKEN" -F "image=@$IMG;type=image/jpeg"
 ```
+
 ```json
-{"success":false,"code":"VISION_UNAVAILABLE",
- "message":"이미지 분석 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
- "details":null,"request_id":"..."}
+{
+  "success": false,
+  "code": "VISION_UNAVAILABLE",
+  "message": "이미지 분석 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
+  "details": null,
+  "request_id": "..."
+}
 ```
 
 > **중요**: Vision/Gemini/공공데이터 장애는 **Backend 전체 장애로 번지지 않습니다**(SR-27).
@@ -1053,59 +1162,59 @@ curl -s http://127.0.0.1:8101/health   # {"status":"ok","model_loaded":false,"mo
 
 ### C-4. 오류 코드 ↔ 재현 방법 요약
 
-| HTTP | code | 재현 방법 |
-|---|---|---|
-| 400 | `IMAGE_EMPTY` | 0 byte 파일 업로드 |
-| 400 | `IMAGE_DECODE_FAILED` | 이미지가 아닌 내용을 `type=image/jpeg` 로 업로드 |
-| 400 | `FEEDBACK_INVALID_CANDIDATE` | Top-K 에 없는 `class_id` 로 select-candidate |
-| 400 | `FEEDBACK_SAME_AS_PREDICTION` | Top-1 과 같은 `class_id` 로 select-candidate |
-| 401 | `AUTH_REQUIRED` | Authorization 헤더 생략 |
-| 401 | `AUTH_INVALID_CREDENTIALS` | 잘못된 비밀번호로 로그인 |
-| 401 | `AUTH_TOKEN_INVALID` | 깨진 토큰 / Bearer 아닌 스킴 |
-| 401 | `AUTH_TOKEN_EXPIRED` | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES=-1` 로 기동 후 로그인 |
-| 403 | `FEEDBACK_FORBIDDEN` | 다른 계정의 feedback_id 로 요청 |
-| 404 | `USER_NOT_FOUND` | 토큰 유효 + DB 에서 사용자 행 삭제 |
-| 404 | `REGION_NOT_FOUND` | `region_id: 9999` |
-| 404 | `CLASS_NOT_FOUND` | `class_id: 99999` |
-| 404 | `FEEDBACK_NOT_FOUND` | 없는 feedback_id |
-| 404 | `FAVORITE_NOT_FOUND` | 없는/타인 소유 favorite_id |
-| 404 | `PUBLIC_WASTE_NOT_FOUND` | 유효한 키 + 데이터 없는 지역 조회 |
-| 409 | `AUTH_EMAIL_EXISTS` | 같은 이메일 재가입 |
-| 409 | `USER_REGION_REQUIRED` | 지역 미선택 계정으로 analyze/disposal |
-| 409 | `FEEDBACK_ALREADY_COMPLETED` | 이미 확정된 feedback 재처리 |
-| 409 | `FAVORITE_ALREADY_EXISTS` | 같은 class_id 재등록 |
-| 413 | `IMAGE_TOO_LARGE` | `MAX_IMAGE_SIZE_MB` 초과 파일 |
-| 415 | `IMAGE_TYPE_UNSUPPORTED` | `type=image/gif` 등 |
-| 422 | `REQUEST_VALIDATION_ERROR` | 필드 누락/형식 오류/길이 초과/미지원 시·도 |
-| 502 | `VISION_UNAVAILABLE` | Vision 서버 중지 또는 잘못된 URL |
-| 502 | `VISION_BAD_RESPONSE` | Vision URL 을 스키마가 다른 서버로 |
-| 502 | `S3_UPLOAD_FAILED` | 잘못된 AWS 자격증명 |
-| 502 | `S3_DOWNLOAD_FAILED` | 저장된 원본 파일 삭제 후 not-in-list |
-| 502 | `PUBLIC_WASTE_UNAVAILABLE` | 공공데이터 키 비움 |
-| 502 | `PUBLIC_WASTE_AUTH_ERROR` | 잘못된 공공데이터 키 |
-| 502 | `GEMINI_UNAVAILABLE` | 잘못된 Gemini 키 |
-| 502 | `GEMINI_BAD_RESPONSE` | Gemini 가 허용 class 밖의 값 반환 (테스트로 검증) |
-| 502 | `AGENT_UNAVAILABLE` | 잘못된 Gemini 키 + `/chat` |
-| 503 | `DATABASE_ERROR` | DB 주소를 없는 곳으로 |
-| 503 | `SERVICE_NOT_READY` | DB 다운 상태에서 `/ready` |
-| 503 | `GEMINI_NOT_CONFIGURED` | `GEMINI_API_KEY` 비움 |
-| 503 | `VISION_MODEL_NOT_READY` | 없는 체크포인트 경로로 Vision 기동 |
-| 503 | `PUBLIC_WASTE_RATE_LIMITED` | 공공데이터 일일 호출 한도 초과 시 |
-| 504 | `VISION_TIMEOUT` | `VISION_REQUEST_TIMEOUT_SECONDS=0.001` |
-| 504 | `S3_TIMEOUT` | S3 연결 타임아웃 |
-| 504 | `PUBLIC_WASTE_TIMEOUT` | `PUBLIC_WASTE_API_TIMEOUT_SECONDS=0.001` |
-| 504 | `GEMINI_TIMEOUT` | `GEMINI_VISION_TIMEOUT_SECONDS=0.001` |
-| 504 | `AGENT_TIMEOUT` | `GEMINI_CHAT_TIMEOUT_SECONDS=0.001` |
-| 500 | `INTERNAL_SERVER_ERROR` | 예상치 못한 예외 (안전망) |
-| 422 | `VISION_NO_MAIN_OBJECT` | (Vision) 중앙 객체 없는 이미지 → Backend 는 200 RETAKE_REQUIRED 로 변환 |
-| 500 | `VISION_INFERENCE_ERROR` | (Vision) 추론 중 예외 (안전망) |
+| HTTP | code                          | 재현 방법                                                               |
+| ---- | ----------------------------- | ----------------------------------------------------------------------- |
+| 400  | `IMAGE_EMPTY`                 | 0 byte 파일 업로드                                                      |
+| 400  | `IMAGE_DECODE_FAILED`         | 이미지가 아닌 내용을 `type=image/jpeg` 로 업로드                        |
+| 400  | `FEEDBACK_INVALID_CANDIDATE`  | Top-K 에 없는 `class_id` 로 select-candidate                            |
+| 400  | `FEEDBACK_SAME_AS_PREDICTION` | Top-1 과 같은 `class_id` 로 select-candidate                            |
+| 401  | `AUTH_REQUIRED`               | Authorization 헤더 생략                                                 |
+| 401  | `AUTH_INVALID_CREDENTIALS`    | 잘못된 비밀번호로 로그인                                                |
+| 401  | `AUTH_TOKEN_INVALID`          | 깨진 토큰 / Bearer 아닌 스킴                                            |
+| 401  | `AUTH_TOKEN_EXPIRED`          | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES=-1` 로 기동 후 로그인                  |
+| 403  | `FEEDBACK_FORBIDDEN`          | 다른 계정의 feedback_id 로 요청                                         |
+| 404  | `USER_NOT_FOUND`              | 토큰 유효 + DB 에서 사용자 행 삭제                                      |
+| 404  | `REGION_NOT_FOUND`            | `region_id: 9999`                                                       |
+| 404  | `CLASS_NOT_FOUND`             | `class_id: 99999`                                                       |
+| 404  | `FEEDBACK_NOT_FOUND`          | 없는 feedback_id                                                        |
+| 404  | `FAVORITE_NOT_FOUND`          | 없는/타인 소유 favorite_id                                              |
+| 404  | `PUBLIC_WASTE_NOT_FOUND`      | 유효한 키 + 데이터 없는 지역 조회                                       |
+| 409  | `AUTH_EMAIL_EXISTS`           | 같은 이메일 재가입                                                      |
+| 409  | `USER_REGION_REQUIRED`        | 지역 미선택 계정으로 analyze/disposal                                   |
+| 409  | `FEEDBACK_ALREADY_COMPLETED`  | 이미 확정된 feedback 재처리                                             |
+| 409  | `FAVORITE_ALREADY_EXISTS`     | 같은 class_id 재등록                                                    |
+| 413  | `IMAGE_TOO_LARGE`             | `MAX_IMAGE_SIZE_MB` 초과 파일                                           |
+| 415  | `IMAGE_TYPE_UNSUPPORTED`      | `type=image/gif` 등                                                     |
+| 422  | `REQUEST_VALIDATION_ERROR`    | 필드 누락/형식 오류/길이 초과/미지원 시·도                              |
+| 502  | `VISION_UNAVAILABLE`          | Vision 서버 중지 또는 잘못된 URL                                        |
+| 502  | `VISION_BAD_RESPONSE`         | Vision URL 을 스키마가 다른 서버로                                      |
+| 502  | `S3_UPLOAD_FAILED`            | 잘못된 AWS 자격증명                                                     |
+| 502  | `S3_DOWNLOAD_FAILED`          | 저장된 원본 파일 삭제 후 not-in-list                                    |
+| 502  | `PUBLIC_WASTE_UNAVAILABLE`    | 공공데이터 키 비움                                                      |
+| 502  | `PUBLIC_WASTE_AUTH_ERROR`     | 잘못된 공공데이터 키                                                    |
+| 502  | `GEMINI_UNAVAILABLE`          | 잘못된 Gemini 키                                                        |
+| 502  | `GEMINI_BAD_RESPONSE`         | Gemini 가 허용 class 밖의 값 반환 (테스트로 검증)                       |
+| 502  | `AGENT_UNAVAILABLE`           | 잘못된 Gemini 키 + `/chat`                                              |
+| 503  | `DATABASE_ERROR`              | DB 주소를 없는 곳으로                                                   |
+| 503  | `SERVICE_NOT_READY`           | DB 다운 상태에서 `/ready`                                               |
+| 503  | `GEMINI_NOT_CONFIGURED`       | `GEMINI_API_KEY` 비움                                                   |
+| 503  | `VISION_MODEL_NOT_READY`      | 없는 체크포인트 경로로 Vision 기동                                      |
+| 503  | `PUBLIC_WASTE_RATE_LIMITED`   | 공공데이터 일일 호출 한도 초과 시                                       |
+| 504  | `VISION_TIMEOUT`              | `VISION_REQUEST_TIMEOUT_SECONDS=0.001`                                  |
+| 504  | `S3_TIMEOUT`                  | S3 연결 타임아웃                                                        |
+| 504  | `PUBLIC_WASTE_TIMEOUT`        | `PUBLIC_WASTE_API_TIMEOUT_SECONDS=0.001`                                |
+| 504  | `GEMINI_TIMEOUT`              | `GEMINI_VISION_TIMEOUT_SECONDS=0.001`                                   |
+| 504  | `AGENT_TIMEOUT`               | `GEMINI_CHAT_TIMEOUT_SECONDS=0.001`                                     |
+| 500  | `INTERNAL_SERVER_ERROR`       | 예상치 못한 예외 (안전망)                                               |
+| 422  | `VISION_NO_MAIN_OBJECT`       | (Vision) 중앙 객체 없는 이미지 → Backend 는 200 RETAKE_REQUIRED 로 변환 |
+| 500  | `VISION_INFERENCE_ERROR`      | (Vision) 추론 중 예외 (안전망)                                          |
 
 ### C-5. 자동 검증
 
 위 오류 동작은 자동 테스트로도 검증됩니다.
 
 ```bash
-cd backend && ../.venv/Scripts/python.exe -m pytest tests/ -q   # 96개
+cd backend && ../.venv/Scripts/python.exe -m pytest tests/ -q   # 104개
 .venv/Scripts/python.exe -m pytest vision/tests -q              # 24개
-bash scripts/smoke-test.sh                                      # 실서버 99개 검사
+bash scripts/smoke-test.sh                                      # 실서버 100개 검사
 ```

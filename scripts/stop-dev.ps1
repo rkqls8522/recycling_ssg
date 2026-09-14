@@ -1,4 +1,4 @@
-# recycling_ssg - run-dev.ps1 로 띄운 개발 서버 종료 (PowerShell)
+﻿# recycling_ssg - run-dev.ps1 로 띄운 개발 서버 종료 (PowerShell)
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $LogDir = Join-Path $RepoRoot ".dev-logs"

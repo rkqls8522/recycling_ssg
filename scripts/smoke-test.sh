@@ -190,19 +190,22 @@ check "GET /users/me 잘못된 토큰 (401)" 401 "$BACKEND/api/v1/users/me" -H "
 expect_field "code" "AUTH_TOKEN_INVALID"
 
 section "7) GET /api/v1/regions"
-check "GET /regions (56개 전체)" 200 "$BACKEND/api/v1/regions" -H "$AUTH"
+# 지역 Master 는 로그인 전 지역 선택 UI 에서도 필요하므로 인증 없이 호출된다.
+check "GET /regions (56개 전체, 토큰 없이)" 200 "$BACKEND/api/v1/regions"
 REGION_COUNT="$("$PY" -c "import json,sys;print(len(json.loads(sys.stdin.read())['items']))" <<<"$BODY" 2>/dev/null)"
 if [ "$REGION_COUNT" = "56" ]; then PASS=$((PASS+1)); printf '        \033[32m↳\033[0m items 개수 = 56\n'
 else FAIL=$((FAIL+1)); printf '        \033[31m↳ items 개수 = %s (want 56)\033[0m\n' "$REGION_COUNT"; fi
 
-check "GET /regions?sido_name=경기도 (31개)" 200 "$BACKEND/api/v1/regions?sido_name=%EA%B2%BD%EA%B8%B0%EB%8F%84" -H "$AUTH"
+check "GET /regions?sido_name=경기도 (31개)" 200 "$BACKEND/api/v1/regions?sido_name=%EA%B2%BD%EA%B8%B0%EB%8F%84"
 GG_COUNT="$("$PY" -c "import json,sys;print(len(json.loads(sys.stdin.read())['items']))" <<<"$BODY" 2>/dev/null)"
 if [ "$GG_COUNT" = "31" ]; then PASS=$((PASS+1)); printf '        \033[32m↳\033[0m 경기도 = 31개\n'
 else FAIL=$((FAIL+1)); printf '        \033[31m↳ 경기도 = %s (want 31)\033[0m\n' "$GG_COUNT"; fi
 
-check "GET /regions?sido_name=부산광역시 (422 미지원 시·도)" 422 "$BACKEND/api/v1/regions?sido_name=%EB%B6%80%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C" -H "$AUTH"
+check "GET /regions?sido_name=부산광역시 (422 미지원 시·도)" 422 "$BACKEND/api/v1/regions?sido_name=%EB%B6%80%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C"
 expect_field "code" "REQUEST_VALIDATION_ERROR"
 expect_field "message" "지원하지 않는 시·도입니다. 서울특별시 또는 경기도를 선택해주세요."
+
+check "GET /regions 잘못된 토큰도 무시 (200)" 200 "$BACKEND/api/v1/regions" -H "Authorization: Bearer not-a-jwt"
 
 section "8) PATCH /api/v1/users/me/region"
 check "PATCH /users/me/region (강남구=23)" 200 \
