@@ -1,4 +1,9 @@
-"""GET /api/v1/regions (섹션 7.2)."""
+"""GET /api/v1/regions (섹션 7.2).
+
+지역 Master 는 공개 데이터이고 로그인 전 지역 선택 UI 에서도 필요하므로,
+이 엔드포인트만 인증 없이 호출할 수 있다.
+(명세 7.2 의 "인증 필요 / 401 AUTH_REQUIRED" 에서 의도적으로 벗어난 부분.)
+"""
 
 from __future__ import annotations
 
@@ -9,10 +14,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.deps import get_current_user
 from core.exceptions import database_error, validation_error
 from models.region import Region
-from models.user import User
 from schemas.region import RegionListResponse
 
 logger = logging.getLogger(__name__)
@@ -25,7 +28,6 @@ _UNSUPPORTED_SIDO_MESSAGE = "지원하지 않는 시·도입니다. 서울특별
 @router.get("", response_model=RegionListResponse)
 def list_regions(
     sido_name: str | None = Query(default=None),
-    _current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> RegionListResponse:
     if sido_name is not None and sido_name not in _ALLOWED_SIDO:

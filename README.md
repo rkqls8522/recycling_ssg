@@ -143,6 +143,9 @@ bash scripts/smoke-test.sh
   SKIP: 0
 ```
 
+필드 정의·오류 코드 전체를 보려면 → **[docs/API_SPEC.md](docs/API_SPEC.md)**
+(19개 엔드포인트의 요청/응답 필드표, 오류 코드 카탈로그, Frontend 연동 가이드. Word 버전: `docs/API_SPEC.docx`)
+
 엔드포인트별로 하나씩 실행해 보려면 → **[docs/API_TEST_COMMANDS.md](docs/API_TEST_COMMANDS.md)**
 (19개 API 전부에 대해 헤더·본문이 채워진 curl/PowerShell 명령어와 실제 응답 예시)
 
@@ -160,7 +163,7 @@ Base URL: `http://<host>/api/v1` · 인증: `Authorization: Bearer <JWT>`
 | 4 | POST | `/api/v1/auth/login` | ✗ | 로그인 → JWT 발급 |
 | 5 | POST | `/api/v1/auth/logout` | ✓ | 로그아웃 (204) |
 | 6 | GET | `/api/v1/users/me` | ✓ | 내 프로필 |
-| 7 | GET | `/api/v1/regions` | ✓ | 지원 지역 56개 (서울 25 + 경기 31) |
+| 7 | GET | `/api/v1/regions` | ✗ | 지원 지역 56개 (서울 25 + 경기 31). 로그인 전 지역 선택 UI 용 |
 | 8 | PATCH | `/api/v1/users/me/region` | ✓ | 지역 선택/변경 |
 | 9 | POST | `/api/v1/analyze` | ✓ | 이미지 분석 + S3/DB 저장 + 배출요일 |
 | 10 | POST | `/api/v1/feedback/{id}/confirm` | ✓ | "예, 맞아요" |
@@ -217,7 +220,7 @@ cd backend && ../.venv/Scripts/python.exe -m pytest tests/ -q
 # Vision 테스트 (24개) — 실제 체크포인트가 있으면 실제 추론까지 검증
 .venv/Scripts/python.exe -m pytest vision/tests -q
 
-# 실제 서버 대상 전체 API 스모크 테스트 (99개 검사)
+# 실제 서버 대상 전체 API 스모크 테스트 (100개 검사)
 bash scripts/smoke-test.sh
 ```
 
@@ -321,6 +324,7 @@ recycling_ssg/
 │   └── tests/               24개 테스트
 ├── data/taxonomy/           regions.json(56) · waste_classes.json(86) ← 단일 소스
 ├── scripts/                 run-dev · stop-dev · smoke-test
+├── docs/API_SPEC.md         API 명세서 (.docx 동봉)
 ├── docs/API_TEST_COMMANDS.md   19개 API 테스트 명령어 모음
 └── ai/                      모델 학습/실험 (서비스 런타임과 무관)
 ```
