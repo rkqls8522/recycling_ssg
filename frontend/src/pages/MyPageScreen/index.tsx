@@ -1,51 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
+import { FavoriteResponse } from "@/types";
+import useAxios from "@/hooks/useAxios";
+import { ChevronRightIcon, ModifyIcon } from "@/components/common/Icons";
 import { useAuthContext } from "../AuthScreen/AuthContext";
 import BackButton from "../../components/common/BackButton";
-import { ChevronRightIcon, ModifyIcon } from "@/components/common/Icons";
-
-const MOCK_HISTORY = [
-  {
-    itemName: "투명 페트병",
-    itemCategory: "플라스틱류",
-    emoji: "🍶",
-    tip: "라벨 제거 후 압착 → 투명 페트 전용함",
-  },
-  {
-    itemName: "알루미늄 캔",
-    itemCategory: "금속류",
-    emoji: "🥤",
-    tip: "내용물 비우고 찌그러트려 → 금속류 수거함",
-  },
-  {
-    itemName: "종이팩",
-    itemCategory: "종이류",
-    emoji: "🥛",
-    tip: "헹군 뒤 납작하게 펴서 → 종이팩 전용함",
-  },
-  {
-    itemName: "스티로폼",
-    itemCategory: "스티로폼류",
-    emoji: "📦",
-    tip: "테이프·스티커 모두 제거 → 스티로폼 전용함",
-  },
-  {
-    itemName: "유리병",
-    itemCategory: "유리류",
-    emoji: "🍾",
-    tip: "뚜껑 분리 후 헹궈서 → 유리류 수거함",
-  },
-];
-
-const MOCK_POINTS = 1_240;
-
-const CATEGORY_COLOR: Record<string, string> = {
-  플라스틱류: "bg-blue-100 text-blue-700",
-  금속류: "bg-slate-100 text-slate-700",
-  "종이류 (종이팩)": "bg-yellow-100 text-yellow-700",
-  스티로폼류: "bg-orange-100 text-orange-700",
-  유리류: "bg-cyan-100 text-cyan-700",
-};
 
 export default function MyPageScreen() {
   const { user } = useAuthContext();
@@ -53,11 +13,40 @@ export default function MyPageScreen() {
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(user?.email.split("@")[0] ?? "");
 
+  const MOCK_POINTS = 1024;
+
   if (!user) return null;
 
   function handleChangeRegion() {
     navigate("/region");
   }
+
+  const {
+    data: favorites,
+    loading,
+    error,
+    refetch,
+  } = useAxios<FavoriteResponse>("", { method: "get" }, false);
+
+  async function loadFavorites() {
+    try {
+      await refetch({
+        url: "/api/favorites",
+        headers: {
+          Accept: "application/json",
+          "X-Request-ID": uuidv4(),
+        },
+      });
+    } catch (e) {
+      console.error("즐겨찾기 조회 실패:", e);
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      loadFavorites();
+    };
+  }, [favorites]);
 
   return (
     <div className="flex flex-col h-full bg-muted">
@@ -103,6 +92,9 @@ export default function MyPageScreen() {
               {user.email}
             </p>
           </div>
+          <button className="btn btn-xs btn-ghost">
+            <div className="text-sm text-white">로그아웃</div>
+          </button>
         </div>
       </div>
 
@@ -141,36 +133,35 @@ export default function MyPageScreen() {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               자주 배출하는 품목
             </p>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              자주 배출하는데 방법이 헷갈리는 품목을 등록해 두세요.
-            </p>
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                자주 배출하는데 방법이 헷갈리는 품목을 등록해 두세요.
+              </p>
+              <p className="btn btn-xs btn-ghost">+</p>
+            </div>
           </div>
           <div className="flex flex-col">
-            {MOCK_HISTORY.map((item, i) => {
-              const color =
-                CATEGORY_COLOR[item.itemCategory] ??
-                "bg-muted text-muted-foreground";
+            {favorites?.items.map((item, i) => {
               return (
                 <div
-                  key={item.itemName}
-                  className={`flex items-center gap-3 px-4 py-3.5 ${i < MOCK_HISTORY.length - 1 ? "border-b border-border" : ""}`}
+                  key={item.favorite_id}
+                  className={"flex items-center gap-3 px-4 py-3.5"}
                 >
-                  <span className="text-xl flex-shrink-0 w-7 text-center">
-                    {item.emoji}
-                  </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-sm font-semibold text-foreground truncate">
-                        {item.itemName}
+                        {item.minor_category}
                       </p>
                       <span
-                        className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${color}`}
+                        className={
+                          "text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                        }
                       >
-                        {item.itemCategory}
+                        {item.major_category}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground leading-snug">
-                      {item.tip}
+                      {/* {item.tip} */}
                     </p>
                   </div>
                 </div>

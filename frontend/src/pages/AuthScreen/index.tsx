@@ -1,10 +1,17 @@
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import type { AxiosError } from "axios";
+import { v4 as uuidv4 } from "uuid";
 import type { AuthMode } from "../../types";
-import { login, signup } from "../../api/api";
+import type {
+  SignupPayload,
+  SignupResponse,
+  ApiErrorBody,
+} from "../../types/index";
 import { getUser } from "../../utils/storage";
 import { RecycleIcon } from "../../components/common/Icons";
 import { useAuthContext, resolveHomeRoute } from "./AuthContext";
+import useAxios from "../../hooks/useAxios";
 
 export default function AuthScreen() {
   const { user, setUser } = useAuthContext();
@@ -13,45 +20,74 @@ export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const {
+    loading,
+    error: apiError,
+    refetch: authRequest,
+  } = useAxios<SignupResponse>("", { method: "post" }, false);
 
   if (user) {
-    return <Navigate to={resolveHomeRoute(user)} replace />;
+    // return <Navigate to={resolveHomeRoute(user)} replace />;
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setFormError("");
 
     if (!email.trim() || !password.trim()) {
-      setError("이메일과 비밀번호를 입력해 주세요");
+      setFormError("이메일과 비밀번호를 입력해 주세요");
       return;
     }
     if (mode === "signup" && password !== confirm) {
-      setError("비밀번호가 일치하지 않습니다");
+      setFormError("비밀번호가 일치하지 않습니다");
       return;
     }
-    if (password.length < 6) {
-      setError("비밀번호는 6자 이상이어야 합니다");
+    // 명세: password 8~72자
+    if (password.length < 8 || password.length > 72) {
+      setFormError("비밀번호는 8자 이상 72자 이하여야 합니다");
       return;
     }
 
-    setLoading(true);
+    const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/signup";
+
     try {
-      const fn = mode === "login" ? login : signup;
-      await fn({ email: email.trim(), password });
+      const payload: SignupPayload = { email: email.trim(), password };
+
+      await authRequest({
+        url: endpoint,
+        data: payload,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-Request-ID": uuidv4(),
+        },
+      });
+
       const loggedInUser = getUser();
       if (loggedInUser) {
         setUser(loggedInUser);
         navigate(resolveHomeRoute(loggedInUser), { replace: true });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다");
-    } finally {
-      setLoading(false);
+      const axiosErr = err as AxiosError<ApiErrorBody>;
+      const body = axiosErr.response?.data;
+
+      if (body?.code === "AUTH_EMAIL_EXISTS") {
+        setFormError("이미 가입된 이메일입니다.");
+      } else if (body?.code === "REQUEST_VALIDATION_ERROR" && body.details) {
+        // 필드별 에러 메시지 중 첫 번째만 표시 (원하면 전체 목록으로 확장 가능)
+        setFormError(body.details[0]?.message ?? body.message);
+      } else if (body?.message) {
+        setFormError(body.message);
+      } else {
+        setFormError("오류가 발생했습니다");
+      }
     }
   }
+
+  const displayError = formError;
 
   return (
     <div className="h-full overflow-y-auto no-scrollbar">
@@ -73,8 +109,11 @@ export default function AuthScreen() {
         <button
           type="button"
           onClick={() => {
+            setEmail("");
+            setPassword("");
+            setConfirm("");
             setMode("login");
-            setError("");
+            setFormError("");
           }}
           className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
             mode === "login"
@@ -88,7 +127,7 @@ export default function AuthScreen() {
           type="button"
           onClick={() => {
             setMode("signup");
-            setError("");
+            setFormError("");
           }}
           className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
             mode === "signup"
@@ -125,7 +164,7 @@ export default function AuthScreen() {
             autoComplete={
               mode === "login" ? "current-password" : "new-password"
             }
-            placeholder="6자 이상"
+            placeholder="8자 이상"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-3.5 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
@@ -148,9 +187,9 @@ export default function AuthScreen() {
           </div>
         )}
 
-        {error && (
+        {displayError && (
           <p className="text-sm text-destructive bg-red-50 px-4 py-3 rounded-lg border border-red-100">
-            {error}
+            {displayError}
           </p>
         )}
 
