@@ -44,6 +44,10 @@ frontend/.vite/
 *.sqlite
 *.sqlite3
 
+# Local dev runtime artifacts
+.local_storage/
+.dev-logs/
+
 # AI training outputs
 runs/
 wandb/
@@ -55,12 +59,13 @@ mlruns/
 *.ckpt
 *.onnx
 
-# Large AI datasets
-data/raw/
-data/processed/
-data/train/
-data/val/
-data/test/
+# Large AI datasets/training runs under data/ -- only data/taxonomy/ (the
+# shared regions.json / waste_classes.json the API and Vision service both
+# read) is ever meant to be committed. Everything else under data/ (raw
+# uploads, processed/, train/val splits, etc.) is large and machine-local.
+data/*
+!data/taxonomy/
+!data/taxonomy/**
 
 # OS
 .DS_Store
