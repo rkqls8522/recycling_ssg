@@ -2,17 +2,13 @@ import { v4 as uuidv4 } from "uuid";
 import type {
   AnalyzeSuccessBody,
   ClassificationResult,
-  ConfidenceLevel,
   DisposalGuideline,
   DisposalScheduleResponse,
-  FailureHint,
 } from "../types";
 import { getToken } from "../utils/storage";
-import { getRandomWasteItem, getGuidelineForRegion } from "./mockData";
 
 export { MOCK_MODE } from "./config";
 
-console.log(getToken());
 export function authHeaders(): Record<string, string> {
   const token = getToken();
 
@@ -74,68 +70,6 @@ export function buildAnalyzeResult(
   };
 }
 
-// mock 모드 전용 — 실제 네트워크 요청 없이 5단계 파이프라인을 흉내낸다.
-export async function runMockAnalyze(
-  regionCode: string,
-  regionName: string,
-  onProgress?: (stepIndex: number) => void,
-): Promise<AnalyzeOutcome> {
-  for (let i = 0; i < 5; i++) {
-    await delay(2000);
-    onProgress?.(i);
-  }
-  const item = getRandomWasteItem();
-  const guidelines = getGuidelineForRegion(item, regionCode);
-  const roll = Math.random();
-  let confidence: number;
-  let confidenceLevel: ConfidenceLevel;
-  let failureHint: FailureHint | undefined;
-
-  if (roll < 0.6) {
-    confidence = Math.min(
-      98,
-      item.baseConfidence + 3 + Math.floor(Math.random() * 8),
-    );
-    confidenceLevel = "high";
-  } else if (roll < 0.85) {
-    confidence = 60 + Math.floor(Math.random() * 22);
-    confidenceLevel = "uncertain";
-  } else {
-    confidence = 20 + Math.floor(Math.random() * 38);
-    confidenceLevel = "low";
-    const hints: FailureHint[] = [
-      "blurry",
-      "dark",
-      "multiple_objects",
-      "unclear",
-      "unknown",
-    ];
-    failureHint = hints[Math.floor(Math.random() * hints.length)];
-  }
-
-  if (confidenceLevel === "low") {
-    return {
-      status: "RETAKE_REQUIRED",
-      retakeMessage: "객체를 정확히 판단하기 어렵습니다. 다시 촬영해주세요.",
-    };
-  }
-
-  return {
-    status: "SUCCESS",
-    result: {
-      itemName: item.itemName,
-      itemCategory: item.itemCategory,
-      itemCategoryEn: item.itemCategoryEn,
-      confidence,
-      confidenceLevel,
-      failureHint,
-      guidelines,
-      regionCode,
-      regionName,
-    },
-  };
-}
-
 // 실제 요청은 단일 요청/응답이라 진짜 진행률을 알 수 없다.
 // 응답을 기다리는 동안 capStep까지만 일정 간격으로 진행 표시를 채우고,
 // 응답이 오면 finish()로 남은 단계(기본 4까지)를 한번에 채운다.
@@ -165,6 +99,3 @@ export function startProgressTicker(
   };
 }
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
