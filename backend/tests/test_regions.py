@@ -1,32 +1,30 @@
 from __future__ import annotations
 
 
-def test_list_all_regions_requires_auth(client):
+def test_list_all_regions_is_public(client):
+    """지역 선택 UI 는 로그인 전에도 떠야 하므로 이 엔드포인트만 인증이 없다."""
+    resp = client.get("/api/v1/regions", headers={"Authorization": "Bearer not-a-real-token"})
+    assert resp.status_code == 200
+
+
+def test_list_all_regions(client):
     resp = client.get("/api/v1/regions")
-    assert resp.status_code == 401
-
-
-def test_list_all_regions(client, signup_and_login):
-    headers, _ = signup_and_login()
-    resp = client.get("/api/v1/regions", headers=headers)
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert len(items) == 56
     assert {r["sido_name"] for r in items} == {"서울특별시", "경기도"}
 
 
-def test_filter_regions_by_sido(client, signup_and_login):
-    headers, _ = signup_and_login()
-    resp = client.get("/api/v1/regions", params={"sido_name": "서울특별시"}, headers=headers)
+def test_filter_regions_by_sido(client):
+    resp = client.get("/api/v1/regions", params={"sido_name": "서울특별시"})
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert len(items) == 25
     assert all(r["sido_name"] == "서울특별시" for r in items)
 
 
-def test_filter_regions_invalid_sido(client, signup_and_login):
-    headers, _ = signup_and_login()
-    resp = client.get("/api/v1/regions", params={"sido_name": "부산광역시"}, headers=headers)
+def test_filter_regions_invalid_sido(client):
+    resp = client.get("/api/v1/regions", params={"sido_name": "부산광역시"})
     assert resp.status_code == 422
     assert resp.json()["code"] == "REQUEST_VALIDATION_ERROR"
 

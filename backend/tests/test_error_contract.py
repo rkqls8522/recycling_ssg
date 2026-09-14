@@ -21,7 +21,7 @@ EXPECTED_ROUTES = {
     ("POST", "/api/v1/auth/login", False),
     ("POST", "/api/v1/auth/logout", True),
     ("GET", "/api/v1/users/me", True),
-    ("GET", "/api/v1/regions", True),
+    ("GET", "/api/v1/regions", False),
     ("PATCH", "/api/v1/users/me/region", True),
     ("POST", "/api/v1/analyze", True),
     ("POST", "/api/v1/feedback/{feedback_id}/confirm", True),
