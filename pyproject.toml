@@ -3,6 +3,7 @@ name = "recycling-ssg"
 version = "0.1.0"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "axios>=0.4.0",
     "boto3>=1.43.92",
     "fastapi>=0.141.1",
     "matplotlib>=3.11.1",
@@ -54,3 +55,4 @@ dev = [
 # B008 flags FastAPI's canonical Depends()/File()/Query() default-argument
 # pattern (used in vision/main.py), which is required, not a bug.
 ignore = ["B008"]
+
