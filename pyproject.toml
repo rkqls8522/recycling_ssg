@@ -3,6 +3,9 @@ name = "recycling-ssg"
 version = "0.1.0"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "axios>=0.4.0",
+    "boto3>=1.43.92",
+    "fastapi>=0.141.1",
     "langchain-core>=1.6.2",
     "langchain-google-genai>=4.4.0",
     "langchain-nvidia-ai-endpoints>=1.4.3",
@@ -10,7 +13,23 @@ dependencies = [
     "langchain-upstage>=0.7.7",
     "langgraph>=1.2.11",
     "langsmith>=0.12.2",
+    "matplotlib>=3.11.1",
+    # torch 2.11.x is not compatible with numpy >= 2.4: its `torch/_dynamo/utils.py`
+    # numpy-shim import fails and the surrounding `except ImportError: pass` silently
+    # drops NP_SUPPORTED_MODULES, which then breaks `import torchvision` (and therefore
+    # ultralytics/YOLO) with a confusing ImportError. Keep numpy below 2.4.
+    "numpy>=2.3,<2.4",
+    "opencv-python>=5.0.0.93",
+    "pandas>=3.0.5",
+    "pillow>=12.3.0",
+    "pydantic-settings>=2.15.0",
     "python-dotenv>=1.2.3",
+    "python-multipart>=0.0.32",
+    "pyyaml>=6.0.3",
+    "torch",
+    "torchvision",
+    "ultralytics>=8.4.138",
+    "uvicorn[standard]>=0.52.4",
 ]
 
 [tool.uv]
@@ -21,3 +40,28 @@ required-version = ">=0.12.9,<0.13"
 members = [
     "backend",
 ]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'win32'" },
+]
+torchvision = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.3.0",
+]
+
+[tool.ruff.lint]
+# B008 flags FastAPI's canonical Depends()/File()/Query() default-argument
+# pattern (used in vision/main.py), which is required, not a bug.
+ignore = ["B008"]
+
+
