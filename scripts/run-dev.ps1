@@ -21,12 +21,36 @@ if (-not (Test-Path $Py)) {
 
 # --- Vision 모델 체크포인트 자동 탐색 ---
 function Find-Model {
-    if ($env:MODEL_PATH -and (Test-Path $env:MODEL_PATH)) { return $env:MODEL_PATH }
-    if (Test-Path "weights\best.pt") { return "weights\best.pt" }
-    $found = Get-ChildItem -Path "ai\models\yolo" -Filter "best.pt" -Recurse -ErrorAction SilentlyContinue |
-             Select-Object -First 1
-    if ($found) { return $found.FullName }
+    if ($env:MODEL_PATH -and (Test-Path $env:MODEL_PATH)) { return (Resolve-Path $env:MODEL_PATH).Path }
+    foreach ($p in @("weights\best.pt")) {
+        if (Test-Path $p) { return (Resolve-Path $p).Path }
+    }
+    foreach ($dir in @("ai\models\yolo", "weights", "vision", "runs")) {
+        $found = Get-ChildItem -Path $dir -Filter "best.pt" -Recurse -ErrorAction SilentlyContinue |
+                 Select-Object -First 1
+        if ($found) { return $found.FullName }
+    }
     return $null
+}
+
+# 체크포인트 경로에서 버전 라벨 추정: <version>\weights\best.pt 형태면 <version>,
+# 아니면 상위 폴더명. 버전 정보가 없으면 기본값.
+function Get-ModelVersion([string]$Path) {
+    if ($env:MODEL_VERSION) { return $env:MODEL_VERSION }
+    $parent = Split-Path -Parent $Path
+    if ($parent -and (Split-Path -Leaf $parent) -eq "weights") {
+        $grandParent = Split-Path -Parent $parent
+        # <RepoRoot>\weights\best.pt 는 버전 폴더가 없는 경우이므로 기본값으로 둔다.
+        if ($grandParent -and $grandParent.TrimEnd('\') -ne $RepoRoot.TrimEnd('\')) {
+            return (Split-Path -Leaf $grandParent)
+        }
+        return "yolo-recycling-v1"
+    }
+    if ($parent) {
+        $leaf = Split-Path -Leaf $parent
+        if ($leaf -and $leaf -notmatch '^(weight|weights)$') { return $leaf }
+    }
+    return "yolo-recycling-v1"
 }
 
 $ModelPath = Find-Model
@@ -34,9 +58,9 @@ if (-not $ModelPath) {
     Write-Host "WARNING: YOLO 체크포인트를 찾지 못했습니다." -ForegroundColor Yellow
     Write-Host "         Vision 서버는 뜨지만 /internal/v1/predict 가 503 VISION_MODEL_NOT_READY 를 반환합니다."
     Write-Host "         학습된 best.pt 를 weights\best.pt 로 복사하거나 MODEL_PATH 로 지정하세요."
-    $ModelPath = "weights\best.pt"
+    $ModelPath = Join-Path $RepoRoot "weights\best.pt"
 }
-$ModelVersion = if ($env:MODEL_VERSION) { $env:MODEL_VERSION } else { Split-Path -Leaf (Split-Path -Parent (Split-Path -Parent $ModelPath)) }
+$ModelVersion = Get-ModelVersion $ModelPath
 
 $LogDir = Join-Path $RepoRoot ".dev-logs"
 if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir | Out-Null }
