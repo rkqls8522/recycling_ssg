@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import type {
   CandidateScore,
   ClassificationResult,
+  DisposalGuideline,
   DisposalScheduleResponse,
   FeedbackConfirmResponse,
   FeedbackNotInListResponse,
@@ -10,9 +11,11 @@ import type {
 } from "../../types";
 import {
   authHeaders,
+  buildAnalyzeResult,
   FALLBACK_GUIDELINE,
   mapDisposalSchedule,
 } from "../../api/analyze";
+import { DEMO_IMAGE, getResultMockData } from "../../api/mockData";
 import useAxios from "../../hooks/useAxios";
 import ChatDrawer from "./ChatDrawer";
 import BackButton from "../../components/common/BackButton";
@@ -84,16 +87,26 @@ export default function ResultScreen() {
     false,
   );
 
+  // TODO(임시): 실제 데이터 완성 전이라 state 여부와 상관없이 항상
+  // mockData의 getResultMockData()로 화면을 채운다.
+  // 실제 연동 다 되면 이 분기를 지우고 state?.result를 그대로 쓰도록 되돌려야 한다.
   useEffect(() => {
-    if (state?.result) {
-      setResult(state.result);
-      setImageUrl(state.imageUrl);
-    } else {
-      navigate("/capture", { replace: true });
-    }
-  }, [state, navigate]);
-
-  if (!state) return null;
+    const mockData = getResultMockData();
+    // mockData 자체가 갖고 있는 수거요일/배출방법(disposal_day, warnings)을 그대로 반영 —
+    // FALLBACK_GUIDELINE을 쓰면 "정보 없음"/일반 안내문만 나와서 서버 응답처럼 비어 보인다.
+    const mockGuidelines: DisposalGuideline = {
+      steps:
+        mockData.warnings.length > 0
+          ? mockData.warnings
+          : FALLBACK_GUIDELINE.steps,
+      notes: [],
+      collectionDays: mockData.disposal_day ?? "정보 없음",
+      source: "행정안전부 생활쓰레기배출정보",
+      sourceUrl: "",
+    };
+    setResult(buildAnalyzeResult(mockData, "11680", mockGuidelines));
+    setImageUrl(DEMO_IMAGE);
+  }, []);
 
   function onBack() {
     navigate("/capture");
@@ -151,6 +164,7 @@ export default function ResultScreen() {
       setFeedbackBusy(false);
     }
   }
+  console.log(result);
 
   function handleRetake() {
     handlePickerOpen();

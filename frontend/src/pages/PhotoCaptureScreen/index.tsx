@@ -94,10 +94,14 @@ export default function PhotoCaptureScreen() {
     setCurrentStep(-1);
   }
 
+  // 분석 중 화면이 응답 속도에 따라 너무 빨리 사라지지 않도록 최소 이 정도는 보여준다.
+  const MIN_ANALYZING_MS = 5000;
+
   // 실제 /api/v1/analyze 호출 — useAxios로 요청하고, SUCCESS면 이어서 배출정보(/disposal/schedule)까지 조회한다.
   async function runRealAnalyze(
     onProgress: (stepIndex: number) => void,
   ): Promise<AnalyzeOutcome> {
+    const startedAt = Date.now();
     const ticker = startProgressTicker(onProgress);
     try {
       const form = new FormData();
@@ -133,6 +137,12 @@ export default function PhotoCaptureScreen() {
         result: buildAnalyzeResult(data, user!.regionCode!, guidelines),
       };
     } finally {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_ANALYZING_MS) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, MIN_ANALYZING_MS - elapsed),
+        );
+      }
       ticker.finish();
     }
   }

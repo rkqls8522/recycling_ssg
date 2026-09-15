@@ -1,4 +1,4 @@
-import type { Province, DisposalGuideline } from "../types";
+import type { AnalyzeSuccessBody, Province, DisposalGuideline } from "../types";
 
 export const CATEGORY_COLOR: Record<string, string> = {
   플라스틱류: "bg-blue-100 text-blue-700",
@@ -90,4 +90,42 @@ export function getGuidelineForRegion(
   }
   const { source, sourceUrl } = defaultSourceByCode(regionCode);
   return { ...item.defaultGuideline, source, sourceUrl };
+}
+
+export function getResultMockData(): AnalyzeSuccessBody {
+  return {
+    status: "SUCCESS",
+    major_category: "종이류",
+    minor_category: "종이컵",
+    candidate_scores: [
+      {
+        class_id: 41,
+        category: "종이류_종이컵",
+        score: 0.9245,
+      },
+      {
+        class_id: 42,
+        category: "종이류_종이팩",
+        score: 0.0512,
+      },
+      {
+        class_id: 40,
+        category: "종이류_일반종이",
+        score: 0.0183,
+      },
+    ],
+    user_region: {
+      region_id: 1,
+      sido_name: "서울특별시",
+      sgg_name: "강남구",
+    },
+    disposal_day: "월, 수, 금",
+    image_id: 502,
+    feedback_id: 902,
+    warnings: [
+      "내용물을 완전히 비우고 헹군 후 배출",
+      "이물질이 세척되지 않는 경우 종량제 봉투 배출",
+      "압착하여 볼륨을 줄인 후 종이팩 전용함으로 배출",
+    ],
+  };
 }

@@ -73,10 +73,12 @@ export function buildAnalyzeResult(
 // 실제 요청은 단일 요청/응답이라 진짜 진행률을 알 수 없다.
 // 응답을 기다리는 동안 capStep까지만 일정 간격으로 진행 표시를 채우고,
 // 응답이 오면 finish()로 남은 단계(기본 4까지)를 한번에 채운다.
+// 기본값(1초 간격 * capStep 4)은 handleAnalyze의 최소 노출 시간(5초)과 맞춰
+// 분석 중 화면이 5단계를 고르게 채우며 끝나도록 맞춘 것.
 export function startProgressTicker(
   onProgress?: (stepIndex: number) => void,
-  capStep = 3,
-  intervalMs = 900,
+  capStep = 4,
+  intervalMs = 1000,
 ) {
   let step = -1;
   const id = setInterval(() => {

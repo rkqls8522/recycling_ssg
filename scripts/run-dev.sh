@@ -5,7 +5,6 @@
 #   - DB: SQLite 파일 (backend/dev.sqlite3)
 #   - 이미지 저장: 로컬 디스크 (.local_storage)  ← STORAGE_BACKEND=local
 #   - Vision: 실제 YOLO 체크포인트
-#
 # 사용법:  bash scripts/run-dev.sh
 # 중지:    Ctrl+C
 
