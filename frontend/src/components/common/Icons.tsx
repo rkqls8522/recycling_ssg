@@ -298,3 +298,56 @@ export function LoadingIcon() {
     </svg>
   );
 }
+
+export function ChatbotIcon() {
+  return (
+    <svg
+      width="64"
+      height="64"
+      viewBox="0 0 64 64"
+      fill="none"
+      aria-hidden="true"
+    >
+      <ellipse cx="32" cy="61" rx="14" ry="3" fill="black" fillOpacity="0.08" />
+      <circle cx="32" cy="30" r="26" fill="#1b5c35" />
+      <ellipse
+        cx="24"
+        cy="20"
+        rx="7"
+        ry="5"
+        fill="white"
+        fillOpacity="0.15"
+        transform="rotate(-20 24 20)"
+      />
+      <circle cx="24" cy="27" r="4" fill="white" />
+      <circle cx="40" cy="27" r="4" fill="white" />
+      <circle cx="25" cy="28" r="2" fill="#0f3d22" />
+      <circle cx="41" cy="28" r="2" fill="#0f3d22" />
+      <circle cx="26" cy="27" r="0.8" fill="white" />
+      <circle cx="42" cy="27" r="0.8" fill="white" />
+      <path
+        d="M24 36 Q32 43 40 36"
+        stroke="white"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <g opacity="0.5" transform="translate(27,39) scale(0.42)">
+        <path
+          d="M12 4l-4 4h3c0 5.52 4.48 10 10 10 1.57 0 3.04-.38 4.34-1.03l-1.46-1.46C23 15.68 22.04 16 21 16c-3.87 0-7-3.13-7-7h3l-4-4zM21 4c-1.57 0-3.04.38-4.34 1.03l1.46 1.46C19 6.32 19.96 6 21 6c3.87 0 7 3.13 7 7h-3l4 4 4-4h-3C30 8.48 25.52 4 21 4z"
+          fill="white"
+        />
+      </g>
+      <line
+        x1="32"
+        y1="4"
+        x2="32"
+        y2="10"
+        stroke="#1b5c35"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <circle cx="32" cy="3" r="3" fill="#4ade80" />
+    </svg>
+  );
+}

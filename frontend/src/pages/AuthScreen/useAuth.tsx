@@ -55,6 +55,7 @@ export function useAuth() {
     setSuccessMessage("");
 
     if (!email.trim() || !password.trim()) {
+      console.log(email, password);
       setFormError("이메일과 비밀번호를 입력해 주세요");
       return;
     }
