@@ -81,7 +81,7 @@ React Frontend
 | 영역 | 스택 |
 |---|---|
 | Backend | Python 3.13, FastAPI, SQLAlchemy 2.0, Pydantic v2 |
-| DB | MySQL (개발 시 SQLite로 대체 가능) |
+| DB | MySQL |
 | Vision AI | Ultralytics YOLO, PyTorch (86 class Object Detection) |
 | Vision LLM | Gemini (`google-genai`) — 후보에 없을 때만 호출 |
 | AI Agent | 분석 컨텍스트 + RAG 지식 기반 Stateless 응답 |
@@ -109,13 +109,13 @@ uv sync --all-packages
 
 1. YOLO 체크포인트를 자동 탐색 (`weights/best.pt` → `ai/models/yolo/*/runs/*/weights/best.pt`)
 2. Vision 서버 기동 후, Backend 가 그 주소를 바라보도록 연결
-3. **개발용 설정 주입** — SQLite DB + 로컬 디스크 저장 + 테이블 생성/Master 시딩
-   자동 실행 (그래서 MySQL·AWS 없이 바로 동작)
+3. **개발용 설정 주입** — 로컬 디스크 저장 + 테이블 생성/Master 시딩 자동 실행
+   (DB는 항상 `.env`의 MySQL `DATABASE_URL`을 그대로 사용 — 이 스크립트가 덮어쓰지 않음)
 4. 두 서버가 `/health` 200 을 낼 때까지 기다렸다가 준비 완료를 알림
    (로그는 `.dev-logs/`, Ctrl+C 로 둘 다 종료)
 
-MySQL·AWS·외부 API 키 **없이도** 전체 흐름이 동작합니다
-(SQLite + 로컬 디스크 저장 + 실제 YOLO 모델).
+MySQL(`DATABASE_URL`)은 `.env`에 항상 설정되어 있어야 합니다. AWS·외부 API 키
+없이도 나머지 흐름은 동작합니다(로컬 디스크 저장 + 실제 YOLO 모델).
 
 ```bash
 bash scripts/run-dev.sh          # Git Bash
@@ -258,9 +258,9 @@ cp vision/.env.example  vision/.env
 `weights/yolo26n.pt` 는 COCO 사전학습 가중치라 **지정하면 안 됩니다** — 86개 폐기물
 taxonomy 가 아닌 COCO class 인덱스를 반환해 모든 `class_id` 가 조용히 오염됩니다.
 
-> `scripts/run-dev.sh` 로 개발 서버를 띄우면 `.env` 없이도 동작합니다
-> (SQLite + 로컬 디스크 저장 + 체크포인트 자동 탐색). `.env` 는 **운영 설정이나
-> 실제 외부 API 키를 붙일 때** 필요합니다.
+> `scripts/run-dev.sh` 로 개발 서버를 띄워도 `DATABASE_URL`(MySQL)은 항상
+> `.env`에서 읽어옵니다. `.env`가 없으면 DB 연결이 안 되니 최소한 `DATABASE_URL`은
+> 채워두세요. 로컬 디스크 저장 + 체크포인트 자동 탐색은 `.env` 없이도 동작합니다.
 
 ### .env 항목별 설명
 
