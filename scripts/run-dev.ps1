@@ -109,8 +109,11 @@ $visionProc = Start-Process -FilePath $Py `
     -PassThru -WindowStyle Hidden
 
 # --- Backend (:8000) ---
-# DATABASE_URL은 일부러 설정하지 않는다: 비워두면 core/config.py가 저장소 루트
-# .env의 MySQL DATABASE_URL을 그대로 읽는다.
+# DATABASE_URL은 이 스크립트가 설정하지 않고 core/config.py가 저장소 루트
+# .env의 MySQL DATABASE_URL을 읽도록 비워둔다. 그런데 pydantic-settings는
+# OS 환경변수를 .env보다 항상 우선시키므로, 상위(부모) 프로세스 환경에 남아있는
+# 값이 있으면 그게 이겨버린다 -- 명시적으로 지워서 항상 .env가 이기게 한다.
+Remove-Item Env:\DATABASE_URL -ErrorAction SilentlyContinue
 $jwtSecret    = if ($env:JWT_SECRET_KEY) { $env:JWT_SECRET_KEY } else { "dev-only-insecure-secret-please-change-me-32bytes+" }
 $storage      = if ($env:STORAGE_BACKEND) { $env:STORAGE_BACKEND } else { "local" }
 $storageDir   = if ($env:LOCAL_STORAGE_DIR) { $env:LOCAL_STORAGE_DIR } else { "../.local_storage" }
