@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # recycling_ssg — 로컬 개발 서버 2개(Backend :8000, Vision :8100) 기동
 #
-# AWS/MySQL/외부 API 키 없이도 전체 흐름이 동작하도록 개발용 설정을 사용한다:
-#   - DB: SQLite 파일 (backend/dev.sqlite3)
+# DB는 항상 저장소 루트 .env 의 DATABASE_URL(MySQL)을 그대로 사용한다 — 이 스크립트가
+# 별도로 덮어쓰지 않는다. 그 외 개발 편의 설정만 기본값을 주입한다:
 #   - 이미지 저장: 로컬 디스크 (.local_storage)  ← STORAGE_BACKEND=local
 #   - Vision: 실제 YOLO 체크포인트
 # 사용법:  bash scripts/run-dev.sh
@@ -65,7 +65,8 @@ VISION_PID=$!
 # --- Backend (:8000) ------------------------------------------------------
 (
   cd backend
-  DATABASE_URL="${DATABASE_URL:-sqlite:///./dev.sqlite3}" \
+  # DATABASE_URL은 일부러 설정하지 않는다: 비워두면 core/config.py가 저장소 루트
+  # .env의 MySQL DATABASE_URL을 그대로 읽는다.
   JWT_SECRET_KEY="${JWT_SECRET_KEY:-dev-only-insecure-secret-please-change-me-32bytes+}" \
   STORAGE_BACKEND="${STORAGE_BACKEND:-local}" \
   LOCAL_STORAGE_DIR="${LOCAL_STORAGE_DIR:-../.local_storage}" \

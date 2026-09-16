@@ -10,8 +10,8 @@ from core.config import settings
 _engine_kwargs: dict = {"pool_pre_ping": True, "future": True}
 if not settings.database_url.startswith("sqlite"):
     # SQLite's default pool (SingletonThreadPool/NullPool) doesn't accept
-    # pool_size/max_overflow. Production always uses MySQL; SQLite is only
-    # ever used for local/test runs (see backend/tests/conftest.py).
+    # pool_size/max_overflow. Dev and production always use MySQL; SQLite is
+    # only ever used by the pytest suite (see backend/tests/conftest.py).
     _engine_kwargs["pool_size"] = settings.db_pool_size
     _engine_kwargs["max_overflow"] = settings.db_max_overflow
 
