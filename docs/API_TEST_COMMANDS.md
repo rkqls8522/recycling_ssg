@@ -25,7 +25,8 @@ bash scripts/run-dev.sh
 
 - Backend: `http://127.0.0.1:8000` · Vision: `http://127.0.0.1:8100`
 - Swagger UI: <http://127.0.0.1:8000/docs>
-- 개발 모드는 **MySQL/AWS/외부 키 없이** 동작합니다 (SQLite + 로컬 디스크 저장).
+- DB는 항상 `.env`의 MySQL을 사용합니다(SQLite 아님). AWS/외부 키 없이도 나머지
+  흐름은 동작합니다 (로컬 디스크 저장).
 
 ### 0-2. 환경변수 설정
 
@@ -1079,6 +1080,12 @@ curl -s $BACKEND/api/v1/users/me -H "Authorization: Bearer $TOKEN"
 
 각 항목은 **해당 환경변수로 Backend 를 재기동**한 뒤 요청하면 재현됩니다.
 `backend/` 디렉터리에서 실행하세요.
+
+> 아래 `run_with`는 실제 MySQL(Railway)과 무관한 **일회용 SQLite 인스턴스**를
+> 띄웁니다. 고의로 데이터를 지우거나(`DELETE FROM users`) `DATABASE_URL`을
+> 깨뜨려 오류를 재현하는 용도라, 실제 공유 MySQL 데이터를 건드리지 않으려고
+> 의도적으로 분리해 둔 것입니다. 앱의 일반 개발/운영 DB는 항상 MySQL만
+> 사용합니다.
 
 ```bash
 cd backend
