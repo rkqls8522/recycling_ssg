@@ -5,22 +5,35 @@ Design notes
 ------------
 Standard Ultralytics YOLO keeps only the best class per surviving box after
 NMS, so a single ``model.predict()`` call does not directly give a
-class-probability distribution for one object. To still produce a
-meaningful Top-K *for the same spatial object* without a second model head,
-we run detection at a low confidence floor (``settings.low_confidence_floor``)
-with per-class (non-agnostic) NMS, which lets *several different classes*
-independently survive NMS for the same overlapping region when the model is
-genuinely unsure between them. We then:
+class-probability distribution for one object -- by the time a box comes
+back, every other class has already been thrown away by
+``argmax``/thresholding. Requiring a *guaranteed* Top-K (SR-06/SR-07) even
+when the model is extremely confident about one class (e.g. 0.95, with every
+other class under 0.01%) rules out any approach based on a confidence floor:
+no floor is low enough to reliably surface classes that faint.
 
-1. Pick the "main object" box: the detection maximizing
+Instead we reach one layer below Ultralytics' post-processing:
+
+1. Run detection normally (``settings.low_confidence_floor``, per-class
+   NMS) and pick the "main object" box: the detection maximizing
    ``confidence * area * (1 - distance_from_image_center)`` -- i.e. a
    confident, large, centered box, matching how users are expected to
    photograph a single item (SR-05).
-2. Collect every other detected box whose IoU with the main box is >=
-   ``settings.candidate_iou_match`` (i.e. "the same object"), keep the max
-   confidence per class_id, sort descending, and take the top K -- this is
-   the object's Top-K 후보 score list (SR-06/SR-07).
-3. If literally nothing is detected even at the low floor, no main object
+2. While that single ``model.predict()`` call runs, ``_predict_capturing_raw``
+   temporarily wraps ``ultralytics.utils.nms.non_max_suppression`` to also
+   hand back (a) the raw pre-NMS prediction tensor -- shape
+   ``(1, 4 + num_classes, num_anchors)``, per-class scores already
+   sigmoid-activated by the detection head -- and (b) which raw anchor index
+   NMS kept for each surviving box, in the same order as the boxes
+   themselves. This changes nothing about detection/NMS itself; it only
+   exposes data Ultralytics already computes internally and normally
+   discards.
+3. Look up the main box's own anchor index and read *every* class's raw
+   score at that single anchor directly out of the raw tensor, then take the
+   top ``settings.top_k`` by score -- with no threshold at all, so the
+   result always has exactly ``top_k`` entries regardless of how confident
+   the model is. These are the object's Top-K 후보 리스트.
+4. If literally nothing is detected even at the low floor, no main object
    exists -> :class:`NoMainObjectError` (mapped to 422 VISION_NO_MAIN_OBJECT).
 """
 
@@ -31,6 +44,7 @@ import logging
 import threading
 import time
 
+import torch
 from PIL import Image, UnidentifiedImageError
 
 from vision.core.config import settings
@@ -66,15 +80,6 @@ class _Detection:
     @property
     def center(self) -> tuple[float, float]:
         return (self.x1 + self.x2) / 2, (self.y1 + self.y2) / 2
-
-
-def _iou(a: _Detection, b: _Detection) -> float:
-    ix1, iy1 = max(a.x1, b.x1), max(a.y1, b.y1)
-    ix2, iy2 = min(a.x2, b.x2), min(a.y2, b.y2)
-    inter_w, inter_h = max(0.0, ix2 - ix1), max(0.0, iy2 - iy1)
-    inter = inter_w * inter_h
-    union = a.area + b.area - inter
-    return inter / union if union > 0 else 0.0
 
 
 class VisionModel:
@@ -131,23 +136,59 @@ class VisionModel:
 
         start = time.perf_counter()
         with self._lock:
-            results = self._model.predict(
-                source=pil_image,
-                conf=settings.low_confidence_floor,
-                iou=settings.nms_iou,
-                agnostic_nms=False,
-                max_det=settings.max_detections,
-                verbose=False,
-            )
+            results, raw_prediction, keep_idx = _predict_capturing_raw(self._model, pil_image)
+            detections = _extract_detections(results)
+            if not detections:
+                raise NoMainObjectError("no detections above low confidence floor")
+            main_box = _select_main_object(detections)
+            anchor_idx = int(keep_idx[detections.index(main_box)].item())
+            candidates = _top_k_from_raw_scores(raw_prediction, anchor_idx)
         inference_ms = (time.perf_counter() - start) * 1000
 
-        detections = _extract_detections(results)
-        if not detections:
-            raise NoMainObjectError("no detections above low confidence floor")
-
-        main_box = _select_main_object(detections)
-        candidates = _build_candidates(detections, main_box)
         return candidates, inference_ms, main_box
+
+
+def _predict_capturing_raw(model, pil_image) -> tuple[list, torch.Tensor, torch.Tensor]:
+    """Run ``model.predict()`` once, capturing the raw pre-NMS prediction
+    tensor and the raw anchor index NMS kept for each surviving box.
+
+    Works by temporarily wrapping ``ultralytics.utils.nms.non_max_suppression``
+    (called internally by ``model.predict()``) to also request
+    ``return_idxs=True`` and stash both its input tensor and its second
+    (indices) return value in a closure, then restoring the original
+    function. Detection/NMS behavior is completely unchanged -- only what we
+    additionally read off is different. Safe to call concurrently only under
+    ``VisionModel._lock`` (module-global patch).
+    """
+    from ultralytics.utils import nms as ultra_nms
+
+    captured: dict = {}
+    original_nms = ultra_nms.non_max_suppression
+
+    def _patched(prediction, *args, **kwargs):
+        # Mirror non_max_suppression's own unwrapping (e.g. validation-mode
+        # models return (inference_out, loss_out)) so the captured tensor is
+        # always the plain (batch, 4+nc, num_anchors) prediction.
+        captured["raw"] = prediction[0] if isinstance(prediction, (list, tuple)) else prediction
+        kwargs["return_idxs"] = True
+        output, keep_idxs = original_nms(prediction, *args, **kwargs)
+        captured["keep_idx"] = keep_idxs[0]
+        return output
+
+    ultra_nms.non_max_suppression = _patched
+    try:
+        results = model.predict(
+            source=pil_image,
+            conf=settings.low_confidence_floor,
+            iou=settings.nms_iou,
+            agnostic_nms=False,
+            max_det=settings.max_detections,
+            verbose=False,
+        )
+    finally:
+        ultra_nms.non_max_suppression = original_nms
+
+    return results, captured["raw"], captured["keep_idx"]
 
 
 def _extract_detections(results) -> list[_Detection]:
@@ -176,26 +217,25 @@ def _select_main_object(detections: list[_Detection]) -> _Detection:
     return max(detections, key=score)
 
 
-def _build_candidates(detections: list[_Detection], main_box: _Detection) -> list[dict]:
-    best_conf_by_class: dict[int, float] = {}
-    for d in detections:
-        if _iou(d, main_box) >= settings.candidate_iou_match:
-            best_conf_by_class[d.cls] = max(best_conf_by_class.get(d.cls, 0.0), d.conf)
-
-    # main_box's own class is always included (IoU with itself == 1.0).
-    best_conf_by_class[main_box.cls] = max(best_conf_by_class.get(main_box.cls, 0.0), main_box.conf)
-
-    ranked = sorted(best_conf_by_class.items(), key=lambda kv: kv[1], reverse=True)
-    ranked = ranked[: settings.top_k]
+def _top_k_from_raw_scores(raw_prediction: torch.Tensor, anchor_idx: int) -> list[dict]:
+    """Rank every class by its raw (pre-NMS, sigmoid-activated) score at one
+    specific anchor and return the top ``settings.top_k``. Unlike NMS-survived
+    boxes, this has no confidence threshold, so it always returns exactly
+    ``top_k`` candidates -- even when the model is so confident that no other
+    class would ever clear any reasonable floor."""
+    num_classes = raw_prediction.shape[1] - 4
+    class_scores = raw_prediction[0, 4 : 4 + num_classes, anchor_idx]
+    k = min(settings.top_k, num_classes)
+    top_scores, top_classes = torch.topk(class_scores, k)
 
     candidates = []
-    for class_id, conf in ranked:
+    for score, class_id in zip(top_scores.tolist(), top_classes.tolist(), strict=True):
         major, minor = category_label(class_id)
         candidates.append(
             {
                 "class_id": class_id,
                 "category": f"{major}_{minor}",
-                "score": round(conf, 4),
+                "score": round(score, 4),
             }
         )
     return candidates

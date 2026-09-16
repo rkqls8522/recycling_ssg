@@ -34,7 +34,6 @@ class VisionSettings(BaseSettings):
     low_confidence_floor: float = 0.05
     nms_iou: float = 0.45
     max_detections: int = 100
-    candidate_iou_match: float = 0.5
     top_k: int = 5
 
     taxonomy_data_dir: str | None = None

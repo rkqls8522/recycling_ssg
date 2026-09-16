@@ -1,29 +1,14 @@
 """Pure-logic tests for the main-object selection + Top-K candidate scoring
 heuristics in inference.py. None of these require the actual YOLO
 checkpoint to be loadable -- ultralytics is only imported lazily inside
-VisionModel._try_load()."""
+VisionModel._try_load()/_predict_capturing_raw()."""
 
 from __future__ import annotations
 
-from vision.inference import _build_candidates, _Detection, _iou, _select_main_object
+import torch
 
-
-def test_iou_identical_boxes_is_one():
-    box = _Detection(0.1, 0.1, 0.5, 0.5, conf=0.9, cls=1)
-    assert _iou(box, box) == 1.0
-
-
-def test_iou_disjoint_boxes_is_zero():
-    a = _Detection(0.0, 0.0, 0.1, 0.1, conf=0.9, cls=1)
-    b = _Detection(0.5, 0.5, 0.6, 0.6, conf=0.9, cls=2)
-    assert _iou(a, b) == 0.0
-
-
-def test_iou_partial_overlap():
-    a = _Detection(0.0, 0.0, 0.4, 0.4, conf=0.9, cls=1)
-    b = _Detection(0.2, 0.2, 0.6, 0.6, conf=0.9, cls=2)
-    # intersection: 0.2x0.2=0.04, union: 0.16+0.16-0.04=0.28
-    assert abs(_iou(a, b) - (0.04 / 0.28)) < 1e-6
+from vision.core.config import settings
+from vision.inference import _Detection, _select_main_object, _top_k_from_raw_scores
 
 
 def test_select_main_object_prefers_large_central_confident_box():
@@ -33,27 +18,49 @@ def test_select_main_object_prefers_large_central_confident_box():
     assert chosen is main
 
 
-def test_build_candidates_includes_main_class_and_overlapping_classes_sorted():
-    main = _Detection(0.2, 0.2, 0.8, 0.8, conf=0.81, cls=22)
-    overlapping_alt = _Detection(0.21, 0.21, 0.79, 0.79, conf=0.12, cls=15)  # same region, other class
-    far_away = _Detection(0.0, 0.0, 0.05, 0.05, conf=0.9, cls=99)  # different object entirely
+def _raw_prediction(num_classes: int, num_anchors: int, anchor_scores: dict[int, list[float]]) -> torch.Tensor:
+    """Build a synthetic (1, 4+num_classes, num_anchors) raw prediction
+    tensor with all-zero boxes, and the given per-class score list placed at
+    each of ``anchor_scores``' anchor indices."""
+    raw = torch.zeros((1, 4 + num_classes, num_anchors))
+    for anchor_idx, scores in anchor_scores.items():
+        raw[0, 4 : 4 + num_classes, anchor_idx] = torch.tensor(scores)
+    return raw
 
-    candidates = _build_candidates([main, overlapping_alt, far_away], main)
 
-    class_ids = [c["class_id"] for c in candidates]
-    assert class_ids[0] == 22  # highest score first
-    assert 15 in class_ids
-    assert 99 not in class_ids  # IoU too low with main box, excluded
+def test_top_k_from_raw_scores_returns_exactly_top_k_sorted_descending(monkeypatch):
+    monkeypatch.setattr(settings, "top_k", 3)
+    # class 4 highest, then 1, then 0; classes 2/3 lower still.
+    raw = _raw_prediction(5, num_anchors=2, anchor_scores={1: [0.2, 0.05, 0.01, 0.001, 0.9]})
+
+    candidates = _top_k_from_raw_scores(raw, anchor_idx=1)
+
+    assert [c["class_id"] for c in candidates] == [4, 0, 1]
     scores = [c["score"] for c in candidates]
     assert scores == sorted(scores, reverse=True)
 
 
-def test_build_candidates_dedupes_by_class_keeping_max_confidence():
-    main = _Detection(0.2, 0.2, 0.8, 0.8, conf=0.5, cls=22)
-    same_class_higher_conf = _Detection(0.22, 0.22, 0.78, 0.78, conf=0.9, cls=22)
+def test_top_k_from_raw_scores_ignores_confidence_magnitude(monkeypatch):
+    """Even when the model is extremely confident about one class (every
+    other class near-zero), the result must still have exactly top_k
+    entries -- there is no threshold that could drop the weaker ones."""
+    monkeypatch.setattr(settings, "top_k", 3)
+    raw = _raw_prediction(5, num_anchors=1, anchor_scores={0: [0.0001, 0.0002, 0.0000, 0.9999, 0.00005]})
 
-    candidates = _build_candidates([main, same_class_higher_conf], main)
+    candidates = _top_k_from_raw_scores(raw, anchor_idx=0)
 
-    assert len(candidates) == 1
-    assert candidates[0]["class_id"] == 22
-    assert candidates[0]["score"] == 0.9
+    assert len(candidates) == 3
+    assert candidates[0]["class_id"] == 3
+    assert candidates[0]["score"] == 0.9999
+
+
+def test_top_k_from_raw_scores_reads_only_the_given_anchor():
+    raw = _raw_prediction(
+        4,
+        num_anchors=2,
+        anchor_scores={0: [0.9, 0.1, 0.1, 0.1], 1: [0.1, 0.1, 0.1, 0.9]},
+    )
+
+    candidates = _top_k_from_raw_scores(raw, anchor_idx=1)
+
+    assert candidates[0]["class_id"] == 3

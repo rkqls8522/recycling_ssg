@@ -227,7 +227,7 @@ backend/
 | `image_processing.py` | **사진 가공.** 업로드된 사진을 Pillow로 실제 디코딩 → EXIF 방향 보정(스마트폰 세로사진이 눕지 않게) → 긴 변이 1920px 넘으면 비율 유지한 채 축소 → JPEG(또는 WebP)로 재인코딩. 투명 PNG는 검은 배경이 아니라 흰 배경으로 합성. 디코딩 자체가 안 되면 `IMAGE_DECODE_FAILED` |
 | `image_validation.py` | 사진 가공 **이전** 단계의 가벼운 검사. 브라우저가 보낸 Content-Type이 허용 목록에 있는지, 파일이 비어있지 않은지, 용량 제한을 넘지 않는지만 빠르게 확인 |
 | `vision_client.py` | **Vision 서버**(`backend`가 아니라 `vision/` 폴더에 있는 별도 서버)와 HTTP로 통신. `predict()`가 사진을 보내고 대분류/소분류/후보 목록/BBox를 받아옴. Vision 서버가 "중앙에 물체가 없다"고 하면 `VisionNoMainObjectError`를 던져서 analyze.py가 재촬영 응답으로 바꿀 수 있게 함 |
-| `public_waste_client.py` | **행정안전부 공공데이터 API**와 통신. 서비스키가 이미 URL-encode된 상태로 발급되는 경우가 많아서 `_decoded_service_key()`가 먼저 `unquote()`한 뒤 httpx가 한 번만 인코딩하게 함(이중 인코딩 버그 방지). `pick_best_item()`이 응답 여러 건 중 우리가 찾는 품목과 가장 비슷한 걸 고름 |
+| `public_waste_client.py` | **행정안전부 공공데이터 API**와 통신. 서비스키가 이미 URL-encode된 상태로 발급되는 경우가 많아서 `_decoded_service_key()`가 먼저 `unquote()`한 뒤 httpx가 한 번만 인코딩하게 함(이중 인코딩 버그 방지). 실제 응답은 품목명이 아니라 **지역당 한 행**이고 폐기물 종류별로 컬럼 그룹(`FOD_WST_`/`LF_WST_`/`RCYCL_`/`TMPRY_BULK_WASTE_`)이 나뉘어 있어서, `_GROUP_PREFIX_BY_MAJOR_CATEGORY`로 우리 12개 대분류를 가장 가까운 그룹에 매핑해 그 그룹의 컬럼만 읽음(`extract_disposal_fields()`) |
 | `disposal_service.py` | 위 `public_waste_client`를 감싸서, "이 폐기물 종류 + 이 지역"을 조합해 최종 배출 정보를 만듦. `get_disposal_info_or_raise()`(직접 조회 API용, 실패하면 오류)와 `get_disposal_info_or_warn()`(이미지 분석용, 실패해도 분석 자체는 성공시키고 `warnings`만 남김) 두 가지 버전 제공 |
 | `gemini_service.py` | **Google Gemini**와 통신. `reanalyze_image()`는 "후보 목록에도 없어요" 눌렀을 때 사진을 다시 분석해 86개 클래스 중 하나로 강제 매핑(허용 목록 밖 답은 `GEMINI_BAD_RESPONSE`). `generate_text()`는 챗봇 답변 생성용. 키가 없으면 호출 전에 `GeminiNotConfiguredError` |
 | `__init__.py` | - | 빈 파일. 패키지 표시용 |

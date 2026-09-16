@@ -65,8 +65,11 @@ VISION_PID=$!
 # --- Backend (:8000) ------------------------------------------------------
 (
   cd backend
-  # DATABASE_URL은 일부러 설정하지 않는다: 비워두면 core/config.py가 저장소 루트
-  # .env의 MySQL DATABASE_URL을 그대로 읽는다.
+  # DATABASE_URL은 이 스크립트가 설정하지 않고 core/config.py가 저장소 루트
+  # .env의 MySQL DATABASE_URL을 읽도록 비워둔다. pydantic-settings는 OS
+  # 환경변수를 .env보다 항상 우선시키므로, 부모 셸 환경에 남은 값이 있으면
+  # 그게 이겨버린다 -- 명시적으로 지워서 항상 .env가 이기게 한다.
+  unset DATABASE_URL
   JWT_SECRET_KEY="${JWT_SECRET_KEY:-dev-only-insecure-secret-please-change-me-32bytes+}" \
   STORAGE_BACKEND="${STORAGE_BACKEND:-local}" \
   LOCAL_STORAGE_DIR="${LOCAL_STORAGE_DIR:-../.local_storage}" \
