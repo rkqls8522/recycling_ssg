@@ -1,44 +1,29 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
-import {
-  type UserRegionResponse,
-  type GetRegionResponse,
-  type RegionItem,
-  type User,
-} from "../../types";
-import { saveUser } from "../../utils/storage";
-import { useAuthContext } from "../AuthScreen/AuthContext";
-import useAxios from "@/hooks/useAxios";
+import { useEffect, useMemo } from "react";
+import { useRegion } from "./useRegion";
 import { ChevronIcon, MapPinIcon } from "@/components/common/Icons";
-import { authHeaders } from "@/utils/get-auth-headers";
 
 // 서울/경기 외 지역이 API에 추가돼도 자연스럽게 붙도록 우선순위만 지정
 // (SIDO_ORDER에 없는 값은 목록 뒤쪽에 그대로 붙는다)
 const SIDO_ORDER = ["서울특별시", "경기도"];
 
 export default function RegionScreen() {
-  const { user, setUser } = useAuthContext();
-  const navigate = useNavigate();
-  const [regionList, setRegionList] = useState<GetRegionResponse>();
-  const [selectedSido, setSelectedSido] = useState("");
-  const [selectedRegionId, setSelectedRegionId] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const {
+    regionList,
+    selectedSido,
+    selectedRegionId,
+    setSelectedSido,
+    setSelectedRegionId,
+    getRegions,
+    loading,
+    error,
+    setError,
+    user,
+    districtList,
+    selectedDistrict,
+    updateRegion,
+  } = useRegion();
 
   if (!user) return null;
-
-  const { refetch: regionRequest } = useAxios<GetRegionResponse>(
-    "",
-    { method: "get" },
-    false,
-  );
-
-  const { refetch: updateUserRegion } = useAxios<UserRegionResponse>(
-    "", // URL (또는 변수로 지정할 경로)
-    { method: "patch" },
-    false, // manual (자동 실행 여부)
-  );
 
   const isFirstSetup = !user.regionCode;
 
@@ -48,98 +33,11 @@ export default function RegionScreen() {
     const unique = Array.from(
       new Set(regionList.items.map((item) => item.sido_name)),
     );
-    return unique.sort(
-      (a, b) => SIDO_ORDER.indexOf(a) - SIDO_ORDER.indexOf(b),
-    );
+    return unique.sort((a, b) => SIDO_ORDER.indexOf(a) - SIDO_ORDER.indexOf(b));
   }, [regionList]);
-
-  // 2차 셀렉트: 선택된 시/도에 속한 시/군/구 목록 (region_id 기준)
-  const districtList = useMemo<RegionItem[]>(() => {
-    if (!regionList || !selectedSido) return [];
-    return regionList.items.filter((item) => item.sido_name === selectedSido);
-  }, [regionList, selectedSido]);
-
-  const selectedDistrict =
-    districtList.find((d) => String(d.region_id) === selectedRegionId) ??
-    null;
-
-  function onSaved(updated: User) {
-    setUser(updated);
-    navigate("/home");
-  }
-
-  async function getRegions() {
-    const endpoint = "/api/v1/regions";
-
-    const data = await regionRequest({
-      url: endpoint,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "X-Request-ID": uuidv4(),
-      },
-    });
-    setRegionList(data);
-
-    // 이미 지역이 설정된 사용자(지역 변경 진입)면 목록이 오는 대로 현재 값을 셀렉트에 채운다
-    if (user?.regionCode) {
-      const current = data.items.find(
-        (item) => String(item.region_id) === user.regionCode,
-      );
-      if (current) {
-        setSelectedSido(current.sido_name);
-        setSelectedRegionId(String(current.region_id));
-      }
-    }
-  }
-
-  async function updateRegion() {
-    // 1. 유저 로그인 상태 사전 검증
-    if (!user) {
-      setError("로그인 정보가 없습니다.");
-      return;
-    }
-
-    // 2. 입력값 필수 검증
-    if (!selectedSido || !selectedDistrict) {
-      setError("시/도와 시/군/구를 모두 선택해 주세요");
-      return;
-    }
-
-    setError("");
-    setLoading(true);
-
-    try {
-      const regionName =
-        `${selectedDistrict.sido_name} ${selectedDistrict.sgg_name}`.trim();
-
-      // API 요청 — region_id는 Integer (명세 기준)
-      await updateUserRegion({
-        url: "/api/v1/users/me/region",
-        data: {
-          region_id: selectedDistrict.region_id,
-        },
-        headers: authHeaders(),
-      });
-
-      const updated: User = {
-        ...user,
-        regionCode: String(selectedDistrict.region_id),
-        regionName,
-      };
-
-      saveUser(updated);
-      onSaved(updated);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "저장에 실패했습니다");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   useEffect(() => {
     getRegions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

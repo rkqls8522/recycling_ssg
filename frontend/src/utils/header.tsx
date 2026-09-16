@@ -10,3 +10,11 @@ export function authHeaders(): Record<string, string> {
     "X-Request-ID": uuidv4(),
   };
 }
+
+export function apiHeaders(): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "X-Request-ID": uuidv4(),
+  };
+}

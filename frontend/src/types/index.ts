@@ -74,18 +74,19 @@ export interface SignupResponse {
   region: RegionInfo | null;
   created_at: string;
 }
+export interface UserResponse {
+  user_id: number;
+  email: string;
+  region: RegionInfo | null;
+  created_at: string;
+  updated_at: string;
+}
 
 // POST /api/v1/auth/login 응답 — signup과 달리 access_token을 함께 내려준다.
 export interface LoginResponse {
   access_token: string;
   token_type: string;
-  user: {
-    user_id: number;
-    email: string;
-    region: RegionInfo | null;
-    created_at: string;
-    updated_at: string;
-  };
+  user: UserResponse;
 }
 
 export interface ApiErrorBody {

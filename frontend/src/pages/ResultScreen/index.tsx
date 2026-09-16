@@ -10,11 +10,11 @@ import type {
   FeedbackSelectCandidateResponse,
 } from "../../types";
 import {
-  authHeaders,
   buildAnalyzeResult,
   FALLBACK_GUIDELINE,
   mapDisposalSchedule,
-} from "../../api/analyze";
+} from "../PhotoCaptureScreen/useAnalyze";
+import { authHeaders } from "../../utils/header";
 import { DEMO_IMAGE, getResultMockData } from "../../api/mockData";
 import useAxios from "../../hooks/useAxios";
 import ChatDrawer from "./ChatDrawer";

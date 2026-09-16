@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
-import { FavoriteResponse } from "@/types";
-import useAxios from "@/hooks/useAxios";
 import { ChevronRightIcon, ModifyIcon } from "@/components/common/Icons";
 import { useAuthContext } from "../AuthScreen/AuthContext";
+import { useMypage } from "./useMypage";
 import BackButton from "../../components/common/BackButton";
 
 export default function MyPageScreen() {
@@ -15,38 +13,18 @@ export default function MyPageScreen() {
 
   const MOCK_POINTS = 1024;
 
+  const { favorites, loadFavorites, logout } = useMypage();
+
+  console.log("user", user);
   if (!user) return null;
 
   function handleChangeRegion() {
     navigate("/region");
   }
 
-  const {
-    data: favorites,
-    loading,
-    error,
-    refetch,
-  } = useAxios<FavoriteResponse>("", { method: "get" }, false);
-
-  async function loadFavorites() {
-    try {
-      await refetch({
-        url: "/api/favorites",
-        headers: {
-          Accept: "application/json",
-          "X-Request-ID": uuidv4(),
-        },
-      });
-    } catch (e) {
-      console.error("즐겨찾기 조회 실패:", e);
-    }
-  }
-
   useEffect(() => {
-    return () => {
-      loadFavorites();
-    };
-  }, [favorites]);
+    loadFavorites();
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-muted">
@@ -92,7 +70,7 @@ export default function MyPageScreen() {
               {user.email}
             </p>
           </div>
-          <button className="btn btn-xs btn-ghost">
+          <button className="btn btn-xs btn-ghost" onClick={logout}>
             <div className="text-sm text-white">로그아웃</div>
           </button>
         </div>
