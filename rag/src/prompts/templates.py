@@ -1,4 +1,4 @@
-from src.agents.state import VerificationSubState
+from rag.src.agents.state import VerificationSubState
 
 
 # 3. LLM NODE

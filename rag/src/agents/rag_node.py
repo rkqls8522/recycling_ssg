@@ -4,10 +4,10 @@ import json
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-from configs.config import load_config
-from src.agents.state import VerificationSubState
-from src.retrieval.retriever import get_retriever
-from src.prompts.templates import get_generate_prompt, get_judge_prompt
+from rag.configs.config import load_config
+from rag.src.agents.state import VerificationSubState
+from rag.src.retrieval.retriever import get_retriever
+from rag.src.prompts.templates import get_generate_prompt, get_judge_prompt
 
 load_dotenv()
 config = load_config()
