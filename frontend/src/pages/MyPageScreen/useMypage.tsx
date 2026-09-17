@@ -2,21 +2,23 @@ import useAxios from "@/hooks/useAxios";
 import { FavoriteResponse, RegionInfo, UserResponse } from "@/types";
 import { authHeaders } from "@/utils/header";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../AuthScreen/AuthContext";
 
 export function useMypage() {
   const navigate = useNavigate();
+  const { logout: authLogout } = useAuthContext();
 
   // 즐겨찾기 항목 가져오기
-  const { data: favorites, refetch } = useAxios<FavoriteResponse>(
-    "",
-    { method: "get" },
-    false,
-  );
+  const {
+    data: favorites,
+    loading: favoritesLoading,
+    refetch,
+  } = useAxios<FavoriteResponse>("", { method: "get" }, false);
 
   async function loadFavorites() {
     try {
       await refetch({
-        url: "/api/favorites",
+        url: "/api/v1/favorites",
         headers: authHeaders(),
       });
 
@@ -40,12 +42,12 @@ export function useMypage() {
         headers: authHeaders(),
       });
 
-      localStorage.removeItem("accessToken");
+      authLogout();
       navigate("/login", { replace: true });
     } catch (e) {
       console.error("로그아웃 실패:", e);
     }
   }
 
-  return { favorites, loadFavorites, logout };
+  return { favorites, favoritesLoading, loadFavorites, logout };
 }

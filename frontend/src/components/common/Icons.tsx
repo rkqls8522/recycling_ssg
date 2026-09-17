@@ -351,3 +351,16 @@ export function ChatbotIcon() {
     </svg>
   );
 }
+
+export function AddIcon() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      className="w-3.5 h-3.5 text-primary-foreground"
+      aria-hidden="true"
+    >
+      <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2z" />
+    </svg>
+  );
+}

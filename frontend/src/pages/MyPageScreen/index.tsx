@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRightIcon, ModifyIcon } from "@/components/common/Icons";
+import {
+  AddIcon,
+  ChevronRightIcon,
+  ModifyIcon,
+} from "@/components/common/Icons";
 import { useAuthContext } from "../AuthScreen/AuthContext";
 import { useMypage } from "./useMypage";
 import BackButton from "../../components/common/BackButton";
+import { useFavorite, CATEGORY_EMOJI, CATEGORY_COLOR } from "./useFavorite";
+import { FavoriteModal } from "./FavoriteModal";
 
 export default function MyPageScreen() {
   const { user } = useAuthContext();
@@ -13,9 +19,29 @@ export default function MyPageScreen() {
 
   const MOCK_POINTS = 1024;
 
-  const { favorites, loadFavorites, logout } = useMypage();
+  const { favorites, favoritesLoading, loadFavorites, logout } = useMypage();
+  const {
+    openModal,
+    modalOpen,
+    setModalOpen,
+    mainCategories,
+    subCategories,
+    selectedMain,
+    setSelectedMain,
+    selectedSub,
+    setSelectedSub,
+    handleAdd,
+    addLoading,
+    handleDelete,
+    deleteLoading,
+    alreadyRegistered,
+  } = useFavorite(
+    loadFavorites,
+    favorites?.items.map((item) => item.class_id),
+  );
 
-  console.log("user", user);
+  const favoritesUpdating = favoritesLoading;
+
   if (!user) return null;
 
   function handleChangeRegion() {
@@ -115,42 +141,78 @@ export default function MyPageScreen() {
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 자주 배출하는데 방법이 헷갈리는 품목을 등록해 두세요.
               </p>
-              <p className="btn btn-xs btn-ghost">+</p>
+              <button
+                onClick={openModal}
+                className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform mt-0.5 cursor-pointer"
+                aria-label="품목 추가"
+              >
+                <AddIcon />
+              </button>
             </div>
           </div>
           <div className="flex flex-col">
-            {favorites?.items.map((item, i) => {
-              return (
-                <div
-                  key={item.favorite_id}
-                  className={"flex items-center gap-3 px-4 py-3.5"}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        {item.minor_category}
-                      </p>
-                      <span
-                        className={
-                          "text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                        }
-                      >
-                        {item.major_category}
-                      </span>
+            {favoritesUpdating
+              ? [0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 px-4 py-3.5 animate-pulse"
+                  >
+                    <div className="flex-1 min-w-0 flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="w-12 h-4 rounded-full bg-muted" />
+                        <span className="w-24 h-4 rounded bg-muted" />
+                      </div>
+                      <span className="w-3 h-3 rounded bg-muted" />
                     </div>
-                    <p className="text-xs text-muted-foreground leading-snug">
-                      {/* {item.tip} */}
-                    </p>
                   </div>
-                </div>
-              );
-            })}
+                ))
+              : favorites?.items.map((item) => {
+                  return (
+                    <div
+                      key={item.favorite_id}
+                      className={"flex items-center gap-3 px-4 py-3.5"}
+                    >
+                      <div className="flex-1 min-w-0 flex justify-between">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                              CATEGORY_COLOR[item.major_category] ??
+                              "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {CATEGORY_EMOJI[item.major_category] ?? ""}{" "}
+                            {item.major_category}
+                          </span>
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {item.minor_category}
+                          </p>
+                        </div>
+                        <button
+                          className="cursor-pointer btn btn-ghost btn-xs text-gray-400"
+                          onClick={() => handleDelete(item.favorite_id)}
+                          disabled={deleteLoading}
+                        >
+                          x
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+            <FavoriteModal
+              modalOpen={modalOpen}
+              setModalOpen={setModalOpen}
+              mainCategories={mainCategories}
+              subCategories={subCategories}
+              selectedMain={selectedMain}
+              setSelectedMain={setSelectedMain}
+              selectedSub={selectedSub}
+              setSelectedSub={setSelectedSub}
+              handleAdd={handleAdd}
+              addLoading={addLoading}
+              alreadyRegistered={alreadyRegistered}
+            />
           </div>
         </div>
-
-        <p className="text-center text-[10px] text-muted-foreground pb-2">
-          분리쏙 v0.1.0 · 목업 데이터 기준
-        </p>
       </div>
     </div>
   );

@@ -104,7 +104,7 @@ export interface FavoriteResponse {
       class_id: number;
       major_category: string;
       minor_category: string;
-      created_at: Date;
+      message: string;
     },
   ];
 }
