@@ -75,9 +75,8 @@ cp .env.example .env
 | `PUBLIC_WASTE_API_SERVICE_KEY` | 없어도 서비스는 죽지 않음. 분석은 성공하되 `disposal_day: null` + 경고만 붙음 |
 | `GEMINI_API_KEY` | 없어도 서비스는 죽지 않음. "여기에 없어요" 기능만 `503 GEMINI_NOT_CONFIGURED`, 챗봇은 미리 준비된 문장으로 답변 |
 
-MySQL을 직접 쓴다면(=`STORAGE_BACKEND=s3`, 로컬 SQLite 아님) `DATABASE_URL`에
-적은 데이터베이스 자체는 미리 만들어져 있어야 합니다(테이블은 앱이 자동으로
-만들어주지만 데이터베이스 자체는 안 만들어줌):
+`DATABASE_URL`에 적은 MySQL 데이터베이스 자체는 미리 만들어져 있어야 합니다
+(테이블은 앱이 자동으로 만들어주지만 데이터베이스 자체는 안 만들어줌):
 
 ```sql
 CREATE DATABASE recycling_ssg CHARACTER SET utf8mb4;
@@ -159,7 +158,7 @@ backend/
 | 파일 | 핵심 내용 | 쉬운 설명 |
 |---|---|---|
 | `config.py` | `class Settings(BaseSettings)` | 저장소 루트의 `.env`(절대경로로 고정 — cwd가 어디든 항상 같은 파일을 봄)를 읽어 DB 주소·JWT 비밀키·S3 키·AI 키 등을 하나의 `settings` 객체로 모아준다 |
-| `database.py` | `engine`, `SessionLocal`, `Base`, `get_db()`, `check_db_connection()` | SQLAlchemy로 MySQL(또는 SQLite)에 접속하는 통로. `get_db()`는 API 함수마다 자동으로 "요청 하나당 DB 세션 하나"를 만들어주는 FastAPI 의존성(dependency) |
+| `database.py` | `engine`, `SessionLocal`, `Base`, `get_db()`, `check_db_connection()` | SQLAlchemy로 MySQL에 접속하는 통로(pytest 실행 시에만 예외적으로 SQLite 사용, `tests/conftest.py` 참고). `get_db()`는 API 함수마다 자동으로 "요청 하나당 DB 세션 하나"를 만들어주는 FastAPI 의존성(dependency) |
 | `security.py` | `hash_password`/`verify_password`, `create_access_token`/`decode_access_token`, `TokenExpiredError`/`TokenInvalidError` | 비밀번호는 **bcrypt**로 단방향 암호화, 로그인 "출입증"은 **JWT**(HS256)로 발급·검증 |
 | `deps.py` | `get_current_user(...)` | `Authorization: Bearer <토큰>` 헤더를 읽어 "이 요청을 보낸 사람이 누구인지" 확인하는 FastAPI 의존성. 토큰이 없으면 401, 깨졌으면 401, DB에 그 유저가 없으면 404 |
 | `exceptions.py` | `class AppError`, `auth_required()`/`database_error()`/`validation_error()` 등 헬퍼, `register_exception_handlers(app)` | 오류가 나면 **항상 같은 JSON 모양**(`success/code/message/details/request_id`)으로 응답하도록 통일. `SQLAlchemyError`를 잡아 항상 `503 DATABASE_ERROR`로 바꿔주는 안전망도 여기 있음(각 API가 개별적으로 안 잡아도 최종적으로 여기서 막아줌) |
@@ -228,7 +227,7 @@ backend/
 | `image_processing.py` | **사진 가공.** 업로드된 사진을 Pillow로 실제 디코딩 → EXIF 방향 보정(스마트폰 세로사진이 눕지 않게) → 긴 변이 1920px 넘으면 비율 유지한 채 축소 → JPEG(또는 WebP)로 재인코딩. 투명 PNG는 검은 배경이 아니라 흰 배경으로 합성. 디코딩 자체가 안 되면 `IMAGE_DECODE_FAILED` |
 | `image_validation.py` | 사진 가공 **이전** 단계의 가벼운 검사. 브라우저가 보낸 Content-Type이 허용 목록에 있는지, 파일이 비어있지 않은지, 용량 제한을 넘지 않는지만 빠르게 확인 |
 | `vision_client.py` | **Vision 서버**(`backend`가 아니라 `vision/` 폴더에 있는 별도 서버)와 HTTP로 통신. `predict()`가 사진을 보내고 대분류/소분류/후보 목록/BBox를 받아옴. Vision 서버가 "중앙에 물체가 없다"고 하면 `VisionNoMainObjectError`를 던져서 analyze.py가 재촬영 응답으로 바꿀 수 있게 함 |
-| `public_waste_client.py` | **행정안전부 공공데이터 API**와 통신. 서비스키가 이미 URL-encode된 상태로 발급되는 경우가 많아서 `_decoded_service_key()`가 먼저 `unquote()`한 뒤 httpx가 한 번만 인코딩하게 함(이중 인코딩 버그 방지). `pick_best_item()`이 응답 여러 건 중 우리가 찾는 품목과 가장 비슷한 걸 고름 |
+| `public_waste_client.py` | **행정안전부 공공데이터 API**와 통신. 서비스키가 이미 URL-encode된 상태로 발급되는 경우가 많아서 `_decoded_service_key()`가 먼저 `unquote()`한 뒤 httpx가 한 번만 인코딩하게 함(이중 인코딩 버그 방지). 실제 응답은 품목명이 아니라 **지역당 한 행**이고 폐기물 종류별로 컬럼 그룹(`FOD_WST_`/`LF_WST_`/`RCYCL_`/`TMPRY_BULK_WASTE_`)이 나뉘어 있어서, `_GROUP_PREFIX_BY_MAJOR_CATEGORY`로 우리 12개 대분류를 가장 가까운 그룹에 매핑해 그 그룹의 컬럼만 읽음(`extract_disposal_fields()`) |
 | `disposal_service.py` | 위 `public_waste_client`를 감싸서, "이 폐기물 종류 + 이 지역"을 조합해 최종 배출 정보를 만듦. `get_disposal_info_or_raise()`(직접 조회 API용, 실패하면 오류)와 `get_disposal_info_or_warn()`(이미지 분석용, 실패해도 분석 자체는 성공시키고 `warnings`만 남김) 두 가지 버전 제공 |
 | `gemini_service.py` | **Google Gemini**와 통신. `reanalyze_image()`는 "후보 목록에도 없어요" 눌렀을 때 사진을 다시 분석해 86개 클래스 중 하나로 강제 매핑(허용 목록 밖 답은 `GEMINI_BAD_RESPONSE`). `generate_text()`는 챗봇 답변 생성용. 키가 없으면 호출 전에 `GeminiNotConfiguredError` |
 | `__init__.py` | - | 빈 파일. 패키지 표시용 |
@@ -286,8 +285,8 @@ uv run pytest tests/ -q
 | `test_database_error_contract.py` | DB 연결이 끊겨도 `500`이 아니라 정해진 대로 `503 DATABASE_ERROR`가 나가는지 |
 | `test_services_unit.py` | 개별 부품 단위 검사 — 공공데이터 응답 해석, 서비스키 디코딩, Gemini 응답 파싱 등 |
 
-> `.pytest_cache/`, `dev.sqlite3`, `__pycache__/` 폴더·파일은 실행하면 자동
-> 생성되는 임시 산출물입니다. 신경 쓰지 않아도 되고, 지워도 다시 생깁니다.
+> `.pytest_cache/`, `__pycache__/` 폴더는 실행하면 자동 생성되는 임시
+> 산출물입니다. 신경 쓰지 않아도 되고, 지워도 다시 생깁니다.
 
 ---
 
@@ -298,7 +297,6 @@ uv run pytest tests/ -q
 | `main.py` | **서버의 시작점.** `api/`의 라우터 9개를 전부 조립하고, `RequestIDMiddleware`·CORS·오류 처리 핸들러를 등록하고, 서버가 켜질 때(`lifespan`) DB 표를 만들고 초기 데이터를 채우는 일까지 지휘한다. `uvicorn main:app` 명령으로 이 파일을 실행하면 서버가 뜬다 |
 | `pyproject.toml` | 이 프로그램을 돌리는 데 필요한 라이브러리(부품) 목록과 최소 버전. `uv sync`가 이 목록을 보고 필요한 것들을 설치한다 (FastAPI, SQLAlchemy, boto3, Pillow, PyJWT, bcrypt, google-genai 등) |
 | `test_image.jpg` | 개발 중 실제 사진으로 분석 흐름을 확인해볼 때 쓰는 샘플 이미지(스테인리스 주전자 사진) |
-| `dev.sqlite3` | 로컬 개발용 임시 데이터베이스 파일(MySQL 대신 씀). 실행하면 자동 생성되는 파일이라 지워도 된다 |
 
 > 💡 **`.env`/`.env.example`은 `backend/` 안이 아니라 저장소 루트**
 > (`recycling_ssg/.env`)에 있습니다. `core/config.py`가 실행 위치(cwd)와

@@ -1,7 +1,7 @@
 ﻿# recycling_ssg - 로컬 개발 서버 2개(Backend :8000, Vision :8100) 기동 (PowerShell)
 #
-# AWS/MySQL/외부 API 키 없이도 전체 흐름이 동작하도록 개발용 설정을 사용한다:
-#   - DB: SQLite 파일 (backend\dev.sqlite3)
+# DB는 항상 저장소 루트 .env 의 DATABASE_URL(MySQL)을 그대로 사용한다 — 이 스크립트가
+# 별도로 덮어쓰지 않는다. 그 외 개발 편의 설정만 기본값을 주입한다:
 #   - 이미지 저장: 로컬 디스크 (.local_storage)  <- STORAGE_BACKEND=local
 #   - Vision: 실제 YOLO 체크포인트
 #
@@ -109,13 +109,16 @@ $visionProc = Start-Process -FilePath $Py `
     -PassThru -WindowStyle Hidden
 
 # --- Backend (:8000) ---
-$dbUrl        = if ($env:DATABASE_URL) { $env:DATABASE_URL } else { "sqlite:///./dev.sqlite3" }
+# DATABASE_URL은 이 스크립트가 설정하지 않고 core/config.py가 저장소 루트
+# .env의 MySQL DATABASE_URL을 읽도록 비워둔다. 그런데 pydantic-settings는
+# OS 환경변수를 .env보다 항상 우선시키므로, 상위(부모) 프로세스 환경에 남아있는
+# 값이 있으면 그게 이겨버린다 -- 명시적으로 지워서 항상 .env가 이기게 한다.
+Remove-Item Env:\DATABASE_URL -ErrorAction SilentlyContinue
 $jwtSecret    = if ($env:JWT_SECRET_KEY) { $env:JWT_SECRET_KEY } else { "dev-only-insecure-secret-please-change-me-32bytes+" }
 $storage      = if ($env:STORAGE_BACKEND) { $env:STORAGE_BACKEND } else { "local" }
 $storageDir   = if ($env:LOCAL_STORAGE_DIR) { $env:LOCAL_STORAGE_DIR } else { "../.local_storage" }
 $visionUrl    = if ($env:VISION_SERVER_BASE_URL) { $env:VISION_SERVER_BASE_URL } else { "http://127.0.0.1:8100/internal/v1" }
 
-$env:DATABASE_URL           = $dbUrl
 $env:JWT_SECRET_KEY         = $jwtSecret
 $env:STORAGE_BACKEND        = $storage
 $env:LOCAL_STORAGE_DIR      = $storageDir

@@ -20,7 +20,7 @@ class FavoriteListResponse(BaseModel):
 
 
 class FavoriteCreateRequest(BaseModel):
-    class_id: int = Field(gt=0)
+    class_id: int = Field(ge=0)
 
 
 class FavoriteCreateResponse(BaseModel):

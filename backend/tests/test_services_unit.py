@@ -20,28 +20,34 @@ def test_decoded_service_key_handles_url_encoded_and_plain(monkeypatch):
     assert public_waste_client._decoded_service_key() == ""
 
 
-def test_extract_disposal_fields_prefers_first_matching_candidate_key():
-    item = {"EMISN_DOW_NM": "화,목", "EMISN_BEGIN_TIME": "18:00", "EMISN_END_TIME": "24:00"}
+def test_extract_disposal_fields_always_reads_recycling_group_regardless_of_class():
+    # Real API shape: one row per region, "+"-joined day abbreviations, one
+    # column group per waste category (섹션 15.1). Every one of our 86
+    # classes is treated as recyclable, so only RCYCL_* is ever read --
+    # other groups on the same row (e.g. LF_WST_*) must be ignored.
+    item = {
+        "RCYCL_EMSN_DOW": "화+목",
+        "RCYCL_EMSN_BGNG_TM": "19:00",
+        "RCYCL_EMSN_END_TM": "21:00",
+        "RCYCL_EMSN_MTHD": "투명 봉투에 담아 배출",
+        "LF_WST_EMSN_DOW": "월+수+금",
+    }
     fields = public_waste_client.extract_disposal_fields(item)
-    assert fields["disposal_day"] == "화,목"
-    assert fields["start_time"] == "18:00"
-    assert fields["end_time"] == "24:00"
-    assert fields["disposal_method"] is None
+    assert fields["disposal_day"] == "화, 목"
+    assert fields["start_time"] == "19:00"
+    assert fields["end_time"] == "21:00"
+    assert fields["disposal_method"] == "투명 봉투에 담아 배출"
 
 
-def test_pick_best_item_matches_minor_category_over_major():
-    items = [
-        {"ITEM_NM": "플라스틱류 일반"},
-        {"ITEM_NM": "플라스틱류 욕실용품"},
-    ]
-    best = public_waste_client.pick_best_item(items, major_category="플라스틱류", minor_category="욕실용품")
-    assert best["ITEM_NM"] == "플라스틱류 욕실용품"
+def test_extract_disposal_fields_missing_recycling_columns_returns_all_none():
+    item = {"LF_WST_EMSN_DOW": "화+목"}
+    fields = public_waste_client.extract_disposal_fields(item)
+    assert fields == {"disposal_day": None, "start_time": None, "end_time": None, "disposal_method": None}
 
 
-def test_pick_best_item_falls_back_to_first_when_no_match():
-    items = [{"ITEM_NM": "종이류"}, {"ITEM_NM": "캔류"}]
-    best = public_waste_client.pick_best_item(items, major_category="유리병", minor_category="맥주병")
-    assert best == items[0]
+def test_pick_best_item_returns_the_single_region_row():
+    items = [{"SGG_NM": "종로구"}]
+    assert public_waste_client.pick_best_item(items) == items[0]
 
 
 def test_gemini_parse_class_id_success_and_failure():

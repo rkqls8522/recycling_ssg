@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import type { ClassificationResult } from "../types"
+import type { ClassificationResult } from "../../types"
 
 interface Message {
   id: number

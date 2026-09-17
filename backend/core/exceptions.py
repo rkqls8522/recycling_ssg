@@ -133,6 +133,15 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
         request_id = _request_id(request)
+        logger.warning(
+            "%s %s -> %d %s: %s [%s]",
+            request.method,
+            request.url.path,
+            exc.status_code,
+            exc.code,
+            exc.message,
+            request_id,
+        )
         response = JSONResponse(
             status_code=exc.status_code,
             content=_error_body(
@@ -174,6 +183,25 @@ def register_exception_handlers(app: FastAPI) -> None:
         request: Request, exc: StarletteHTTPException
     ) -> JSONResponse:
         request_id = _request_id(request)
+        if exc.status_code == 404:
+            # Almost always means the route path itself doesn't exist (typo,
+            # missing /api/v1 prefix, trailing slash, wrong method, ...) as
+            # opposed to a business-logic 404 raised via AppError.
+            logger.warning(
+                "%s %s -> 404 (no matching route) [%s]",
+                request.method,
+                request.url.path,
+                request_id,
+            )
+        else:
+            logger.warning(
+                "%s %s -> %d %s [%s]",
+                request.method,
+                request.url.path,
+                exc.status_code,
+                exc.detail,
+                request_id,
+            )
         code = "AUTH_REQUIRED" if exc.status_code == 401 else "INVALID_REQUEST"
         message = (
             exc.detail
@@ -221,6 +249,12 @@ def register_exception_handlers(app: FastAPI) -> None:
         request: Request, exc: Exception
     ) -> JSONResponse:
         request_id = _request_id(request)
+        logger.exception(
+            "unhandled exception on %s %s [%s]",
+            request.method,
+            request.url.path,
+            request_id,
+        )
         response = JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=_error_body(

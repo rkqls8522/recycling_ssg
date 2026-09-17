@@ -30,17 +30,12 @@ _RESULT_CODE_AUTH_ERROR = {
     "UNREGISTERED_IP_ERROR",
 }
 
-# 응답 아이템의 실제 컬럼명이 배포 기관/버전에 따라 달라질 수 있어, 후보
-# 목록 중 처음으로 매칭되는 키를 사용한다.
-_FIELD_CANDIDATES: dict[str, list[str]] = {
-    "sido": ["SIDO_NM", "sidoNm", "시도명"],
-    "sgg": ["SGG_NM", "sggNm", "시군구명"],
-    "item": ["ITEM_NM", "PBLIC_WSTE_NM", "itemNm", "품목명", "품목"],
-    "day": ["EMISN_DOW_NM", "COLT_DOW_NM", "DSPOS_DOW_NM", "emisnDowNm", "배출요일", "수거요일"],
-    "start_time": ["EMISN_BEGIN_TIME", "COLT_BEGIN_TIME", "emisnBeginTime", "배출시작시간"],
-    "end_time": ["EMISN_END_TIME", "COLT_END_TIME", "emisnEndTime", "배출종료시간"],
-    "method": ["EMISN_MTH_CN", "DSPOS_MTH_CN", "emisnMthCn", "배출방법", "비고"],
-}
+# 실제 응답은 "품목명으로 찾는 여러 행"이 아니라 지역 하나당 한 행으로,
+# 폐기물 종류별 컬럼 그룹(음식물/생활쓰레기/재활용/대형폐기물)이 나뉘어 있다
+# (예: LF_WST_EMSN_DOW, RCYCL_EMSN_BGNG_TM, ...) -- 실제 발급받은 서비스키로
+# 호출해 확인한 컬럼 구조 기준(2026-09-16). 우리 서비스는 86개 클래스 전부를
+# 재활용품으로 취급하므로 대분류와 무관하게 항상 재활용(RCYCL) 그룹만 읽는다.
+_GROUP_PREFIX = "RCYCL"
 
 
 def _decoded_service_key() -> str:
@@ -160,32 +155,29 @@ def fetch_items(*, sgg_name: str) -> list[dict]:
     return items
 
 
-def _get_field(item: dict, field: str) -> str | None:
-    for key in _FIELD_CANDIDATES[field]:
-        if key in item and item[key] not in (None, ""):
-            return str(item[key]).strip()
-    return None
-
-
-def pick_best_item(items: list[dict], *, major_category: str, minor_category: str) -> dict:
-    """품목명이 있는 필드를 대/소분류 문자열과 비교해 가장 근접한 행을 고른다.
-    소분류 일치를 최우선으로, 그다음 대분류 일치를 시도하고, 매칭되는 것이
-    없으면 첫 번째 행을 사용한다."""
-    if minor_category:
-        for item in items:
-            if minor_category in (_get_field(item, "item") or ""):
-                return item
-    if major_category:
-        for item in items:
-            if major_category in (_get_field(item, "item") or ""):
-                return item
+def pick_best_item(items: list[dict]) -> dict:
+    """The API returns one row per region (sgg_name), not one row per waste
+    item, so there is no item-name field to match against -- just take the
+    (typically only) row for the requested region."""
     return items[0]
 
 
+def _format_disposal_day(raw: str | None) -> str | None:
+    """Raw values are "+"-joined day abbreviations (e.g. "월+화+수"); the
+    spec's documented format is comma-separated (e.g. "화, 목")."""
+    if not raw:
+        return None
+    return ", ".join(part for part in raw.split("+") if part)
+
+
 def extract_disposal_fields(item: dict) -> dict[str, str | None]:
+    def field(suffix: str) -> str | None:
+        value = item.get(f"{_GROUP_PREFIX}_EMSN_{suffix}")
+        return str(value).strip() if value not in (None, "") else None
+
     return {
-        "disposal_day": _get_field(item, "day"),
-        "start_time": _get_field(item, "start_time"),
-        "end_time": _get_field(item, "end_time"),
-        "disposal_method": _get_field(item, "method"),
+        "disposal_day": _format_disposal_day(field("DOW")),
+        "start_time": field("BGNG_TM"),
+        "end_time": field("END_TM"),
+        "disposal_method": field("MTHD"),
     }

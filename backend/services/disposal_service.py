@@ -22,12 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 def _lookup(waste_class: WasteClass, region: Region) -> dict[str, str | None]:
+    # 86개 클래스 전부를 재활용품으로 취급하므로 waste_class 자체는 조회에
+    # 쓰이지 않는다 -- 시그니처에는 남겨서 호출부(analyze/disposal API)가
+    # "이 폐기물 종류 + 이 지역" 조합이라는 의도를 그대로 드러내게 한다.
     items = public_waste_client.fetch_items(sgg_name=region.sgg_name)
-    best = public_waste_client.pick_best_item(
-        items,
-        major_category=waste_class.major_category,
-        minor_category=waste_class.minor_category,
-    )
+    best = public_waste_client.pick_best_item(items)
     return public_waste_client.extract_disposal_fields(best)
 
 
