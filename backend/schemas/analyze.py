@@ -7,6 +7,18 @@ from pydantic import BaseModel
 from schemas.common import CandidateScoreOut, RegionOut
 
 
+class NationalRuleOut(BaseModel):
+    source: str
+    method: str | None = None
+
+
+class RegionRuleOut(BaseModel):
+    region: str
+    source_url: str
+    exception_type: str
+    method: str
+
+
 class AnalyzeSuccessResponse(BaseModel):
     status: Literal["SUCCESS"] = "SUCCESS"
     major_category: str
@@ -14,6 +26,8 @@ class AnalyzeSuccessResponse(BaseModel):
     candidate_scores: list[CandidateScoreOut]
     user_region: RegionOut
     disposal_day: str | None = None
+    national_rule: NationalRuleOut | None = None
+    region_rule: RegionRuleOut | None = None
     image_id: int
     feedback_id: int
     warnings: list[str] = []

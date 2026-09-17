@@ -49,6 +49,15 @@ export interface DisposalGuideline {
   specialInstructions?: string;
   source: string;
   sourceUrl: string;
+  // RAG(node2) 결과를 "전국 공통 기준" / "지자체 추가 안내"로 나눠 보여주기 위한 구조화 필드.
+  // /analyze(RAG 연동) 흐름에서만 채워짐 — mock이나 /disposal/schedule 폴백 흐름에서는 null/undefined.
+  nationalRule?: { source: string; method: string } | null;
+  regionRule?: {
+    region: string;
+    method: string;
+    sourceLabel: string;
+    sourceUrl: string;
+  } | null;
 }
 
 export type Screen = "auth" | "region" | "home" | "classifying" | "result";
@@ -124,6 +133,18 @@ export interface CandidateScore {
   score: number;
 }
 
+export interface NationalRule {
+  source: string;
+  method: string | null;
+}
+
+export interface RegionRule {
+  region: string;
+  source_url: string;
+  exception_type: string;
+  method: string;
+}
+
 export interface AnalyzeSuccessBody {
   status: "SUCCESS";
   major_category: string;
@@ -131,6 +152,8 @@ export interface AnalyzeSuccessBody {
   candidate_scores: CandidateScore[];
   user_region: RegionInfo;
   disposal_day: string | null;
+  national_rule: NationalRule | null;
+  region_rule: RegionRule | null;
   image_id: number;
   feedback_id: number;
   warnings: string[];

@@ -6,13 +6,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_upstage import UpstageEmbeddings
+from rag.src.vectorstore.pinecone_vectorstore import upsert_documents  
 
 
 RAG_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = RAG_ROOT / "data" / "metadata"
 
 sys.path.append(str(RAG_ROOT))
-from src.vectorstore.pinecone_vectorstore import upsert_documents  
 
 load_dotenv()
 
@@ -40,9 +40,13 @@ def load_national_law_documents(path: Path) -> list[Document]:
                 "source": data["source"]["organization"],
                 "region": "전국",
                 "item": item["item"],
+                "method": item.get("method"),
+                "byeolpyo1_item": item.get("byeolpyo1_item"),
+                "byeolpyo1_method": item.get("byeolpyo1_method"),
                 "major_category": item.get("major_category"),
                 "minor_category": item.get("minor_category"),
             }
+
             documents.append(
                 Document(page_content=page_content, metadata=clean_metadata(metadata))
             )
