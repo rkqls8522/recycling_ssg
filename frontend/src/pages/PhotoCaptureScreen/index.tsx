@@ -5,6 +5,7 @@ import AnalyzingView from "./AnalyzingView";
 import ResultFailView from "./ResultFailView";
 import AgentThinkingView from "./AgentThinkingView";
 import { useAnalyze } from "./useAnalyze";
+import AnalyzingView2 from "./AnalyzingView2";
 
 export default function PhotoCaptureScreen() {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ export default function PhotoCaptureScreen() {
       )}
 
       {captureState === "analyzing" && previewUrl && (
-        <AnalyzingView
+        <AnalyzingView2
           previewUrl={previewUrl}
           completedSteps={completedSteps}
           currentStep={currentStep}
