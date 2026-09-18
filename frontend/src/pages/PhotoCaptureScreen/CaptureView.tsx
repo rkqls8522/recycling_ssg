@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import BackButton from "../../components/common/BackButton";
 import FlowIndicator from "../../components/common/FlowIndicator";
 import { UserIcon } from "../../components/common/Icons";
+import LiveViewfinder, { type LiveViewfinderHandle } from "./LiveViewfinder";
 
 interface Props {
   previewUrl: string | null;
@@ -48,6 +49,9 @@ export default function CaptureView({
 }: Props) {
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
+  const liveViewfinderRef = useRef<LiveViewfinderHandle>(null);
+  // 실시간 카메라(getUserMedia)를 못 쓰면(권한 거부, 미지원 브라우저 등) 기존 방식(OS 카메라 열기)으로 대체
+  const [liveCameraUnavailable, setLiveCameraUnavailable] = useState(false);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -112,8 +116,8 @@ export default function CaptureView({
                   </svg>
                 </button>
               </>
-            ) : (
-              /* Empty viewfinder with guide */
+            ) : liveCameraUnavailable ? (
+              /* Empty viewfinder with guide (실시간 카메라를 못 쓸 때의 대체 화면) */
               <div
                 className="relative flex flex-col items-center justify-center py-12 px-6 cursor-pointer w-full h-full"
                 onClick={() => cameraRef.current?.click()}
@@ -151,6 +155,13 @@ export default function CaptureView({
                   또는 하단에서 갤러리 선택
                 </p>
               </div>
+            ) : (
+              /* 실시간 카메라 + 가이드 프레임 자동 인식 (GrabCut) */
+              <LiveViewfinder
+                ref={liveViewfinderRef}
+                onCapture={onFileSelected}
+                onUnavailable={() => setLiveCameraUnavailable(true)}
+              />
             )}
           </div>
         </div>
@@ -163,7 +174,7 @@ export default function CaptureView({
           <div className="flex flex-col gap-2">
             {[
               { icon: "🎯", tip: "물체가 화면 중앙에 오도록 촬영하세요" },
-              { icon: "💡", tip: "밝은 환경에서 찍으면 인식률이 높아집니다" },
+              { icon: "💡", tip: "단순한 단색 배경에서 촬영하면 인식률이 높아집니다" },
               { icon: "📐", tip: "물체 전체가 프레임 안에 들어오게 해주세요" },
             ].map(({ icon, tip }) => (
               <div key={tip} className="flex items-start gap-2.5">
@@ -194,45 +205,6 @@ export default function CaptureView({
               </button>
             </div>
           </div>
-        )}
-
-        {/* Gallery option */}
-        {!previewUrl && (
-          <button
-            onClick={() => galleryRef.current?.click()}
-            className="flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl border border-border bg-card text-sm font-medium text-foreground active:bg-muted transition-all"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              className="w-5 h-5"
-              aria-hidden="true"
-            >
-              <rect
-                x="3"
-                y="3"
-                width="18"
-                height="18"
-                rx="2"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <circle
-                cx="8.5"
-                cy="8.5"
-                r="1.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M21 15l-5-5L5 21"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-              />
-            </svg>
-            갤러리에서 선택
-          </button>
         )}
 
         {/* Hidden inputs */}
@@ -285,7 +257,7 @@ export default function CaptureView({
               분석하기
             </button>
             <button
-              onClick={() => cameraRef.current?.click()}
+              onClick={onReset}
               className="w-full py-3 text-sm font-medium text-muted-foreground flex items-center justify-center gap-1.5 active:opacity-60 transition-opacity"
             >
               <svg
@@ -304,33 +276,78 @@ export default function CaptureView({
             </button>
           </>
         ) : (
-          /* Big shutter button when no photo */
-          <button
-            onClick={() => cameraRef.current?.click()}
-            className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-semibold text-base shadow-lg shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2.5"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              className="w-6 h-6"
-              aria-hidden="true"
+          <>
+            {/* 촬영하기: 라이브 카메라면 뷰파인더의 촬영을, 폴백이면 OS 카메라를 트리거 */}
+            <button
+              onClick={() => {
+                if (liveCameraUnavailable) {
+                  cameraRef.current?.click();
+                } else {
+                  liveViewfinderRef.current?.capture();
+                }
+              }}
+              className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-semibold text-base shadow-lg shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2.5"
             >
-              <path
-                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-              />
-              <circle
-                cx="12"
-                cy="13"
-                r="4"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-            </svg>
-            촬영하기
-          </button>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="w-6 h-6"
+                aria-hidden="true"
+              >
+                <path
+                  d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+                <circle
+                  cx="12"
+                  cy="13"
+                  r="4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              촬영하기
+            </button>
+
+            {/* 갤러리에서 선택 */}
+            <button
+              onClick={() => galleryRef.current?.click()}
+              className="flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl border border-border bg-card text-sm font-medium text-foreground active:bg-muted transition-all"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="w-5 h-5"
+                aria-hidden="true"
+              >
+                <rect
+                  x="3"
+                  y="3"
+                  width="18"
+                  height="18"
+                  rx="2"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <circle
+                  cx="8.5"
+                  cy="8.5"
+                  r="1.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M21 15l-5-5L5 21"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              갤러리에서 선택
+            </button>
+          </>
         )}
       </div>
     </div>
