@@ -12,6 +12,9 @@ failures differently depending on the caller:
 from __future__ import annotations
 
 import logging
+import os
+
+import requests
 
 from core.exceptions import AppError
 from models.region import Region
@@ -49,3 +52,28 @@ def get_disposal_info_or_warn(
     except Exception:
         logger.exception("unexpected disposal info lookup failure during analyze")
         return None, ["PUBLIC_WASTE_UNAVAILABLE"]
+
+
+
+RAG_SERVICE_URL = os.getenv("RAG_SERVICE_URL", "http://localhost:8001/rule_node")
+
+
+def get_rule_info_or_warn(
+    classification_payload: dict,
+) -> tuple[dict | None, dict | None, list[str]]:
+    """RAG 서비스(node2)에 배출방법(national_rule/region_rule)을 조회.
+
+    Returns (national_rule, region_rule, warnings). Never raises —
+    disposal_day 조회와 동일하게 best-effort로 동작 (섹션 15.1 패턴).
+    """
+    try:
+        response = requests.post(RAG_SERVICE_URL, json=classification_payload, timeout=5)
+        response.raise_for_status()
+        disposal_result = response.json().get("disposal_result", {})
+        return disposal_result.get("national_rule"), disposal_result.get("region_rule"), []
+    except requests.RequestException:
+        logger.warning("rule info (RAG service) lookup failed during analyze, degrading gracefully")
+        return None, None, ["RAG_SERVICE_UNAVAILABLE"]
+    except Exception:
+        logger.exception("unexpected rule info lookup failure during analyze")
+        return None, None, ["RAG_SERVICE_UNAVAILABLE"]

@@ -27,7 +27,7 @@ from models.waste_class import WasteClass
 from schemas.analyze import AnalyzeRetakeResponse, AnalyzeSuccessResponse
 from schemas.common import RegionOut
 from services import image_processing, storage, vision_client
-from services.disposal_service import get_disposal_info_or_warn
+from services.disposal_service import get_disposal_info_or_warn, get_rule_info_or_warn
 from services.image_validation import validate_and_read
 
 logger = logging.getLogger(__name__)
@@ -134,12 +134,32 @@ def analyze_image(
     waste_class = db.get(WasteClass, top1.class_id)
     disposal_day, warnings = get_disposal_info_or_warn(waste_class, region) if waste_class else (None, [])
 
+    # Best-effort disposal-method lookup via RAG 서비스 (node2).
+    region_out = RegionOut.model_validate(region)
+    classification_payload = {
+        "status": "SUCCESS",
+        "major_category": prediction.major_category,
+        "minor_category": prediction.minor_category,
+        "candidate_scores": [
+            {"class_id": c.class_id, "category": "", "score": c.score} for c in candidates
+        ],
+        "user_region": region_out.model_dump(),
+        "disposal_day": disposal_day,
+        "image_id": image_row.image_id,
+        "feedback_id": feedback_row.feedback_id,
+        "warnings": warnings,
+    }
+    national_rule, region_rule, rule_warnings = get_rule_info_or_warn(classification_payload)
+    warnings = warnings + rule_warnings
+
     return AnalyzeSuccessResponse(
         major_category=prediction.major_category,
         minor_category=prediction.minor_category,
         candidate_scores=candidates,
-        user_region=RegionOut.model_validate(region),
+        user_region=region_out,
         disposal_day=disposal_day,
+        national_rule=national_rule,
+        region_rule=region_rule,
         image_id=image_row.image_id,
         feedback_id=feedback_row.feedback_id,
         warnings=warnings,
