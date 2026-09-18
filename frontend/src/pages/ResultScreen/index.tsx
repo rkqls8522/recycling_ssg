@@ -95,7 +95,7 @@ export default function ResultScreen() {
         </div>
 
         {/* Guidelines Card */}
-        <div className="bg-card rounded-2xl border border-border overflow-hidden">
+        <div className="bg-card rounded-2xl border border-border scrollbar-thin overflow-auto ">
           <div className="px-5 pt-5 pb-4 border-b border-border">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
               배출 방법
