@@ -9,6 +9,7 @@ class AgentState(TypedDict):
     img_url : str                 # llm 분류위한 이미지 url
     is_rag_result : bool          # 4번 노드에서 판단 위한 값 (loop의 여부)
     final_answer_list : List[str] # 배출 방법
+    failure_reason: str
 
 class VerificationSubState(TypedDict):
     category: str                            # 대분류
