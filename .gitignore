@@ -1,7 +1,3 @@
-# ============================================
-# Python
-# ============================================
-
 # Python virtual environment
 .venv/
 
@@ -18,80 +14,48 @@ build/
 dist/
 *.egg-info/
 
-
-# ============================================
 # Test / Coverage
-# ============================================
-
 .coverage
 .coverage.*
 htmlcov/
 coverage.xml
 
-
-# ============================================
 # Environment variables
-# ============================================
-
 .env
 .env.*
 !.env.example
 
-
-# ============================================
 # IDE
-# ============================================
-
 .vscode/
 .idea/
 
-
-# ============================================
-# React / Frontend
-# ============================================
-
+# React
+node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
-
-# ============================================
 # Jupyter
-# ============================================
-
 .ipynb_checkpoints/
 
-
-# ============================================
 # Logs
-# ============================================
-
 *.log
 
-
-# ============================================
 # Local DB
-# ============================================
-
 *.db
 *.sqlite
 *.sqlite3
 
+# Local dev runtime artifacts
+.local_storage/
+.dev-logs/
 
-# ============================================
-# AI Training Outputs
-# ============================================
-
+# AI training outputs
 runs/
 wandb/
 mlruns/
 
-
-# ============================================
-# AI Model Weights / Exported Models
-# ============================================
-
-# PyTorch / YOLO
+# AI model weights
 *.pt
 *.pth
 *.ckpt
@@ -131,6 +95,16 @@ data/
 
 # Detailed OpenCV augmentation generation logs
 **/report/summary/opencv_generation_*.csv
+# Large AI datasets/training runs under data/ -- only data/taxonomy/ (the
+# shared regions.json / waste_classes.json the API and Vision service both
+# read) is ever meant to be committed. Everything else under data/ (raw
+# uploads, processed/, train/val splits, etc.) is large and machine-local.
+data/*
+!data/taxonomy/
+!data/taxonomy/**
+
+# Local-only data backup archive (26GB) -- never meant to be pushed on any branch.
+/data.zip
 
 
 # ============================================
@@ -154,7 +128,5 @@ data/
 
 # ============================================
 # OS
-# ============================================
-
 .DS_Store
 Thumbs.db
