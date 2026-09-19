@@ -23,7 +23,7 @@ class VisionSettings(BaseSettings):
     # Point this at your fine-tuned recycling checkpoint, e.g. a copy of
     # ai/models/yolo/01_experiment_augmentation/runs/<winning_run>/weights/best.pt.
     # Intentionally does NOT default to the untrained COCO weights/yolo26n.pt --
-    # that would silently return COCO class indices instead of the 86-class
+    # that would silently return COCO class indices instead of the 17-class
     # recycling taxonomy and corrupt every downstream class_id.
     model_path: str = "weights/best.pt"
     model_version: str = "yolo-recycling-v1"

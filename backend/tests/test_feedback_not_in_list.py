@@ -13,7 +13,7 @@ from models.feedback_candidate import FeedbackCandidate
 from models.image import Image
 from services import gemini_service, storage
 
-STEEL_FRYPAN = 7  # 고철류/프라이팬
+STEEL_SCRAP = 0  # 고철류/고철
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def seeded_feedback(db_session, signup_and_login):
     feedback = Feedback(
         user_id=user_id,
         image_id=image.image_id,
-        predicted_class_id=77,  # 플라스틱류/욕실용품
+        predicted_class_id=4,  # 비닐/비닐
         predicted_score=0.62,
         bbox_x1=0.1,
         bbox_y1=0.1,
@@ -38,7 +38,7 @@ def seeded_feedback(db_session, signup_and_login):
     db_session.add(feedback)
     db_session.flush()
     db_session.add(
-        FeedbackCandidate(feedback_id=feedback.feedback_id, class_id=77, score=0.62, rank=1)
+        FeedbackCandidate(feedback_id=feedback.feedback_id, class_id=4, score=0.62, rank=1)
     )
     db_session.commit()
 
@@ -55,7 +55,7 @@ def test_not_in_list_success_sets_gemini_correction(
 ):
     headers, feedback_id = seeded_feedback
     monkeypatch.setattr(
-        gemini_service, "reanalyze_image", lambda **kwargs: STEEL_FRYPAN
+        gemini_service, "reanalyze_image", lambda **kwargs: STEEL_SCRAP
     )
 
     resp = client.post(f"/api/v1/feedback/{feedback_id}/not-in-list", headers=headers)
@@ -64,15 +64,15 @@ def test_not_in_list_success_sets_gemini_correction(
     body = resp.json()
     assert body["feedback_id"] == feedback_id
     assert body["is_correct"] is False
-    assert body["final_class_id"] == STEEL_FRYPAN
+    assert body["final_class_id"] == STEEL_SCRAP
     assert body["correction_source"] == "GEMINI"
     assert body["major_category"] == "고철류"
-    assert body["minor_category"] == "프라이팬"
+    assert body["minor_category"] == "고철"
     assert body["message"] == "추가 이미지 분석 결과로 수정되었습니다."
 
     row = db_session.get(Feedback, feedback_id)
     db_session.refresh(row)
-    assert row.final_class_id == STEEL_FRYPAN
+    assert row.final_class_id == STEEL_SCRAP
     assert row.is_correct is False
     assert row.correction_source == "GEMINI"
     # feedback_candidates is an analysis-time snapshot: unchanged (섹션 9.2/9.3).
@@ -168,7 +168,7 @@ def test_not_in_list_rejects_already_completed(
     client, seeded_feedback, fake_s3_download, monkeypatch
 ):
     headers, feedback_id = seeded_feedback
-    monkeypatch.setattr(gemini_service, "reanalyze_image", lambda **kwargs: STEEL_FRYPAN)
+    monkeypatch.setattr(gemini_service, "reanalyze_image", lambda **kwargs: STEEL_SCRAP)
 
     first = client.post(f"/api/v1/feedback/{feedback_id}/not-in-list", headers=headers)
     assert first.status_code == 200
@@ -182,7 +182,7 @@ def test_not_in_list_ownership_and_auth(
     client, seeded_feedback, fake_s3_download, signup_and_login, monkeypatch
 ):
     headers, feedback_id = seeded_feedback
-    monkeypatch.setattr(gemini_service, "reanalyze_image", lambda **kwargs: STEEL_FRYPAN)
+    monkeypatch.setattr(gemini_service, "reanalyze_image", lambda **kwargs: STEEL_SCRAP)
 
     anonymous = client.post(f"/api/v1/feedback/{feedback_id}/not-in-list")
     assert anonymous.status_code == 401

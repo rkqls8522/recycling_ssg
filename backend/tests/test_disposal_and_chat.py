@@ -16,7 +16,7 @@ def test_disposal_schedule_requires_region_then_succeeds(client, signup_and_logi
     assert unknown_class.status_code == 404
     assert unknown_class.json()["code"] == "CLASS_NOT_FOUND"
 
-    no_region = client.get("/api/v1/disposal/schedule", params={"class_id": 22}, headers=headers)
+    no_region = client.get("/api/v1/disposal/schedule", params={"class_id": 6}, headers=headers)
     assert no_region.status_code == 409
     assert no_region.json()["code"] == "USER_REGION_REQUIRED"
 
@@ -33,7 +33,7 @@ def test_disposal_schedule_requires_region_then_succeeds(client, signup_and_logi
         },
     )
 
-    ok = client.get("/api/v1/disposal/schedule", params={"class_id": 22}, headers=headers)
+    ok = client.get("/api/v1/disposal/schedule", params={"class_id": 6}, headers=headers)
     assert ok.status_code == 200
     body = ok.json()
     assert body["disposal_day"] == "화, 목"
@@ -49,7 +49,7 @@ def test_chat_ownership_and_region_checks(client, db_session, signup_and_login, 
     feedback = Feedback(
         user_id=user_id,
         image_id=image.image_id,
-        predicted_class_id=22,
+        predicted_class_id=6,
         predicted_score=0.9,
         bbox_x1=0.1,
         bbox_y1=0.1,

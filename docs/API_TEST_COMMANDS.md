@@ -555,7 +555,7 @@ curl -s -X POST "$BACKEND/api/v1/feedback/4/select-candidate" -H "Authorization:
 
 # 400 FEEDBACK_INVALID_CANDIDATE — 해당 분석의 Top-K 후보에 없는 class_id
 curl -s -X POST "$BACKEND/api/v1/feedback/4/select-candidate" -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" -d '{"class_id":85}'
+  -H "Content-Type: application/json" -d '{"class_id":16}'
 ```
 
 ---
@@ -585,16 +585,16 @@ curl -s -X POST "$BACKEND/api/v1/feedback/5/not-in-list" \
 {
   "feedback_id": 5,
   "is_correct": false,
-  "final_class_id": 7,
+  "final_class_id": 0,
   "correction_source": "GEMINI",
   "major_category": "고철류",
-  "minor_category": "프라이팬",
+  "minor_category": "고철",
   "message": "추가 이미지 분석 결과로 수정되었습니다."
 }
 ```
 
 > 키 설정: `.env` 에 `GEMINI_API_KEY=...` 추가 후 서버 재시작.
-> Gemini 결과는 항상 `waste_classes` 의 86개 class_id 중 하나로 제한됩니다.
+> Gemini 결과는 항상 `waste_classes` 의 17개 class_id 중 하나로 제한됩니다.
 > 그 외 오류: `502 GEMINI_UNAVAILABLE` / `502 GEMINI_BAD_RESPONSE` / `504 GEMINI_TIMEOUT` / `502 S3_DOWNLOAD_FAILED`
 
 ---
@@ -847,20 +847,20 @@ curl -s -X POST "$VISION/internal/v1/predict" -F "image=@empty.jpg;type=image/jp
 ```bash
 curl -s "$VISION/internal/v1/classes"
 
-# 개수만 확인 (86개여야 함)
+# 개수만 확인 (17개여야 함)
 curl -s "$VISION/internal/v1/classes" \
   | .venv/Scripts/python.exe -c "import json,sys;print(len(json.load(sys.stdin)['classes']))"
 ```
 
-**실제 응답** `200 OK` (classes 86개)
+**실제 응답** `200 OK` (classes 17개)
 
 ```json
 {
   "model_version": "B01_yolo_default_baseline_seed42",
   "classes": [
     { "class_id": 0, "major_category": "고철류", "minor_category": "고철" },
-    { "class_id": 6, "major_category": "고철류", "minor_category": "철옷걸이" },
-    { "class_id": 85, "major_category": "형광등", "minor_category": "환형" }
+    { "class_id": 1, "major_category": "고철류", "minor_category": "비철금속" },
+    { "class_id": 16, "major_category": "형광등", "minor_category": "형광등" }
   ]
 }
 ```
@@ -1049,7 +1049,7 @@ curl -s -X POST $BACKEND/api/v1/feedback/$NEW_FB/select-candidate -H "Authorizat
 
 # 400 FEEDBACK_INVALID_CANDIDATE ── 그 분석의 Top-K 에 없는 class_id
 curl -s -X POST $BACKEND/api/v1/feedback/$NEW_FB/select-candidate -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" -d '{"class_id":85}'
+  -H "Content-Type: application/json" -d '{"class_id":16}'
 
 # 403 FEEDBACK_FORBIDDEN ── 다른 계정의 feedback 에 접근
 OTHER=$(curl -s -X POST $BACKEND/api/v1/auth/login -H "Content-Type: application/json" \

@@ -82,7 +82,7 @@ React Frontend
 |---|---|
 | Backend | Python 3.13, FastAPI, SQLAlchemy 2.0, Pydantic v2 |
 | DB | MySQL |
-| Vision AI | Ultralytics YOLO, PyTorch (86 class Object Detection) |
+| Vision AI | Ultralytics YOLO, PyTorch (17 class Object Detection) |
 | Vision LLM | Gemini (`google-genai`) — 후보에 없을 때만 호출 |
 | AI Agent | 분석 컨텍스트 + RAG 지식 기반 Stateless 응답 |
 | Storage | AWS S3 (boto3) / 개발용 로컬 디스크 |
@@ -175,7 +175,7 @@ Base URL: `http://<host>/api/v1` · 인증: `Authorization: Bearer <JWT>`
 | 16 | POST | `/api/v1/favorites` | ✓ | 즐겨찾기 등록 (201) |
 | 17 | DELETE | `/api/v1/favorites/{id}` | ✓ | 즐겨찾기 삭제 (204) |
 | 18 | POST | `/internal/v1/predict` | Backend 전용 | YOLO 중앙 객체 + Top-K |
-| 19 | GET | `/internal/v1/classes` | Backend 전용 | Vision taxonomy (86 class) |
+| 19 | GET | `/internal/v1/classes` | Backend 전용 | Vision taxonomy (17 class) |
 
 ### 공통 오류 응답
 
@@ -203,7 +203,7 @@ Base URL: `http://<host>/api/v1` · 인증: `Authorization: Bearer <JWT>`
 | **class_id 단일 소스** | `data/taxonomy/waste_classes.json` 이 YOLO 클래스 인덱스와 `waste_classes` 테이블이 공유하는 유일한 기준 |
 | **feedback 에 문자열 미저장** | 대/소분류는 `class_id` JOIN 으로 해석. `feedback` 에는 문자열을 저장하지 않음 |
 | **미응답 상태 보존** | 사용자가 아무 응답 없이 이탈하면 `final_class_id`/`is_correct`/`correction_source` 는 **NULL 유지** |
-| **Gemini 는 Fallback 전용** | 일반 분석 과정에서 호출하지 않고 "여기에 없어요" 일 때만 호출. 결과는 86개 class_id 로 제한 |
+| **Gemini 는 Fallback 전용** | 일반 분석 과정에서 호출하지 않고 "여기에 없어요" 일 때만 호출. 결과는 17개 class_id 로 제한 |
 | **대화 미저장** | `/api/v1/chat` 은 Stateless. message/answer 를 DB에 저장하지 않음 |
 | **S3 는 key 만 저장** | 만료되는 Presigned URL 은 DB에 저장 금지 |
 | **업로드 이미지는 항상 재인코딩** | 원본 그대로 저장하지 않고 1920px 이하로 축소 + JPEG(기본)로 재인코딩. Vision 서버와 S3 양쪽에 **같은 처리된 이미지**가 전달됨 |
@@ -255,7 +255,7 @@ cp vision/.env.example  vision/.env
 
 추가로 챙길 것 하나: **학습된 체크포인트를 `weights/best.pt` 로 복사**하세요.
 (`ai/models/yolo/.../runs/<우승 실험>/weights/best.pt`)
-`weights/yolo26n.pt` 는 COCO 사전학습 가중치라 **지정하면 안 됩니다** — 86개 폐기물
+`weights/yolo26n.pt` 는 COCO 사전학습 가중치라 **지정하면 안 됩니다** — 17개 폐기물
 taxonomy 가 아닌 COCO class 인덱스를 반환해 모든 `class_id` 가 조용히 오염됩니다.
 
 > `scripts/run-dev.sh` 로 개발 서버를 띄워도 `DATABASE_URL`(MySQL)은 항상
@@ -322,7 +322,7 @@ recycling_ssg/
 │   ├── main.py              /internal/v1/predict, /classes, /health
 │   ├── inference.py         YOLO 로딩, 중앙 메인 객체 선택, Top-K
 │   └── tests/               24개 테스트
-├── data/taxonomy/           regions.json(56) · waste_classes.json(86) ← 단일 소스
+├── data/taxonomy/           regions.json(56) · waste_classes.json(17) ← 단일 소스
 ├── scripts/                 run-dev · stop-dev · smoke-test
 ├── docs/API_SPEC.md         API 명세서 (.docx 동봉)
 ├── docs/API_TEST_COMMANDS.md   19개 API 테스트 명령어 모음

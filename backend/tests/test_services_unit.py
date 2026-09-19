@@ -22,7 +22,7 @@ def test_decoded_service_key_handles_url_encoded_and_plain(monkeypatch):
 
 def test_extract_disposal_fields_always_reads_recycling_group_regardless_of_class():
     # Real API shape: one row per region, "+"-joined day abbreviations, one
-    # column group per waste category (섹션 15.1). Every one of our 86
+    # column group per waste category (섹션 15.1). Every one of our 17
     # classes is treated as recyclable, so only RCYCL_* is ever read --
     # other groups on the same row (e.g. LF_WST_*) must be ignored.
     item = {

@@ -34,9 +34,9 @@ class _StubModel:
         if self._raises is not None:
             raise self._raises
         candidates = [
-            {"class_id": 77, "category": "플라스틱류_욕실용품", "score": 0.8123},
-            {"class_id": 76, "category": "플라스틱류_바구니", "score": 0.1211},
-            {"class_id": 74, "category": "플라스틱류_대용량플라스틱통", "score": 0.0432},
+            {"class_id": 14, "category": "플라스틱류_플라스틱", "score": 0.8123},
+            {"class_id": 15, "category": "플라스틱류_장난감", "score": 0.1211},
+            {"class_id": 0, "category": "고철류_고철", "score": 0.0432},
         ]
         return candidates, 31.7, _StubBox()
 
@@ -71,14 +71,14 @@ def test_predict_returns_full_internal_contract(client, stub_model):
 
     assert set(body) == {"major_category", "minor_category", "candidate_scores", "internal_meta"}
     assert body["major_category"] == "플라스틱류"
-    assert body["minor_category"] == "욕실용품"
+    assert body["minor_category"] == "플라스틱"
 
     scores = body["candidate_scores"]
     assert len(scores) == 3
     assert all(set(s) == {"class_id", "category", "score"} for s in scores)
     # Top-K ordered by score desc (SR-07).
     assert [s["score"] for s in scores] == sorted((s["score"] for s in scores), reverse=True)
-    assert scores[0]["category"] == "플라스틱류_욕실용품"  # 대분류_소분류 형식
+    assert scores[0]["category"] == "플라스틱류_플라스틱"  # 대분류_소분류 형식
 
     meta = body["internal_meta"]
     assert set(meta) == {"bbox", "model_version", "inference_ms"}
@@ -198,7 +198,7 @@ def test_predict_requires_image_field(client, stub_model):
 # --- GET /internal/v1/classes ---------------------------------------------
 
 
-def test_classes_returns_full_86_class_taxonomy(client, stub_model):
+def test_classes_returns_full_taxonomy(client, stub_model):
     stub_model()
 
     resp = client.get("/internal/v1/classes")
@@ -209,12 +209,12 @@ def test_classes_returns_full_86_class_taxonomy(client, stub_model):
     assert isinstance(body["model_version"], str)
 
     classes = body["classes"]
-    assert len(classes) == 86
+    assert len(classes) == 17
     assert all(set(c) == {"class_id", "major_category", "minor_category"} for c in classes)
-    # Sorted by class_id, contiguous 0..85 — the ids the Backend stores.
-    assert [c["class_id"] for c in classes] == list(range(86))
+    # Sorted by class_id, contiguous 0..16 — the ids the Backend stores.
+    assert [c["class_id"] for c in classes] == list(range(17))
     assert classes[0] == {"class_id": 0, "major_category": "고철류", "minor_category": "고철"}
-    assert classes[85] == {"class_id": 85, "major_category": "형광등", "minor_category": "환형"}
+    assert classes[16] == {"class_id": 16, "major_category": "형광등", "minor_category": "형광등"}
 
 
 def test_classes_returns_503_when_model_not_loaded(client, stub_model):
