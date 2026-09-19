@@ -1,0 +1,4 @@
+embedding_model: solar-embedding-2-passage
+pinecone_index: recycling-ssg
+retriever_k: 3
+llm: gemini-3.8-flash

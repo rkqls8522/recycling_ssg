@@ -58,7 +58,7 @@ trap cleanup EXIT INT TERM
 
 # --- Vision (:8100) -------------------------------------------------------
 MODEL_PATH="$MODEL_PATH" MODEL_VERSION="$MODEL_VERSION" \
-  "$PY" -m uvicorn vision.main:app --host 127.0.0.1 --port 8100 \
+  "$PY" -m uvicorn vision.main:app --host 127.0.0.1 --port 8100 --reload \
   > "$LOG_DIR/vision.log" 2>&1 &
 VISION_PID=$!
 
@@ -75,7 +75,7 @@ VISION_PID=$!
   LOCAL_STORAGE_DIR="${LOCAL_STORAGE_DIR:-../.local_storage}" \
   VISION_SERVER_BASE_URL="${VISION_SERVER_BASE_URL:-http://127.0.0.1:8100/internal/v1}" \
   AUTO_CREATE_TABLES=true AUTO_SEED_MASTER_DATA=true \
-  "$PY" -m uvicorn main:app --host 127.0.0.1 --port 8000 \
+  "$PY" -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload \
   > "$LOG_DIR/backend.log" 2>&1
 ) &
 BACKEND_PID=$!

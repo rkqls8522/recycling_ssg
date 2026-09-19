@@ -120,6 +120,11 @@ export function getResultMockData(): AnalyzeSuccessBody {
       sgg_name: "강남구",
     },
     disposal_day: "월, 수, 금",
+    national_rule: {
+      source: "기후에너지환경부 (환경부)",
+      method: "내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출",
+    },
+    region_rule: null,
     image_id: 502,
     feedback_id: 902,
     warnings: [
