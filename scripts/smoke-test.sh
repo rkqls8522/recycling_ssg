@@ -431,8 +431,8 @@ expect_field "code" "IMAGE_EMPTY"
 
 check "GET /internal/v1/classes" 200 "$VISION/internal/v1/classes"
 CLASS_COUNT="$("$PY" -c "import json,sys;print(len(json.loads(sys.stdin.read())['classes']))" <<<"$BODY" 2>/dev/null)"
-if [ "$CLASS_COUNT" = "86" ]; then PASS=$((PASS+1)); printf '        \033[32m↳\033[0m classes 개수 = 86\n'
-else FAIL=$((FAIL+1)); printf '        \033[31m↳ classes 개수 = %s (want 86)\033[0m\n' "$CLASS_COUNT"; fi
+if [ "$CLASS_COUNT" = "17" ]; then PASS=$((PASS+1)); printf '        \033[32m↳\033[0m classes 개수 = 17\n'
+else FAIL=$((FAIL+1)); printf '        \033[31m↳ classes 개수 = %s (want 17)\033[0m\n' "$CLASS_COUNT"; fi
 
 check "GET /health (Vision)" 200 "$VISION/health"
 expect_field "model_loaded" "True"

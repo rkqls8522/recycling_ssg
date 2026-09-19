@@ -123,7 +123,7 @@ Frontend 가 요청에 넣어 보내면 그 값이 그대로 되돌아오고, �
 
 | 필드 | 타입 | Nullable | 예시 |
 | --- | --- | --- | --- |
-| `class_id` | Integer | No | `6` (0~85) |
+| `class_id` | Integer | No | `6` (0~16) |
 | `category` | String | No | `고철류_철옷걸이` (`대분류_소분류`) |
 | `score` | Number | No | `0.6439` (0~1) |
 
@@ -526,7 +526,7 @@ Stateless JWT 이므로 서버 상태 변경이 없습니다. 토큰 유효성�
 
 ### 13.3 POST /api/v1/feedback/{feedback_id}/not-in-list — Gemini 재분석
 
-요청 Body 없음. 저장된 원본 이미지를 내려받아 Gemini 에 재분석을 요청하고, 결과를 **`waste_classes` 86개 class_id 안으로 제한**합니다.
+요청 Body 없음. 저장된 원본 이미지를 내려받아 Gemini 에 재분석을 요청하고, 결과를 **`waste_classes` 17개 class_id 안으로 제한**합니다.
 
 **응답 200**
 
@@ -732,7 +732,7 @@ Frontend 에서 직접 호출하지 않습니다. 운영에서는 사설망/접�
 | 필드 | 타입 | 설명 |
 | --- | --- | --- |
 | `model_version` | String | 로드된 모델 식별자 |
-| `classes` | Array | `{class_id, major_category, minor_category}` × **86** |
+| `classes` | Array | `{class_id, major_category, minor_category}` × **17** |
 
 **오류**: `503 VISION_MODEL_NOT_READY`
 

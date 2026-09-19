@@ -37,7 +37,7 @@
 - 로그인한 사람이 맞는지 확인하고 (인증)
 - 사진을 크기 줄이고 압축해서, AI 분석 서버(Vision)에 보내 무슨 쓰레기인지 물어보고
 - 그 결과와 사진을 데이터베이스·저장소(S3)에 기록하고
-- "이건 플라스틱류/욕실용품이고, 화·목요일에 배출하세요" 같은 최종 답을
+- "이건 플라스틱류/플라스틱이고, 화·목요일에 배출하세요" 같은 최종 답을
   다시 앱에 돌려주는 일을 하는 프로그램입니다.
 
 이 폴더 안의 코드는 **FastAPI**라는 Python 웹 프레임워크로 만들어져 있고,
@@ -185,7 +185,7 @@ backend/
 | `timestamps.py` | (테이블 아님) | `utcnow()` 하나만 있는 파일. "지금 시각"을 항상 **표준시(UTC)**로 통일해서 기록하는 공용 도구. MySQL의 `NOW()`는 서버 로컬시간이라 애매해질 수 있어서, Python 쪽에서 직접 UTC로 찍음 |
 | `__init__.py` | - | 위 7개 테이블 설계도를 한 번에 불러 모으는 파일 (`Base.metadata`가 이걸 보고 표를 만듦) |
 
-> 💡 `region.py`와 `waste_class.py`의 실제 **내용물**(56개 지역 이름, 86개
+> 💡 `region.py`와 `waste_class.py`의 실제 **내용물**(56개 지역 이름, 17개
 > 분류 이름)은 여기 없고, 저장소 루트의 `data/taxonomy/` 폴더에 JSON으로
 > 있습니다. 이 파일들은 어디까지나 "표의 칸(컬럼) 모양"만 정의합니다.
 
@@ -229,7 +229,7 @@ backend/
 | `vision_client.py` | **Vision 서버**(`backend`가 아니라 `vision/` 폴더에 있는 별도 서버)와 HTTP로 통신. `predict()`가 사진을 보내고 대분류/소분류/후보 목록/BBox를 받아옴. Vision 서버가 "중앙에 물체가 없다"고 하면 `VisionNoMainObjectError`를 던져서 analyze.py가 재촬영 응답으로 바꿀 수 있게 함 |
 | `public_waste_client.py` | **행정안전부 공공데이터 API**와 통신. 서비스키가 이미 URL-encode된 상태로 발급되는 경우가 많아서 `_decoded_service_key()`가 먼저 `unquote()`한 뒤 httpx가 한 번만 인코딩하게 함(이중 인코딩 버그 방지). 실제 응답은 품목명이 아니라 **지역당 한 행**이고 폐기물 종류별로 컬럼 그룹(`FOD_WST_`/`LF_WST_`/`RCYCL_`/`TMPRY_BULK_WASTE_`)이 나뉘어 있어서, `_GROUP_PREFIX_BY_MAJOR_CATEGORY`로 우리 12개 대분류를 가장 가까운 그룹에 매핑해 그 그룹의 컬럼만 읽음(`extract_disposal_fields()`) |
 | `disposal_service.py` | 위 `public_waste_client`를 감싸서, "이 폐기물 종류 + 이 지역"을 조합해 최종 배출 정보를 만듦. `get_disposal_info_or_raise()`(직접 조회 API용, 실패하면 오류)와 `get_disposal_info_or_warn()`(이미지 분석용, 실패해도 분석 자체는 성공시키고 `warnings`만 남김) 두 가지 버전 제공 |
-| `gemini_service.py` | **Google Gemini**와 통신. `reanalyze_image()`는 "후보 목록에도 없어요" 눌렀을 때 사진을 다시 분석해 86개 클래스 중 하나로 강제 매핑(허용 목록 밖 답은 `GEMINI_BAD_RESPONSE`). `generate_text()`는 챗봇 답변 생성용. 키가 없으면 호출 전에 `GeminiNotConfiguredError` |
+| `gemini_service.py` | **Google Gemini**와 통신. `reanalyze_image()`는 "후보 목록에도 없어요" 눌렀을 때 사진을 다시 분석해 17개 클래스 중 하나로 강제 매핑(허용 목록 밖 답은 `GEMINI_BAD_RESPONSE`). `generate_text()`는 챗봇 답변 생성용. 키가 없으면 호출 전에 `GeminiNotConfiguredError` |
 | `__init__.py` | - | 빈 파일. 패키지 표시용 |
 
 ### 4.6 `agent/` — AI 챗봇 (후속 질문 답변)
@@ -247,7 +247,7 @@ backend/
 
 ### 4.7 `db/` — 데이터베이스 초기 데이터 채워 넣기
 
-서버를 처음 켤 때, "서울 25개 구 + 경기 31개 시·군" 목록과 "86개 폐기물
+서버를 처음 켤 때, "서울 25개 구 + 경기 31개 시·군" 목록과 "17개 폐기물
 분류" 목록을 데이터베이스에 자동으로 넣어주는 코드입니다. 이미 들어있으면
 값만 최신화하고 중복으로 넣지 않습니다(멱등성 — 몇 번을 실행해도 결과가 같음).
 
@@ -326,7 +326,7 @@ uv run pytest tests/ -q
         │
 ⑥ services/vision_client.py 가 압축된 사진을 Vision 서버로 전송
         │        (Vision 서버는 backend가 아닌 별도 폴더/서버: vision/)
-        │        → "플라스틱류/욕실용품, 확신도 0.81" 같은 답이 옴
+        │        → "플라스틱류/플라스틱, 확신도 0.81" 같은 답이 옴
         │
 ⑦ 확신도가 낮거나(<0.5) 중앙 객체가 없으면
         │   → schemas/analyze.py 의 AnalyzeRetakeResponse 형식으로

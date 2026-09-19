@@ -35,19 +35,19 @@ def _make_test_jpeg(width: int = 64, height: int = 48) -> bytes:
     PILImage.new("RGB", (width, height), color=(120, 180, 90)).save(buffer, format="JPEG")
     return buffer.getvalue()
 
-PLASTIC_BATHROOM = 77  # 플라스틱류/욕실용품
-PLASTIC_BASKET = 76  # 플라스틱류/바구니
+PLASTIC_MAIN = 14  # 플라스틱류/플라스틱
+PLASTIC_TOY = 15  # 플라스틱류/장난감
 
 
 def _prediction(top_score: float = 0.8123) -> VisionPredictResponse:
     return VisionPredictResponse(
         major_category="플라스틱류",
-        minor_category="욕실용품",
+        minor_category="플라스틱",
         candidate_scores=[
             CandidateScoreOut(
-                class_id=PLASTIC_BATHROOM, category="플라스틱류_욕실용품", score=top_score
+                class_id=PLASTIC_MAIN, category="플라스틱류_플라스틱", score=top_score
             ),
-            CandidateScoreOut(class_id=PLASTIC_BASKET, category="플라스틱류_바구니", score=0.1211),
+            CandidateScoreOut(class_id=PLASTIC_TOY, category="플라스틱류_장난감", score=0.1211),
         ],
         internal_meta=InternalMeta(
             bbox=BBox(x1=0.25, y1=0.18, x2=0.76, y2=0.88),
@@ -107,7 +107,7 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
 
     assert body["status"] == "SUCCESS"
     assert body["major_category"] == "플라스틱류"
-    assert body["minor_category"] == "욕실용품"
+    assert body["minor_category"] == "플라스틱"
     assert body["disposal_day"] == "화, 목"
     assert body["warnings"] == []
     assert isinstance(body["image_id"], int)
@@ -123,7 +123,7 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
 
     # CandidateScore objects, sorted by score desc (SR-07).
     scores = body["candidate_scores"]
-    assert [s["class_id"] for s in scores] == [PLASTIC_BATHROOM, PLASTIC_BASKET]
+    assert [s["class_id"] for s in scores] == [PLASTIC_MAIN, PLASTIC_TOY]
     assert all(set(s) == {"class_id", "category", "score"} for s in scores)
     assert scores[0]["score"] >= scores[1]["score"]
 
@@ -138,7 +138,7 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
 
     feedback_row = db_session.get(Feedback, body["feedback_id"])
     assert feedback_row.user_id == user_id
-    assert feedback_row.predicted_class_id == PLASTIC_BATHROOM
+    assert feedback_row.predicted_class_id == PLASTIC_MAIN
     assert feedback_row.predicted_score == pytest.approx(0.8123)
     assert feedback_row.model_version == "yolo26n-recycling-test"
     # BBox stored as 0~1 normalized XYXY (섹션 3.3, 20).
@@ -161,8 +161,8 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
         .all()
     )
     assert [(c.class_id, c.rank) for c in candidates] == [
-        (PLASTIC_BATHROOM, 1),
-        (PLASTIC_BASKET, 2),
+        (PLASTIC_MAIN, 1),
+        (PLASTIC_TOY, 2),
     ]
 
 

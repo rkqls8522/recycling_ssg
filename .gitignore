@@ -67,6 +67,9 @@ data/*
 !data/taxonomy/
 !data/taxonomy/**
 
+# Local-only data backup archive (26GB) -- never meant to be pushed on any branch.
+/data.zip
+
 # OS
 .DS_Store
 Thumbs.db
