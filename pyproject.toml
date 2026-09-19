@@ -13,6 +13,7 @@ dependencies = [
     # ultralytics/YOLO) with a confusing ImportError. Keep numpy below 2.4.
     "numpy>=2.3,<2.4",
     "opencv-python>=5.0.0.93",
+    "optuna>=5.0.0",
     "pandas>=3.0.5",
     "pillow>=12.3.0",
     "pydantic-settings>=2.15.0",

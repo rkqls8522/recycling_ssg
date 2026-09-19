@@ -1,0 +1,31 @@
+{
+  "selected_trial": 23,
+  "selection_rule": "mAP50-95 within 0.005 of best, then higher Recall/F1 preferred",
+  "objective_mAP50_95": 0.5209415502474027,
+  "metrics": {
+    "actual_epochs": 15,
+    "f1": 0.5371286323319187,
+    "inference_ms_per_image": 6.6770945934392385,
+    "mAP50": 0.5395649892706165,
+    "mAP50_95": 0.5209415502474027,
+    "mAP75": 0.5341374119152263,
+    "precision": 0.5146713344261428,
+    "recall": 0.5616351616362708,
+    "train_minutes": 88.1799115916668
+  },
+  "params": {
+    "optimizer": "SGD",
+    "lr0": 0.004928743342321972,
+    "lrf": 0.35384036699409716,
+    "momentum": 0.9485420920943789,
+    "weight_decay": 1.4642481193608707e-05,
+    "warmup_epochs": 3.5391917958627177,
+    "cos_lr": true
+  },
+  "fixed": {
+    "model": "yolo26n.pt",
+    "imgsz": 640,
+    "batch": 8,
+    "tune_epochs": 15
+  }
+}
