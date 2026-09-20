@@ -37,11 +37,3 @@ def judge_node(state: AgentState):
         "failure_reason": result.reason,
         "retry_count": state.get("retry_count", 0) + 1,
     }
-
-
-def route_after_judge(state: AgentState) -> str:
-    if state.get("is_valid"):
-        return "disposal_lookup"
-    if state.get("retry_count", 0) >= MAX_CLASSIFY_RETRIES:
-        return "request_retake"
-    return "classify"
