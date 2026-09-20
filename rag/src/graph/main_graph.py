@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, END
 from rag.src.agents.state import  AgentState
 from rag.src.agents.llm_classify_node import llm_classify_node
-from rag.src.agents.judge_node import judge_node, route_after_judge
+from rag.src.agents.judge_node import judge_node
 from rag.src.agents.disposal_lookup_node import disposal_lookup_node
 
 
@@ -19,10 +19,10 @@ def route_after_judge(state: AgentState) -> str:
 
 # "여기없음" 플로우 전용 그래프 (classify -> judge -> disposal_lookup)
 graph = StateGraph(AgentState)
-graph.add("classify", llm_classify_node)
-graph.add("judge", judge_node)
-graph.add("disposal_lookup", disposal_lookup_node)
-graph.add("request_retake", request_retake_node)
+graph.add_node("classify", llm_classify_node)
+graph.add_node("judge", judge_node)
+graph.add_node("disposal_lookup", disposal_lookup_node)
+graph.add_node("request_retake", request_retake_node)
 
 graph.set_entry_point("classify")
 graph.add_edge("classify", "judge")

@@ -1,6 +1,3 @@
-from rag.src.agents.state import VerificationSubState
-
-
 # 3. LLM NODE
 from langchain_core.prompts import ChatPromptTemplate
 
