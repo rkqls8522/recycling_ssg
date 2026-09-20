@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from rag.src.agents.disposal_loopup_node import disposal_lookup_node
+from rag.src.agents.disposal_lookup_node import disposal_lookup_node
 from ..schemas import ClassificationResultWithDisposal, ClassificationResult
 
 router = APIRouter()

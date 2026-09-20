@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from rag.src.agents.state import AgentState
+from rag.src.agents.state import VerificationSubState
 from langchain_google_genai import ChatGoogleGenerativeAI
 from rag.src.prompts.templates import get_llm_prompt
 from rag.configs.config import load_config
@@ -21,7 +21,7 @@ llm = ChatGoogleGenerativeAI(
 
 prompt = get_llm_prompt()
 
-def llm_classify_node(state: AgentState):
+def llm_classify_node(state: VerificationSubState):
     img_url = state["img_url"]
     failure_reason = state.get('failure_reason', "")
 
