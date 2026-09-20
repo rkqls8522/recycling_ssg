@@ -2,6 +2,11 @@ from typing_extensions import List, TypedDict, Dict
 from langchain_core.documents import Document
 from typing import Optional
 
+class UserRegion(TypedDict):
+    region_id: int
+    sido_name: str
+    sgg_name: str
+
 class NationalRule(TypedDict):
     source: str
     method: str
@@ -20,13 +25,13 @@ class DisposalResult(TypedDict):
     region_rule: Optional[RegionRule]
     has_region_exception: bool
 
-class VerificationSubState(TypedDict):
-    category: str
-    sub_item: str
-    region: str
-    img_url: str                    # classify judge용
-    regulation_text: List[str]
-    disposal_result: DisposalResult # generated_answer 대체
+class AgentState(TypedDict):
+    major_category: str
+    minor_category: str
+    item_list: List[Dict]      
+    user_region: UserRegion
+    img_url: str
+    disposal_result: DisposalResult
     is_valid: bool
     failure_reason: str
     retry_count: int
