@@ -450,13 +450,14 @@ Stateless JWT 이므로 서버 상태 변경이 없습니다. 토큰 유효성�
 | `status` | String | No | `RETAKE_REQUIRED` 고정 |
 | `code` | String | No | `AI_LOW_CONFIDENCE` \| `AI_NO_MAIN_OBJECT` |
 | `message` | String | No | 사용자 안내 문구 |
-| `threshold` | Number \| null | Yes | `AI_LOW_CONFIDENCE` 일 때 `0.5`. `AI_NO_MAIN_OBJECT` 는 `null` |
+| `threshold` | Number \| null | Yes | 고정 설정값(`VISION_CONFIDENCE_THRESHOLD`, 기본 `0.5`). `code` 와 무관하게 항상 채워짐 |
 | `score` | Number \| null | Yes | `AI_LOW_CONFIDENCE` 일 때 실제 Top-1 신뢰도(`threshold` 미만이라 재촬영을 요구한 바로 그 값). `AI_NO_MAIN_OBJECT` 는 점수를 낼 대상 자체가 없으므로 `null` |
+| `feedback_id` | Integer \| null | Yes | `AI_LOW_CONFIDENCE` 는 SUCCESS 와 동일하게 저장되므로 그 행의 `feedback_id`. `AI_NO_MAIN_OBJECT` 는 저장된 행이 없으므로 `null` |
 | `request_id` | UUID String | No | 재촬영 요청도 추적 가능하도록 포함 |
 
 | code | message | S3/DB 저장 |
 | --- | --- | --- |
-| `AI_LOW_CONFIDENCE` | 분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요. | **함** (재학습 데이터 수집 목적, 미응답 상태로 저장. `image_id`/`feedback_id` 는 응답에 노출하지 않음) |
+| `AI_LOW_CONFIDENCE` | 분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요. | **함** (재학습 데이터 수집 목적, 미응답 상태로 저장. 응답에 `feedback_id` 포함) |
 | `AI_NO_MAIN_OBJECT` | 분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요. | 안 함 (예측값 자체가 없어 저장할 대상이 없음) |
 
 ### 12.3 오류
@@ -846,8 +847,9 @@ HTTP 200 이어도 두 가지입니다. 반드시 `status` 로 먼저 분기하�
 ```
 200 + status="SUCCESS"          → 결과 화면 (feedback_id 보관)
 200 + status="RETAKE_REQUIRED"  → 재촬영 안내 (message 노출; AI_LOW_CONFIDENCE 는
-                                   재학습용으로 S3/DB 저장은 되지만 feedback_id 는
-                                   응답에 없으므로 프론트에서 참조 불가)
+                                   재학습용으로 S3/DB 저장도 되고 feedback_id 도
+                                   응답에 포함됨. AI_NO_MAIN_OBJECT 는 저장된
+                                   행이 없어 feedback_id: null)
 4xx/5xx                          → 공통 오류 처리
 ```
 

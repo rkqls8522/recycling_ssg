@@ -212,15 +212,16 @@ def test_analyze_low_confidence_returns_retake_but_still_persists_rows(
     assert body["threshold"] == 0.5
     assert body["score"] == 0.42
     assert body["request_id"] == resp.headers["X-Request-ID"]
-    # 응답 계약은 그대로 -- image_id/feedback_id는 노출하지 않는다.
+    # image_id는 여전히 응답에 없지만, feedback_id는 저장된 행을 가리키도록 포함된다.
     assert "image_id" not in body
-    assert "feedback_id" not in body
+    assert isinstance(body["feedback_id"], int)
 
     assert len(fake_externals["upload"]) == 1  # S3에는 그대로 업로드됨
 
     feedback_row = (
         db_session.query(Feedback).filter(Feedback.user_id == user_id).one()
     )
+    assert feedback_row.feedback_id == body["feedback_id"]
     assert feedback_row.predicted_class_id == PLASTIC_MAIN
     assert feedback_row.predicted_score == pytest.approx(0.42)
     # 미응답 상태(NULL triple)로 저장되어 chk_feedback_result_state를 만족한다.
@@ -240,9 +241,11 @@ def test_analyze_low_confidence_returns_retake_but_still_persists_rows(
     assert [(c.class_id, c.rank) for c in candidates] == [(PLASTIC_TOY, 1)]
 
 
-def test_analyze_no_main_object_returns_retake_without_threshold(
+def test_analyze_no_main_object_returns_retake_with_threshold_but_no_score(
     client, authed_with_region, fake_externals, image_file, monkeypatch, db_session: Session
 ):
+    """threshold는 고정 설정값이라 항상 내려주지만, score는 매길 대상 자체가
+    없으므로(탐지 0건) null이고, 저장할 예측값도 없으므로 S3/DB 저장도 없다."""
     headers, user_id = authed_with_region
 
     def raise_no_main_object(**kwargs):
@@ -258,8 +261,9 @@ def test_analyze_no_main_object_returns_retake_without_threshold(
     assert body["status"] == "RETAKE_REQUIRED"
     assert body["code"] == "AI_NO_MAIN_OBJECT"
     assert body["message"] == "분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요."
-    assert body["threshold"] is None
+    assert body["threshold"] == 0.5
     assert body["score"] is None
+    assert body["feedback_id"] is None
     assert body["request_id"]
 
     assert fake_externals["upload"] == []

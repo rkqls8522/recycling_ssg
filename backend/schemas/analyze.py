@@ -41,8 +41,14 @@ class AnalyzeRetakeResponse(BaseModel):
     status: Literal["RETAKE_REQUIRED"] = "RETAKE_REQUIRED"
     code: Literal["AI_LOW_CONFIDENCE", "AI_NO_MAIN_OBJECT"]
     message: str
+    # threshold는 고정 설정값(VISION_CONFIDENCE_THRESHOLD)이라 code와 무관하게
+    # 항상 채워진다.
     threshold: float | None = None
     # AI_LOW_CONFIDENCE일 때 실제 Top-1 신뢰도 점수 (threshold 미만이라 재촬영을
     # 요구한 바로 그 값). AI_NO_MAIN_OBJECT는 애초에 점수를 낼 대상이 없으므로 null.
     score: float | None = None
+    # AI_LOW_CONFIDENCE일 때는 SUCCESS와 동일하게 저장이 이루어지므로 그 행의
+    # feedback_id를 내려준다(추후 피드백 3종 제출에 사용 가능). AI_NO_MAIN_OBJECT는
+    # 저장된 행 자체가 없으므로 null.
+    feedback_id: int | None = None
     request_id: str

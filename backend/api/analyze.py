@@ -73,7 +73,10 @@ def analyze_image(
         return AnalyzeRetakeResponse(
             code="AI_NO_MAIN_OBJECT",
             message="분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요.",
-            threshold=None,
+            # threshold는 고정 설정값이라 항상 내려줄 수 있다. score는 정말로
+            # 낼 수 없다 -- Vision이 low_confidence_floor(0.05)조차 넘는 탐지를
+            # 하나도 못 했으므로 점수를 매길 대상 자체가 없다.
+            threshold=settings.vision_confidence_threshold,
             request_id=request_id,
         )
 
@@ -132,6 +135,7 @@ def analyze_image(
             message="분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요.",
             threshold=settings.vision_confidence_threshold,
             score=prediction.score,
+            feedback_id=feedback_row.feedback_id,
             request_id=request_id,
         )
 

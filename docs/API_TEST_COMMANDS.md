@@ -440,12 +440,13 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   "message": "분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요.",
   "threshold": 0.5,
   "score": 0.37,
+  "feedback_id": 42,
   "request_id": "..."
 }
 ```
 
-> 응답 자체는 `feedback_id` 없음(재조회 불가)이지만, **S3/DB 에는 SUCCESS 와
-> 동일하게 저장됩니다** (재학습 데이터 수집 목적). 저장된 `feedback` 행은
+> **S3/DB 에는 SUCCESS 와 동일하게 저장됩니다** (재학습 데이터 수집 목적),
+> 그래서 `feedback_id` 도 응답에 포함됩니다. 저장된 `feedback` 행은
 > `final_class_id`/`is_correct`/`correction_source` 가 전부 NULL인 미응답
 > 상태로 남으며, `predicted_score < 0.5` 로 나중에 구분해서 조회할 수 있습니다.
 
@@ -462,8 +463,9 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   "status": "RETAKE_REQUIRED",
   "code": "AI_NO_MAIN_OBJECT",
   "message": "분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요.",
-  "threshold": null,
+  "threshold": 0.5,
   "score": null,
+  "feedback_id": null,
   "request_id": "..."
 }
 ```
