@@ -44,3 +44,14 @@ class DisposalResult(BaseModel):
 
 class ClassificationResultWithDisposal(ClassificationResult):
     disposal_result: DisposalResult    
+
+class ReclassifyRequest(BaseModel):
+    img_url: str
+    user_region: UserRegion
+
+
+class ReclassifyResponse(BaseModel):
+    major_category: str | None = None
+    minor_category: str | None = None
+    disposal_result: DisposalResult | None = None
+    needs_retake: bool

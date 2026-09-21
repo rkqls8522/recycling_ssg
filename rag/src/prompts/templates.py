@@ -1,6 +1,3 @@
-from rag.src.agents.state import VerificationSubState
-
-
 # 3. LLM NODE
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -27,7 +24,7 @@ def get_llm_prompt() -> ChatPromptTemplate:
                     "- 캔류: 캔\n"
                     "- 페트병: 페트병\n"
                     "- 플라스틱류: 플라스틱, 장난감\n"
-                    "- 형광등: 전구\n"
+                    "- 형광등: 형광등\n"
                 ),
             },
             {
@@ -38,37 +35,28 @@ def get_llm_prompt() -> ChatPromptTemplate:
     ])
 
 
-# 4-1. RAG GENERATE NODE
-def get_generate_prompt(state: VerificationSubState):
-    retry_note = (f"이전 시도 실패 이유 : {state['failure_reason']} -> 이 문제를 반영해 다시 작성하세요."
-                  if state.get("failure_reason") else "")
-    
-    return (f"""
-    아래의 작성 예시를 참고하여 제공된 배출정보로만 근거로 사용자에게 안내할 배출방법과 주의사항을 작성예시를 참고하여 작성하세요.
-    정보에 없는 내용은 추가하지 마세요.
-
-    [배출 지역]
-    {state['region']}
-    [배출 정보]
-    {state["regulation_text"]}, {state["sub_item"]}
-    {retry_note}
-
-    [작성 예시]
-    1. 
-    {"배출 방법" : ["이물질·스티커를 제거해 주세요","깨끗한 상태에서 스티로폼 전용 수거함에 배출하세요"]}
-    {"주의사항" : ["오염된 스티로폼 -> 종량제 봉투", "색스티로폼·은박 완충재 -> 종량제 봉투"]}
-    2. 
-    {"배출 방법" : ["내용물을 비우고 행궈 주세요","라벨과 뚜껑을 분리해 주세요", "투명 페트병 전용 수거함에 배출하세요"]}
-    {"주의사항" : ["색이 있는 페트병은 플라스틱류 수거함 배출"]}
-    """)
-
-
-# 4-2. RAG JUDGE NODE
-def get_judge_prompt(state: VerificationSubState):
-    return (f"""
-    [원본데이터] {state['regulation_text']} 
-    [생성된 답변] {state['generated_answer']}
-
-    생성된 답변이 원본 데이터에 없는 내용을 포함하면 false로 판정하세요
-    JSON으로만 응답 {{"is_valid": bool, "failure_reason": string}}
-    """)
+def get_judge_prompt() -> ChatPromptTemplate:
+    return ChatPromptTemplate.from_messages([
+        ("human", [
+            {
+                "type": "text",
+                "text": (
+                    "당신은 생활폐기물 분리배출 이미지 분류 결과를 검증하는 엄격한 검증자입니다.\n"
+                    "당신의 역할은 분류가 맞았다고 확인해주는 것이 아니라, 틀렸을 가능성을 적극적으로 찾아내는 것입니다.\n\n"
+                    "[검증 기준]\n"
+                    "아래 이미지를 보고, 제시된 분류 라벨(대분류: {major_category}, 소분류: {minor_category})이 "
+                    "이미지 속 실제 사물과 일치하는지 판단하세요.\n"
+                    "- 사물의 종류와 재질이 라벨과 실제로 일치하는지 확인하세요.\n"
+                    "- 이미지에 여러 사물이 있다면, 가장 크고 명확하게 보이는 사물을 기준으로 판단하세요.\n"
+                    "- 이미지가 흐리거나 사물이 잘 안 보여서 판단이 어려우면, 근거 불충분(false)으로 처리하세요. "
+                    "임의로 추측해서 통과시키지 마세요.\n"
+                    "- 라벨이 그럴듯해 보인다는 이유만으로 통과시키지 마세요 — 이미지에 실제로 드러난 근거가 있어야 합니다.\n\n"
+                    "[출력 지침]\n"
+                    "- is_valid: 라벨이 이미지에 명확히 근거하면 true, 아니면 false\n"
+                    "- reason: false인 경우 왜 안 맞는지 한두 문장으로 구체적으로 설명하세요 "
+                    "(재분류 시 참고할 수 있도록 실질적인 내용으로). true인 경우 빈 문자열."
+                ),
+            },
+            {"type": "image_url", "image_url": "{img_url}"},
+        ]),
+    ])

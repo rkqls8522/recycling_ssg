@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from langchain_pinecone import PineconeVectorStore
 from langchain_upstage import UpstageEmbeddings
+from rag.src.agents.state import DisposalResult, AgentState
 
 load_dotenv()
 _vectorstore = None
@@ -87,7 +88,7 @@ def find_region_rule(major_category: str, minor_category: str, user_region: dict
     }
 
 
-def disposal_lookup_node(state: dict) -> dict:
+def disposal_lookup_node(state: AgentState) -> dict:
     major_category = state["major_category"]
     minor_category = state["minor_category"]
     user_region = state["user_region"]
@@ -95,7 +96,7 @@ def disposal_lookup_node(state: dict) -> dict:
     national_rule = find_national_rule(major_category, minor_category)
     region_rule = find_region_rule(major_category, minor_category, user_region)
 
-    result = {
+    result: DisposalResult = {
         "item": (national_rule or {}).get("item"),
         "major_category": major_category,
         "minor_category": minor_category,
@@ -106,4 +107,4 @@ def disposal_lookup_node(state: dict) -> dict:
         "region_rule": region_rule,
         "has_region_exception": region_rule is not None,
     }
-    return {**state, "disposal_result": result}
+    return {"disposal_result": result}

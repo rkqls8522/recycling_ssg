@@ -1,5 +1,8 @@
 from pathlib import Path
 import yaml
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = BASE_DIR / "settings.yaml"

@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 
 from rag.api.routes.disposal import router as disposal_router
+from rag.api.routes.reclassify import router as reclassify_router
 
 app = FastAPI(title="Recycling SSG RAG Service")
 
 app.include_router(disposal_router)
+app.include_router(reclassify_router)
 
 
 @app.get("/health")
