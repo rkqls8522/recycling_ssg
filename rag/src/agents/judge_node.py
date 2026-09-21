@@ -1,3 +1,4 @@
+import time
 from pydantic import BaseModel, Field
 from rag.src.agents.state import AgentState
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -16,18 +17,25 @@ MODEL_NAME = config["llm"]
 llm = ChatGoogleGenerativeAI(
     model=MODEL_NAME,
     temperature=0,
-    max_output_tokens=300
+    max_output_tokens=1024
 ).with_structured_output(ClassifyJudgeResult)
 
 prompt = get_judge_prompt()
 
 def judge_node(state: AgentState):
+    start = time.time()
+    print(f"✅[judge] 시작: {state['major_category']}/{state['minor_category']} 검증 중")
+
     judge_chain = prompt | llm
     result: ClassifyJudgeResult = judge_chain.invoke({
         "img_url": state["img_url"],
         "major_category": state["major_category"],
         "minor_category": state["minor_category"],
     })
+
+    print(f"✅ [judge] 완료: is_valid={result.is_valid} ({time.time() - start:.1f}초)")
+
+
 
     if result.is_valid:
         return {"is_valid": True, "failure_reason": ""}

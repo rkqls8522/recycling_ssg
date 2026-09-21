@@ -8,4 +8,4 @@ router = APIRouter()
 def get_disposal_info(payload: ClassificationResult) -> ClassificationResultWithDisposal:
     state = payload.model_dump()
     updated_state = disposal_lookup_node(state)
-    return updated_state
+    return {**state, **updated_state}   
