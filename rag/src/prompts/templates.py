@@ -60,3 +60,16 @@ def get_judge_prompt() -> ChatPromptTemplate:
             {"type": "image_url", "image_url": "{img_url}"},
         ]),
     ])
+
+def get_chatbot_prompt() -> ChatPromptTemplate:
+    return ChatPromptTemplate.from_messages([
+        ("human",
+         "너는 생활폐기물 분리배출 안내 챗봇이다.\n"
+         "[분류 결과] 대분류: {major_category}, 소분류: {minor_category}\n"
+         "[전국 공통 배출요령]\n{national_rule_text}\n"
+         "[지자체 예외]\n{region_rule_text}\n"
+         "[사용자 질문]\n{user_message}\n\n"
+         "위 정보를 바탕으로 한국어로 간결하게 답변하라. 정보에 없는 내용은 추측하지 말고 "
+         "\"정확한 사항은 지역 공지를 확인하세요\"라고 안내하라."
+        ),
+    ])
