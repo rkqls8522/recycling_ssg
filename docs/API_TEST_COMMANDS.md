@@ -25,8 +25,9 @@ bash scripts/run-dev.sh
 
 - Backend: `http://127.0.0.1:8000` · Vision: `http://127.0.0.1:8100`
 - Swagger UI: <http://127.0.0.1:8000/docs>
-- DB는 항상 `.env`의 MySQL을 사용합니다(SQLite 아님). AWS/외부 키 없이도 나머지
-  흐름은 동작합니다 (로컬 디스크 저장).
+- DB는 항상 `.env`의 MySQL을 사용합니다(SQLite 아님). 이미지는 `.env`의 AWS
+  자격증명으로 실제 S3에 저장됩니다(배포와 동일). AWS 없이 돌리려면
+  `STORAGE_BACKEND=local bash scripts/run-dev.sh` 로 기동하세요.
 
 ### 0-2. 환경변수 설정
 
@@ -1075,8 +1076,10 @@ curl -s -X POST $BACKEND/api/v1/feedback/$FEEDBACK_ID/confirm -H "Authorization:
 
 ```bash
 # ── 502 S3_DOWNLOAD_FAILED ── 저장된 원본을 지운 뒤 not-in-list 호출
-#    (개발 모드 STORAGE_BACKEND=local 기준)
-find .local_storage -name "*.jpg" -delete
+#    기본(STORAGE_BACKEND=s3): 해당 키만 지운다. images.s3_key 값을 확인해서 쓸 것.
+aws s3 rm "s3://$AWS_S3_BUCKET/$S3_KEY"
+#    STORAGE_BACKEND=local 로 기동한 경우:
+# find .local_storage -name "*.jpg" -delete
 curl -s -X POST $BACKEND/api/v1/feedback/$FEEDBACK_ID/not-in-list -H "Authorization: Bearer $TOKEN"
 
 # ── 404 USER_NOT_FOUND ── 토큰은 유효하지만 사용자 행이 사라진 경우

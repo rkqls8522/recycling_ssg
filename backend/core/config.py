@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Resolved as an absolute path (not ".env") so this works the same whether
@@ -97,6 +98,26 @@ class Settings(BaseSettings):
     # Defaults to <repo_root>/data/taxonomy, resolved relative to this file
     # at runtime (see core/paths.py). Override for non-standard deployments.
     taxonomy_data_dir: str | None = None
+
+    # .env에 키는 있는데 값이 비어 있으면("AWS_S3_ENDPOINT_URL=") None이 아니라
+    # ""가 들어온다. 이 선택적 설정들에서 빈 값은 "설정 안 함"을 뜻해야 한다:
+    # boto3는 endpoint_url=""를 ValueError("Invalid endpoint")로 거부하고,
+    # 빈 문자열 자격증명을 진짜 자격증명으로 취급해서 배포 환경의 IAM 역할
+    # fallback을 막아버린다.
+    @field_validator(
+        "aws_access_key_id",
+        "aws_secret_access_key",
+        "aws_s3_endpoint_url",
+        "public_waste_api_service_key",
+        "gemini_api_key",
+        "taxonomy_data_dir",
+        mode="before",
+    )
+    @classmethod
+    def _blank_to_none(cls, value: str | None) -> str | None:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
     @property
     def cors_origin_list(self) -> list[str]:

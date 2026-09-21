@@ -109,13 +109,15 @@ uv sync --all-packages
 
 1. YOLO 체크포인트를 자동 탐색 (`weights/best.pt` → `ai/models/yolo/*/runs/*/weights/best.pt`)
 2. Vision 서버 기동 후, Backend 가 그 주소를 바라보도록 연결
-3. **개발용 설정 주입** — 로컬 디스크 저장 + 테이블 생성/Master 시딩 자동 실행
+3. **개발용 설정 주입** — S3 이미지 저장(배포와 동일) + 테이블 생성/Master 시딩 자동 실행
    (DB는 항상 `.env`의 MySQL `DATABASE_URL`을 그대로 사용 — 이 스크립트가 덮어쓰지 않음)
 4. 두 서버가 `/health` 200 을 낼 때까지 기다렸다가 준비 완료를 알림
    (로그는 `.dev-logs/`, Ctrl+C 로 둘 다 종료)
 
-MySQL(`DATABASE_URL`)은 `.env`에 항상 설정되어 있어야 합니다. AWS·외부 API 키
-없이도 나머지 흐름은 동작합니다(로컬 디스크 저장 + 실제 YOLO 모델).
+MySQL(`DATABASE_URL`)과 AWS 자격증명(`AWS_*`)은 `.env`에 항상 설정되어 있어야
+합니다 — 이미지는 배포와 동일하게 실제 S3에 저장됩니다. AWS 없이 돌려야 하면
+`STORAGE_BACKEND=local bash scripts/run-dev.sh` 로 로컬 디스크 저장으로 우회할
+수 있습니다(그러면 `images.s3_key` 가 가리키는 파일이 S3 에 없게 됩니다).
 
 ```bash
 bash scripts/run-dev.sh          # Git Bash
@@ -260,7 +262,8 @@ taxonomy 가 아닌 COCO class 인덱스를 반환해 모든 `class_id` 가 조�
 
 > `scripts/run-dev.sh` 로 개발 서버를 띄워도 `DATABASE_URL`(MySQL)은 항상
 > `.env`에서 읽어옵니다. `.env`가 없으면 DB 연결이 안 되니 최소한 `DATABASE_URL`은
-> 채워두세요. 로컬 디스크 저장 + 체크포인트 자동 탐색은 `.env` 없이도 동작합니다.
+> 채워두세요. 이미지 저장도 기본이 S3라 `AWS_*` 도 함께 필요합니다 — `.env` 없이
+> 동작하는 것은 체크포인트 자동 탐색뿐입니다.
 
 ### .env 항목별 설명
 
@@ -299,7 +302,7 @@ taxonomy 가 아닌 COCO class 인덱스를 반환해 모든 `class_id` 가 조�
 
 | 변수 | 설명 |
 |---|---|
-| `STORAGE_BACKEND=local` | S3 대신 로컬 디스크에 저장 (`s3_key` 의미는 동일) |
+| `STORAGE_BACKEND=local` | S3 대신 로컬 디스크에 저장 (`s3_key` 의미는 동일). 기본값은 `s3` |
 | `LOCAL_STORAGE_DIR` | 로컬 저장 경로 (기본 `./.local_storage`) |
 | `AUTO_CREATE_TABLES` / `AUTO_SEED_MASTER_DATA` | 기동 시 테이블 생성 및 지역/폐기물 Master 시딩 |
 
