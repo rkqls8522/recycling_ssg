@@ -23,7 +23,9 @@ class Settings(BaseSettings):
     app_name: str = "recycling_ssg backend"
     app_version: str = "1.0.0"
     environment: str = "development"
-    cors_allow_origins: str = "http://localhost:5173,http://localhost:3000"
+    cors_allow_origins: str = "http://localhost:5173,http://localhost:3000,http://localhost:8443"
+    # DEBUG로 올리면 SQLAlchemy가 실행하는 SQL문까지 전부 터미널에 출력된다.
+    log_level: str = "INFO"
 
     # --- Database (MySQL) ---
     database_url: str = (

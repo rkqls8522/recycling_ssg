@@ -205,6 +205,7 @@ def test_analyze_low_confidence_returns_retake_and_stores_nothing(
     assert body["code"] == "AI_LOW_CONFIDENCE"
     assert body["message"] == "분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요."
     assert body["threshold"] == 0.5
+    assert body["score"] == 0.42
     assert body["request_id"] == resp.headers["X-Request-ID"]
 
     assert fake_externals["upload"] == []  # no S3 write (섹션 20)
@@ -231,6 +232,7 @@ def test_analyze_no_main_object_returns_retake_without_threshold(
     assert body["code"] == "AI_NO_MAIN_OBJECT"
     assert body["message"] == "분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요."
     assert body["threshold"] is None
+    assert body["score"] is None
     assert body["request_id"]
 
     assert fake_externals["upload"] == []

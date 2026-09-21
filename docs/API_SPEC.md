@@ -442,6 +442,7 @@ Stateless JWT 이므로 서버 상태 변경이 없습니다. 토큰 유효성�
 | `code` | String | No | `AI_LOW_CONFIDENCE` \| `AI_NO_MAIN_OBJECT` |
 | `message` | String | No | 사용자 안내 문구 |
 | `threshold` | Number \| null | Yes | `AI_LOW_CONFIDENCE` 일 때 `0.5`. `AI_NO_MAIN_OBJECT` 는 `null` |
+| `score` | Number \| null | Yes | `AI_LOW_CONFIDENCE` 일 때 실제 Top-1 신뢰도(`threshold` 미만이라 재촬영을 요구한 바로 그 값). `AI_NO_MAIN_OBJECT` 는 점수를 낼 대상 자체가 없으므로 `null` |
 | `request_id` | UUID String | No | 재촬영 요청도 추적 가능하도록 포함 |
 
 | code | message | S3/DB 저장 |

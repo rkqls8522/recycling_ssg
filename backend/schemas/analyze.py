@@ -38,4 +38,7 @@ class AnalyzeRetakeResponse(BaseModel):
     code: Literal["AI_LOW_CONFIDENCE", "AI_NO_MAIN_OBJECT"]
     message: str
     threshold: float | None = None
+    # AI_LOW_CONFIDENCE일 때 실제 Top-1 신뢰도 점수 (threshold 미만이라 재촬영을
+    # 요구한 바로 그 값). AI_NO_MAIN_OBJECT는 애초에 점수를 낼 대상이 없으므로 null.
+    score: float | None = None
     request_id: str

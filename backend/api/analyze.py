@@ -83,6 +83,7 @@ def analyze_image(
             code="AI_LOW_CONFIDENCE",
             message="분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요.",
             threshold=settings.vision_confidence_threshold,
+            score=top1.score,
             request_id=request_id,
         )
 

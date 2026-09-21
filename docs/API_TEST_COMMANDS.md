@@ -433,6 +433,7 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   "code": "AI_LOW_CONFIDENCE",
   "message": "분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요.",
   "threshold": 0.5,
+  "score": 0.37,
   "request_id": "..."
 }
 ```
@@ -453,6 +454,7 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   "code": "AI_NO_MAIN_OBJECT",
   "message": "분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요.",
   "threshold": null,
+  "score": null,
   "request_id": "..."
 }
 ```
