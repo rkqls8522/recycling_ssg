@@ -2,7 +2,7 @@
 #
 # DB는 항상 저장소 루트 .env 의 DATABASE_URL(MySQL)을 그대로 사용한다 — 이 스크립트가
 # 별도로 덮어쓰지 않는다. 그 외 개발 편의 설정만 기본값을 주입한다:
-#   - 이미지 저장: 로컬 디스크 (.local_storage)  <- STORAGE_BACKEND=local
+#   - 이미지 저장: AWS S3 (배포와 동일)  <- STORAGE_BACKEND=s3
 #   - Vision: 실제 YOLO 체크포인트
 #
 # 사용법:  .\scripts\run-dev.ps1
@@ -115,7 +115,10 @@ $visionProc = Start-Process -FilePath $Py `
 # 값이 있으면 그게 이겨버린다 -- 명시적으로 지워서 항상 .env가 이기게 한다.
 Remove-Item Env:\DATABASE_URL -ErrorAction SilentlyContinue
 $jwtSecret    = if ($env:JWT_SECRET_KEY) { $env:JWT_SECRET_KEY } else { "dev-only-insecure-secret-please-change-me-32bytes+" }
-$storage      = if ($env:STORAGE_BACKEND) { $env:STORAGE_BACKEND } else { "local" }
+# 이미지는 배포와 동일하게 실제 S3에 저장한다(.env 의 AWS_* 필요). AWS 자격증명
+# 없이 돌려야 하면 $env:STORAGE_BACKEND="local" 을 먼저 설정하고 실행한다 --
+# 다만 그러면 images.s3_key 가 가리키는 파일이 S3 에 없게 된다.
+$storage      = if ($env:STORAGE_BACKEND) { $env:STORAGE_BACKEND } else { "s3" }
 $storageDir   = if ($env:LOCAL_STORAGE_DIR) { $env:LOCAL_STORAGE_DIR } else { "../.local_storage" }
 $visionUrl    = if ($env:VISION_SERVER_BASE_URL) { $env:VISION_SERVER_BASE_URL } else { "http://127.0.0.1:8100/internal/v1" }
 

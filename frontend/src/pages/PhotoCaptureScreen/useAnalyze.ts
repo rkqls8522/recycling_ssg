@@ -106,18 +106,19 @@ export function buildAnalyzeResult(
   regionCode: string,
   guidelines: DisposalGuideline,
 ): ClassificationResult {
-  const top1 = data.candidate_scores[0];
+  // Top-1(실제 예측)은 이제 최상위 class_id/score 필드에 있다 — candidate_scores는
+  // Top-1을 제외한 "다른 후보"만 담고 있으므로 더 이상 [0]을 쓰지 않는다.
   return {
     itemName: data.minor_category,
     itemCategory: data.major_category,
-    itemCategoryEn: top1 ? String(top1.class_id) : "unknown",
-    confidence: top1 ? Math.round(top1.score * 100) : 100,
+    itemCategoryEn: String(data.class_id),
+    confidence: Math.round(data.score * 100),
     confidenceLevel: "high",
     guidelines,
     regionCode,
     regionName: `${data.user_region.sido_name} ${data.user_region.sgg_name}`,
     feedbackId: data.feedback_id,
-    classId: top1?.class_id,
+    classId: data.class_id,
     candidateScores: data.candidate_scores,
   };
 }

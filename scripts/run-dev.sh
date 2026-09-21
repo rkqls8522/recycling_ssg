@@ -3,7 +3,7 @@
 #
 # DB는 항상 저장소 루트 .env 의 DATABASE_URL(MySQL)을 그대로 사용한다 — 이 스크립트가
 # 별도로 덮어쓰지 않는다. 그 외 개발 편의 설정만 기본값을 주입한다:
-#   - 이미지 저장: 로컬 디스크 (.local_storage)  ← STORAGE_BACKEND=local
+#   - 이미지 저장: AWS S3 (배포와 동일)  ← STORAGE_BACKEND=s3
 #   - Vision: 실제 YOLO 체크포인트
 # 사용법:  bash scripts/run-dev.sh
 # 중지:    Ctrl+C
@@ -70,8 +70,11 @@ VISION_PID=$!
   # 환경변수를 .env보다 항상 우선시키므로, 부모 셸 환경에 남은 값이 있으면
   # 그게 이겨버린다 -- 명시적으로 지워서 항상 .env가 이기게 한다.
   unset DATABASE_URL
+  # 이미지는 배포와 동일하게 실제 S3에 저장한다(.env 의 AWS_* 필요). AWS 자격증명
+  # 없이 돌려야 하면 STORAGE_BACKEND=local bash scripts/run-dev.sh 로 로컬 디스크에
+  # 저장할 수 있다 -- 다만 그러면 images.s3_key 가 가리키는 파일이 S3 에 없게 된다.
   JWT_SECRET_KEY="${JWT_SECRET_KEY:-dev-only-insecure-secret-please-change-me-32bytes+}" \
-  STORAGE_BACKEND="${STORAGE_BACKEND:-local}" \
+  STORAGE_BACKEND="${STORAGE_BACKEND:-s3}" \
   LOCAL_STORAGE_DIR="${LOCAL_STORAGE_DIR:-../.local_storage}" \
   VISION_SERVER_BASE_URL="${VISION_SERVER_BASE_URL:-http://127.0.0.1:8100/internal/v1}" \
   AUTO_CREATE_TABLES=true AUTO_SEED_MASTER_DATA=true \
