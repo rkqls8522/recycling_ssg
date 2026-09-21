@@ -25,12 +25,13 @@ graph.add_node("disposal_lookup", disposal_lookup_node)
 graph.add_node("request_retake", request_retake_node)
 
 graph.set_entry_point("classify")
-graph.add_edge("classify", "judge")
-graph.add_conditional_edges("judge", route_after_judge, {
-    "disposal_lookup": "disposal_lookup",
-    "classify": "classify",
-    "request_retake": "request_retake",
-})
+graph.add_edge("classify", "disposal_lookup")
+# graph.add_edge("classify", "judge")
+# graph.add_conditional_edges("judge", route_after_judge, {
+#     "disposal_lookup": "disposal_lookup",
+#     "classify": "classify",
+#     "request_retake": "request_retake",
+# })
 graph.add_edge("disposal_lookup", END)
 graph.add_edge("request_retake", END)
 
@@ -49,7 +50,6 @@ def handle_direct_classification(major_category: str, minor_category: str, user_
 
 # "여기없음" 선택된 경우 : classify -> judge 루프 그래프 실행
 def handle_not_in_list(img_url: str, user_region: dict) -> dict:
-    """"여기없음" 선택된 경우 - classify -> judge 루프 그래프 실행"""
     graph_state = {
         "major_category": "",
         "minor_category": "",

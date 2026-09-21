@@ -24,7 +24,7 @@ def get_llm_prompt() -> ChatPromptTemplate:
                     "- 캔류: 캔\n"
                     "- 페트병: 페트병\n"
                     "- 플라스틱류: 플라스틱, 장난감\n"
-                    "- 형광등: 전구\n"
+                    "- 형광등: 형광등\n"
                 ),
             },
             {

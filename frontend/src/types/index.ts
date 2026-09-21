@@ -204,6 +204,9 @@ export interface FeedbackNotInListResponse {
   correction_source: "GEMINI";
   major_category: string;
   minor_category: string;
+  disposal_day: string | null;
+  national_rule: NationalRule | null;
+  region_rule: RegionRule | null;
   message: string;
 }
 
