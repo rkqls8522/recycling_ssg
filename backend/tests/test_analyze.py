@@ -43,10 +43,10 @@ def _prediction(top_score: float = 0.8123) -> VisionPredictResponse:
     return VisionPredictResponse(
         major_category="플라스틱류",
         minor_category="플라스틱",
+        class_id=PLASTIC_MAIN,
+        score=top_score,
+        # Top-1(PLASTIC_MAIN)을 제외한 "다른 후보"만 담는다.
         candidate_scores=[
-            CandidateScoreOut(
-                class_id=PLASTIC_MAIN, category="플라스틱류_플라스틱", score=top_score
-            ),
             CandidateScoreOut(class_id=PLASTIC_TOY, category="플라스틱류_장난감", score=0.1211),
         ],
         internal_meta=InternalMeta(
@@ -108,6 +108,8 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
     assert body["status"] == "SUCCESS"
     assert body["major_category"] == "플라스틱류"
     assert body["minor_category"] == "플라스틱"
+    assert body["class_id"] == PLASTIC_MAIN
+    assert body["score"] == pytest.approx(0.8123)
     assert body["disposal_day"] == "화, 목"
     assert body["warnings"] == []
     assert isinstance(body["image_id"], int)
@@ -121,11 +123,12 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
         "sgg_name": "강남구",
     }
 
-    # CandidateScore objects, sorted by score desc (SR-07).
+    # CandidateScore objects -- Top-1(class_id/score, 위에서 이미 확인)은 빠지고
+    # "다른 후보"만 남는다, score 내림차순 (SR-07).
     scores = body["candidate_scores"]
-    assert [s["class_id"] for s in scores] == [PLASTIC_MAIN, PLASTIC_TOY]
+    assert [s["class_id"] for s in scores] == [PLASTIC_TOY]
     assert all(set(s) == {"class_id", "category", "score"} for s in scores)
-    assert scores[0]["score"] >= scores[1]["score"]
+    assert scores == sorted(scores, key=lambda s: s["score"], reverse=True)
 
     # Persistence: images + feedback + Top-K snapshot (섹션 19).
     image_row = db_session.get(Image, body["image_id"])
@@ -160,9 +163,10 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
         .order_by(FeedbackCandidate.rank)
         .all()
     )
+    # feedback_candidates에는 이제 "다른 후보"만 저장된다 (PLASTIC_MAIN은
+    # feedback.predicted_class_id에 이미 저장됨). rank는 1부터 다시 매김.
     assert [(c.class_id, c.rank) for c in candidates] == [
-        (PLASTIC_MAIN, 1),
-        (PLASTIC_TOY, 2),
+        (PLASTIC_TOY, 1),
     ]
 
 

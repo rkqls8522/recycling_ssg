@@ -149,6 +149,10 @@ export interface AnalyzeSuccessBody {
   status: "SUCCESS";
   major_category: string;
   minor_category: string;
+  // Top-1(실제 예측) class_id/score. major_category/minor_category와 같은 대상.
+  class_id: number;
+  score: number;
+  // Top-1을 제외한 "다른 후보" 목록 (모델이 틀렸을 때 사용자에게 보여줄 대안).
   candidate_scores: CandidateScore[];
   user_region: RegionInfo;
   disposal_day: string | null;

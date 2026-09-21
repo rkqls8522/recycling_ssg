@@ -390,10 +390,12 @@ curl.exe -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" 
 {
   "status": "SUCCESS",
   "major_category": "고철류",
-  "minor_category": "철옷걸이",
+  "minor_category": "고철",
+  "class_id": 0,
+  "score": 0.9962,
   "candidate_scores": [
-    { "class_id": 6, "category": "고철류_철옷걸이", "score": 0.6439 },
-    { "class_id": 2, "category": "고철류_기타", "score": 0.0521 }
+    { "class_id": 11, "category": "종이류_종이", "score": 0.0014 },
+    { "class_id": 1, "category": "고철류_비철금속", "score": 0.0003 }
   ],
   "user_region": {
     "region_id": 23,
@@ -409,12 +411,15 @@ curl.exe -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" 
 
 > 공공데이터 API 키가 없으면 **분석은 성공 처리**되고 `disposal_day: null` + `warnings` 에
 > 경고 코드가 담깁니다 (명세 15.1). 키를 설정하면 `disposal_day: "화, 목"` 처럼 채워집니다.
+>
+> `candidate_scores` 는 **Top-1(`class_id`/`score`)을 제외한** 다른 후보만 담습니다 — 모델이
+> 틀렸을 때 사용자에게 보여줄 대안 목록이라, 이미 맞았는지 확인 끝난 Top-1은 다시 넣지 않습니다.
 
 **다음 단계에 쓸 값 저장**
 
 ```bash
 FEEDBACK_ID=1   # 응답의 feedback_id
-CLASS_ID=6      # candidate_scores[0].class_id
+CLASS_ID=0      # 응답의 class_id (Top-1 예측)
 ```
 
 ### 9-B. RETAKE_REQUIRED — 신뢰도 부족 (HTTP 200)
@@ -813,10 +818,12 @@ curl.exe -s -X POST "$VISION/internal/v1/predict" -H "X-Request-ID: 550e8400-e29
 ```json
 {
   "major_category": "고철류",
-  "minor_category": "철옷걸이",
+  "minor_category": "고철",
+  "class_id": 0,
+  "score": 0.9962,
   "candidate_scores": [
-    { "class_id": 6, "category": "고철류_철옷걸이", "score": 0.6439 },
-    { "class_id": 2, "category": "고철류_기타", "score": 0.0521 }
+    { "class_id": 11, "category": "종이류_종이", "score": 0.0014 },
+    { "class_id": 1, "category": "고철류_비철금속", "score": 0.0003 }
   ],
   "internal_meta": {
     "bbox": { "x1": 0.2485, "y1": 0.2534, "x2": 0.8284, "y2": 0.624 },
@@ -826,7 +833,8 @@ curl.exe -s -X POST "$VISION/internal/v1/predict" -H "X-Request-ID: 550e8400-e29
 }
 ```
 
-> `bbox` 는 0~1 정규화 XYXY, `candidate_scores` 는 score 내림차순입니다.
+> `bbox` 는 0~1 정규화 XYXY. `class_id`/`score` 가 Top-1(실제 예측)이고,
+> `candidate_scores` 는 **Top-1을 제외한** 나머지 후보만 score 내림차순으로 담습니다.
 
 **오류 케이스**
 
@@ -913,7 +921,7 @@ RESULT=$(curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TO
   -F "image=@$IMG;type=image/jpeg")
 echo "$RESULT"
 FEEDBACK_ID=$(echo "$RESULT" | $PY -c "import json,sys;print(json.load(sys.stdin)['feedback_id'])")
-CLASS_ID=$(echo "$RESULT" | $PY -c "import json,sys;print(json.load(sys.stdin)['candidate_scores'][0]['class_id'])")
+CLASS_ID=$(echo "$RESULT" | $PY -c "import json,sys;print(json.load(sys.stdin)['class_id'])")
 
 # 4) "예, 맞아요" 확정
 curl -s -X POST "$BACKEND/api/v1/feedback/$FEEDBACK_ID/confirm" -H "Authorization: Bearer $TOKEN"; echo

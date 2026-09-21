@@ -123,9 +123,9 @@ Frontend 가 요청에 넣어 보내면 그 값이 그대로 되돌아오고, �
 
 | 필드 | 타입 | Nullable | 예시 |
 | --- | --- | --- | --- |
-| `class_id` | Integer | No | `6` (0~16) |
-| `category` | String | No | `고철류_철옷걸이` (`대분류_소분류`) |
-| `score` | Number | No | `0.6439` (0~1) |
+| `class_id` | Integer | No | `1` (0~16) |
+| `category` | String | No | `고철류_비철금속` (`대분류_소분류`) |
+| `score` | Number | No | `0.0003` (0~1) |
 
 ---
 
@@ -405,8 +405,10 @@ Stateless JWT 이므로 서버 상태 변경이 없습니다. 토큰 유효성�
 | --- | --- | --- | --- |
 | `status` | String | No | `SUCCESS` 고정 |
 | `major_category` | String | No | Top-1 대분류 (예: `고철류`) |
-| `minor_category` | String | No | Top-1 소분류 (예: `철옷걸이`) |
-| `candidate_scores` | Array\<CandidateScore\> | No | score 내림차순, 최대 5개(`VISION_TOP_K`) |
+| `minor_category` | String | No | Top-1 소분류 (예: `고철`) |
+| `class_id` | Integer | No | Top-1 class_id (`major_category`/`minor_category`와 같은 대상) |
+| `score` | Number | No | Top-1 신뢰도 (0~1) |
+| `candidate_scores` | Array\<CandidateScore\> | No | **Top-1을 제외한** 다른 후보 목록(모델이 틀렸을 때 사용자가 고를 대안). score 내림차순, 최대 `VISION_TOP_K - 1`개(기본 4개) |
 | `user_region` | Region | No | `users.region_id` 로 조회한 지역 |
 | `disposal_day` | String \| null | Yes | 예 `화, 목`. 외부 API 실패 시 `null` |
 | `image_id` | Integer | No | `images.image_id` |
@@ -417,10 +419,12 @@ Stateless JWT 이므로 서버 상태 변경이 없습니다. 토큰 유효성�
 {
   "status": "SUCCESS",
   "major_category": "고철류",
-  "minor_category": "철옷걸이",
+  "minor_category": "고철",
+  "class_id": 0,
+  "score": 0.9962,
   "candidate_scores": [
-    { "class_id": 6, "category": "고철류_철옷걸이", "score": 0.6439 },
-    { "class_id": 2, "category": "고철류_기타", "score": 0.0521 }
+    { "class_id": 11, "category": "종이류_종이", "score": 0.0014 },
+    { "class_id": 1, "category": "고철류_비철금속", "score": 0.0003 }
   ],
   "user_region": { "region_id": 23, "sido_name": "서울특별시", "sgg_name": "강남구" },
   "disposal_day": null,
@@ -709,7 +713,9 @@ Frontend 에서 직접 호출하지 않습니다. 운영에서는 사설망/접�
 | --- | --- | --- |
 | `major_category` | String | Top-1 대분류 |
 | `minor_category` | String | Top-1 소분류 |
-| `candidate_scores` | Array\<CandidateScore\> | score 내림차순, 최대 `TOP_K`(기본 5) |
+| `class_id` | Integer | Top-1 class_id |
+| `score` | Number | Top-1 신뢰도 (0~1) |
+| `candidate_scores` | Array\<CandidateScore\> | **Top-1 제외**, 나머지 후보. score 내림차순, 최대 `TOP_K - 1`개(기본 4) |
 | `internal_meta.bbox` | Object | `x1,y1,x2,y2` — **0~1 정규화 XYXY** |
 | `internal_meta.model_version` | String | 추론 모델 식별자 |
 | `internal_meta.inference_ms` | Number | 추론 소요 시간(ms) |

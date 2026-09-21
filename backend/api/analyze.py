@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from core.config import settings
 from core.database import get_db
 from core.deps import get_current_user
-from core.exceptions import AppError, database_error, user_region_required
+from core.exceptions import database_error, user_region_required
 from models.feedback import Feedback
 from models.feedback_candidate import FeedbackCandidate
 from models.image import Image
@@ -69,21 +69,16 @@ def analyze_image(
             request_id=request_id,
         )
 
-    candidates = sorted(prediction.candidate_scores, key=lambda c: c.score, reverse=True)
-    if not candidates:
-        raise AppError(
-            status_code=502,
-            code="VISION_BAD_RESPONSE",
-            message="이미지 분석 결과를 처리할 수 없습니다.",
-        )
+    # candidate_scores는 Top-1(prediction.class_id/score)을 제외한 "다른 후보"만
+    # 담고 있다 -- Vision이 이미 score 내림차순으로 정렬해서 내려준다.
+    other_candidates = prediction.candidate_scores
 
-    top1 = candidates[0]
-    if top1.score < settings.vision_confidence_threshold:
+    if prediction.score < settings.vision_confidence_threshold:
         return AnalyzeRetakeResponse(
             code="AI_LOW_CONFIDENCE",
             message="분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요.",
             threshold=settings.vision_confidence_threshold,
-            score=top1.score,
+            score=prediction.score,
             request_id=request_id,
         )
 
@@ -103,8 +98,8 @@ def analyze_image(
         feedback_row = Feedback(
             user_id=current_user.user_id,
             image_id=image_row.image_id,
-            predicted_class_id=top1.class_id,
-            predicted_score=top1.score,
+            predicted_class_id=prediction.class_id,
+            predicted_score=prediction.score,
             bbox_x1=bbox.x1,
             bbox_y1=bbox.y1,
             bbox_x2=bbox.x2,
@@ -114,7 +109,7 @@ def analyze_image(
         db.add(feedback_row)
         db.flush()
 
-        for rank, candidate in enumerate(candidates, start=1):
+        for rank, candidate in enumerate(other_candidates, start=1):
             db.add(
                 FeedbackCandidate(
                     feedback_id=feedback_row.feedback_id,
@@ -132,7 +127,7 @@ def analyze_image(
         raise database_error() from exc
 
     # Best-effort disposal-day lookup: never fails the request (섹션 15.1).
-    waste_class = db.get(WasteClass, top1.class_id)
+    waste_class = db.get(WasteClass, prediction.class_id)
     disposal_day, warnings = get_disposal_info_or_warn(waste_class, region) if waste_class else (None, [])
 
     # Best-effort disposal-method lookup via RAG 서비스 (node2).
@@ -141,8 +136,10 @@ def analyze_image(
         "status": "SUCCESS",
         "major_category": prediction.major_category,
         "minor_category": prediction.minor_category,
+        "class_id": prediction.class_id,
+        "score": prediction.score,
         "candidate_scores": [
-            {"class_id": c.class_id, "category": "", "score": c.score} for c in candidates
+            {"class_id": c.class_id, "category": "", "score": c.score} for c in other_candidates
         ],
         "user_region": region_out.model_dump(),
         "disposal_day": disposal_day,
@@ -156,7 +153,9 @@ def analyze_image(
     return AnalyzeSuccessResponse(
         major_category=prediction.major_category,
         minor_category=prediction.minor_category,
-        candidate_scores=candidates,
+        class_id=prediction.class_id,
+        score=prediction.score,
+        candidate_scores=other_candidates,
         user_region=region_out,
         disposal_day=disposal_day,
         national_rule=national_rule,
