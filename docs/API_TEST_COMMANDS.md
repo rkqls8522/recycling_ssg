@@ -444,7 +444,10 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
 }
 ```
 
-> 이 경로에서는 **S3/DB 에 아무것도 저장하지 않습니다** (feedback_id 없음).
+> 응답 자체는 `feedback_id` 없음(재조회 불가)이지만, **S3/DB 에는 SUCCESS 와
+> 동일하게 저장됩니다** (재학습 데이터 수집 목적). 저장된 `feedback` 행은
+> `final_class_id`/`is_correct`/`correction_source` 가 전부 NULL인 미응답
+> 상태로 남으며, `predicted_score < 0.5` 로 나중에 구분해서 조회할 수 있습니다.
 
 ### 9-C. RETAKE_REQUIRED — 중앙 객체 없음 (HTTP 200)
 
@@ -464,6 +467,9 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   "request_id": "..."
 }
 ```
+
+> 이 경로는 (9-B 와 달리) **S3/DB 에 아무것도 저장하지 않습니다** — 메인
+> 객체를 아예 못 찾아 저장할 예측값(class_id/score/bbox) 자체가 없습니다.
 
 ### 9-D. 오류 케이스
 

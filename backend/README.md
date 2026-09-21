@@ -328,10 +328,11 @@ uv run pytest tests/ -q
         │        (Vision 서버는 backend가 아닌 별도 폴더/서버: vision/)
         │        → "플라스틱류/플라스틱, 확신도 0.81" 같은 답이 옴
         │
-⑦ 확신도가 낮거나(<0.5) 중앙 객체가 없으면
+⑦ 중앙 객체 자체를 못 찾았으면
         │   → schemas/analyze.py 의 AnalyzeRetakeResponse 형식으로
-        │     "재촬영해주세요" 응답 (HTTP 200, S3/DB 저장 없음), 끝
-        │   확신도가 충분하면 → 다음 단계 계속
+        │     "재촬영해주세요"(AI_NO_MAIN_OBJECT) 응답 (HTTP 200, S3/DB 저장
+        │     없음 — 저장할 예측값 자체가 없음), 끝
+        │   중앙 객체를 찾았으면 → 다음 단계 계속 (확신도와 무관하게 저장은 함)
         │
 ⑧ services/storage.py 가 압축된 사진을 S3(또는 로컬)에 저장
         │
@@ -339,10 +340,16 @@ uv run pytest tests/ -q
    설계도대로 데이터베이스에 분석 결과를 기록 (하나의 트랜잭션)
         │    → 이 중 하나라도 실패하면 전부 롤백 + 방금 올린 S3 사진도 삭제
         │
-⑩ services/disposal_service.py 가 "이 지역 + 이 폐기물"의 배출 요일을 조회
+⑩ 확신도가 낮으면(<0.5)
+        │   → ⑨에서 저장은 이미 끝난 상태로, AnalyzeRetakeResponse 형식으로
+        │     "재촬영해주세요"(AI_LOW_CONFIDENCE) 응답, 끝
+        │     (재학습 데이터 수집 목적 — feedback_id는 응답에 노출 안 함)
+        │   확신도가 충분하면 → 다음 단계 계속
+        │
+⑪ services/disposal_service.py 가 "이 지역 + 이 폐기물"의 배출 요일을 조회
         │    (이게 실패해도 분석 자체는 성공 처리, disposal_day만 null)
         │
-⑪ schemas/analyze.py 의 AnalyzeSuccessResponse 형식에 맞춰
+⑫ schemas/analyze.py 의 AnalyzeSuccessResponse 형식에 맞춰
    최종 결과를 JSON으로 만들어 앱에 응답
 ```
 

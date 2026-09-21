@@ -1,10 +1,18 @@
 """POST /api/v1/analyze (섹션 8.1, 19).
 
 Flow: JWT -> region check -> image validation -> Vision predict ->
-confidence/main-object gate -> S3 upload -> DB transaction
-(images/feedback/feedback_candidates) -> best-effort disposal lookup ->
-SUCCESS response. Any failure before the DB commit leaves no S3/DB trace;
-any failure *during* the DB transaction triggers a compensating S3 delete.
+main-object gate -> S3 upload -> DB transaction
+(images/feedback/feedback_candidates) -> confidence gate -> (SUCCESS 경로만)
+best-effort disposal lookup -> SUCCESS/RETAKE_REQUIRED response.
+
+- AI_NO_MAIN_OBJECT(메인 객체 자체를 못 찾음): 저장할 예측값이 없으므로
+  S3/DB 어디에도 저장하지 않는다.
+- AI_LOW_CONFIDENCE(신뢰도 < threshold): 예측 자체는 있으므로 SUCCESS와
+  동일하게 S3/DB에 저장하되(재학습 데이터 수집 목적), 사용자에게는 그대로
+  RETAKE_REQUIRED로 응답한다. 이렇게 저장된 행은 final_class_id/is_correct/
+  correction_source가 전부 NULL(미응답)로 남고, predicted_score < threshold로
+  나중에 구분해서 조회할 수 있다.
+- 어느 쪽이든 DB 트랜잭션 실패 시 업로드된 S3 객체를 보상 삭제한다.
 """
 
 from __future__ import annotations
@@ -72,15 +80,7 @@ def analyze_image(
     # candidate_scores는 Top-1(prediction.class_id/score)을 제외한 "다른 후보"만
     # 담고 있다 -- Vision이 이미 score 내림차순으로 정렬해서 내려준다.
     other_candidates = prediction.candidate_scores
-
-    if prediction.score < settings.vision_confidence_threshold:
-        return AnalyzeRetakeResponse(
-            code="AI_LOW_CONFIDENCE",
-            message="분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요.",
-            threshold=settings.vision_confidence_threshold,
-            score=prediction.score,
-            request_id=request_id,
-        )
+    is_low_confidence = prediction.score < settings.vision_confidence_threshold
 
     s3_key = storage.upload_image(
         file_bytes=file_bytes,
@@ -125,6 +125,15 @@ def analyze_image(
         logger.exception("analyze DB transaction failed, compensating S3 delete key=%s", s3_key)
         storage.delete_object(s3_key)
         raise database_error() from exc
+
+    if is_low_confidence:
+        return AnalyzeRetakeResponse(
+            code="AI_LOW_CONFIDENCE",
+            message="분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요.",
+            threshold=settings.vision_confidence_threshold,
+            score=prediction.score,
+            request_id=request_id,
+        )
 
     # Best-effort disposal-day lookup: never fails the request (섹션 15.1).
     waste_class = db.get(WasteClass, prediction.class_id)

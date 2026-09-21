@@ -391,13 +391,18 @@ Stateless JWT 이므로 서버 상태 변경이 없습니다. 토큰 유효성�
 4. 디코드 → EXIF 회전 보정 → 긴 변 1920px 이하로 축소(비율 유지) → JPEG 품질 85 재인코딩
    → **Vision 과 S3 는 이 동일한 바이트를 받습니다** (저장된 이미지 = 분석된 이미지)
 5. Vision `POST /internal/v1/predict` 호출
-6. 게이트 판정
-   - 중앙 객체 없음 → **200 `RETAKE_REQUIRED` / `AI_NO_MAIN_OBJECT`**, 저장 없음
-   - Top-1 score < 0.5(`VISION_CONFIDENCE_THRESHOLD`) → **200 `RETAKE_REQUIRED` / `AI_LOW_CONFIDENCE`**, 저장 없음
+6. 메인 객체 게이트: 중앙 객체 없음 → **200 `RETAKE_REQUIRED` / `AI_NO_MAIN_OBJECT`**, 저장 없음(예측값 자체가 없음)
 7. S3(또는 로컬) 업로드
 8. DB 트랜잭션: `images` → `feedback` → `feedback_candidates`(Top-K) 를 한 번에 커밋
    실패 시 rollback + **업로드한 S3 객체를 보상 삭제**
-9. 배출요일 조회 (best-effort) — 실패해도 분석은 성공 처리하고 `warnings` 로만 알림
+9. 신뢰도 게이트: Top-1 score < 0.5(`VISION_CONFIDENCE_THRESHOLD`) →
+   **200 `RETAKE_REQUIRED` / `AI_LOW_CONFIDENCE`** — 7~8 단계에서 **이미 저장은
+   완료된 상태**로, 재학습용 데이터 수집을 위해 저장 자체는 정상 분석과
+   동일하게 수행하고 사용자 응답만 재촬영 안내로 내려줍니다
+   (`final_class_id`/`is_correct`/`correction_source` 는 전부 NULL인
+   미응답 상태로 남습니다)
+10. 배출요일 조회 (best-effort, `AI_LOW_CONFIDENCE` 경로는 건너뜀) — 실패해도
+    분석은 성공 처리하고 `warnings` 로만 알림
 
 ### 12.1 성공 응답 200 (`status = "SUCCESS"`)
 
@@ -451,8 +456,8 @@ Stateless JWT 이므로 서버 상태 변경이 없습니다. 토큰 유효성�
 
 | code | message | S3/DB 저장 |
 | --- | --- | --- |
-| `AI_LOW_CONFIDENCE` | 분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요. | 안 함 |
-| `AI_NO_MAIN_OBJECT` | 분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요. | 안 함 |
+| `AI_LOW_CONFIDENCE` | 분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요. | **함** (재학습 데이터 수집 목적, 미응답 상태로 저장. `image_id`/`feedback_id` 는 응답에 노출하지 않음) |
+| `AI_NO_MAIN_OBJECT` | 분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요. | 안 함 (예측값 자체가 없어 저장할 대상이 없음) |
 
 ### 12.3 오류
 
@@ -840,7 +845,9 @@ HTTP 200 이어도 두 가지입니다. 반드시 `status` 로 먼저 분기하�
 
 ```
 200 + status="SUCCESS"          → 결과 화면 (feedback_id 보관)
-200 + status="RETAKE_REQUIRED"  → 재촬영 안내 (message 노출, 저장된 것 없음)
+200 + status="RETAKE_REQUIRED"  → 재촬영 안내 (message 노출; AI_LOW_CONFIDENCE 는
+                                   재학습용으로 S3/DB 저장은 되지만 feedback_id 는
+                                   응답에 없으므로 프론트에서 참조 불가)
 4xx/5xx                          → 공통 오류 처리
 ```
 
@@ -861,7 +868,7 @@ HTTP 200 이어도 두 가지입니다. 반드시 `status` 로 먼저 분기하�
 | --- | --- | --- |
 | `users` | 계정 | `region_id` FK → `regions`, NULL 허용 |
 | `regions` | 지역 Master | 56행 고정 (시드) |
-| `waste_classes` | 폐기물 분류 Master | 86행 고정 (시드), `class_id` 는 YOLO 인덱스와 공유 |
+| `waste_classes` | 폐기물 분류 Master | 17행 고정 (시드), `class_id` 는 YOLO 인덱스와 공유 |
 | `images` | 분석 이미지 | `s3_key`, `content_type` |
 | `feedback` | 분석 1건 = 1행 | bbox, `predicted_*`, `final_class_id`, `is_correct`, `correction_source`, `model_version` |
 | `feedback_candidates` | Top-K 후보 | PK `(feedback_id, candidate_rank)` |

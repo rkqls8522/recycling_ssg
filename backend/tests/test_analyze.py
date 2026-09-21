@@ -191,15 +191,16 @@ def test_analyze_succeeds_with_warning_when_public_api_fails(
     assert isinstance(body["feedback_id"], int)  # analysis still persisted
 
 
-# --- RETAKE_REQUIRED (HTTP 200, no storage) --------------------------------
+# --- RETAKE_REQUIRED (HTTP 200) --------------------------------------------
 
 
-def test_analyze_low_confidence_returns_retake_and_stores_nothing(
+def test_analyze_low_confidence_returns_retake_but_still_persists_rows(
     client, authed_with_region, fake_externals, image_file, db_session: Session
 ):
+    """신뢰도가 낮아도 재학습용 데이터는 SUCCESS 경로와 동일하게 저장하고,
+    사용자 응답은 그대로 RETAKE_REQUIRED(스코어 포함)로 돌려준다."""
     headers, user_id = authed_with_region
     fake_externals["prediction"] = _prediction(top_score=0.42)
-    before = db_session.query(Feedback).filter(Feedback.user_id == user_id).count()
 
     resp = client.post("/api/v1/analyze", files=image_file, headers=headers)
 
@@ -211,10 +212,32 @@ def test_analyze_low_confidence_returns_retake_and_stores_nothing(
     assert body["threshold"] == 0.5
     assert body["score"] == 0.42
     assert body["request_id"] == resp.headers["X-Request-ID"]
+    # 응답 계약은 그대로 -- image_id/feedback_id는 노출하지 않는다.
+    assert "image_id" not in body
+    assert "feedback_id" not in body
 
-    assert fake_externals["upload"] == []  # no S3 write (섹션 20)
-    after = db_session.query(Feedback).filter(Feedback.user_id == user_id).count()
-    assert after == before  # no feedback row (SR-09)
+    assert len(fake_externals["upload"]) == 1  # S3에는 그대로 업로드됨
+
+    feedback_row = (
+        db_session.query(Feedback).filter(Feedback.user_id == user_id).one()
+    )
+    assert feedback_row.predicted_class_id == PLASTIC_MAIN
+    assert feedback_row.predicted_score == pytest.approx(0.42)
+    # 미응답 상태(NULL triple)로 저장되어 chk_feedback_result_state를 만족한다.
+    assert feedback_row.final_class_id is None
+    assert feedback_row.is_correct is None
+    assert feedback_row.correction_source is None
+
+    image_row = db_session.get(Image, feedback_row.image_id)
+    assert image_row is not None
+    assert image_row.s3_key.startswith("feedback/")
+
+    candidates = (
+        db_session.query(FeedbackCandidate)
+        .filter(FeedbackCandidate.feedback_id == feedback_row.feedback_id)
+        .all()
+    )
+    assert [(c.class_id, c.rank) for c in candidates] == [(PLASTIC_TOY, 1)]
 
 
 def test_analyze_no_main_object_returns_retake_without_threshold(
