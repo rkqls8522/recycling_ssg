@@ -81,6 +81,39 @@ def get_rule_info_or_warn(
 
 RAG_RECLASSIFY_URL = os.getenv("RAG_RECLASSIFY_URL", "http://localhost:8001/reclassify")
 
+RAG_CHAT_URL = os.getenv("RAG_CHAT_URL", "http://localhost:8001/chat_node")
+
+
+def get_chat_answer_or_warn(
+    *, message: str, major_category: str, minor_category: str, user_region: dict
+) -> tuple[str | None, list[str]]:
+    """RAG 서비스의 챗봇 노드(node4)에 후속 질문 답변을 요청.
+
+    Returns (answer, warnings). Never raises -- get_rule_info_or_warn과 동일한
+    best-effort 패턴. 챗봇은 (구) Gemini 미설정 시에도 결정적 답변으로 계속
+    동작하는 게 기존 설계라서, RAG 서비스가 죽어있는 경우도 똑같이 취급해
+    호출부(agent/service.py)가 폴백 답변으로 대체하게 한다.
+    """
+    try:
+        response = requests.post(
+            RAG_CHAT_URL,
+            json={
+                "message": message,
+                "major_category": major_category,
+                "minor_category": minor_category,
+                "user_region": user_region,
+            },
+            timeout=15,
+        )
+        response.raise_for_status()
+        return response.json().get("answer"), []
+    except requests.RequestException:
+        logger.warning("chat (RAG service) lookup failed, degrading to fallback answer")
+        return None, ["RAG_SERVICE_UNAVAILABLE"]
+    except Exception:
+        logger.exception("unexpected chat (RAG service) failure")
+        return None, ["RAG_SERVICE_UNAVAILABLE"]
+
 
 def reclassify_or_raise(img_url: str, user_region: dict) -> dict:
     """RAG 서비스의 재분류 그래프(classify -> judge -> disposal_lookup)를 호출.
