@@ -91,7 +91,7 @@ export default function AuthScreen() {
             type="email"
             autoComplete="email"
             placeholder="example@email.com"
-            // value={email}
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3.5 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
           />
@@ -107,7 +107,7 @@ export default function AuthScreen() {
               mode === "login" ? "current-password" : "new-password"
             }
             placeholder="8자 이상"
-            // value={password}
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-3.5 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
           />
