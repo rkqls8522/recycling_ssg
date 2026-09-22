@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CLASSIFY_STEPS } from "@/api/api";
+import TipPoster from "./TipPoster";
 
 interface Props {
   previewUrl: string;
@@ -15,52 +16,12 @@ const ANALYZING_MESSAGES = [
   "맞춤 안내문을 만들고 있습니다...",
 ];
 
-const TIP_IMAGES = [
-  "/tips/TIP (1).png",
-  "/tips/TIP (2).png",
-  "/tips/TIP (3).png",
-  "/tips/TIP (4).png",
-  "/tips/TIP (5).png",
-  "/tips/TIP (6).png",
-  "/tips/TIP (7).png",
-  "/tips/TIP (8).png",
-  "/tips/TIP (9).png",
-  "/tips/TIP (10).png",
-  "/tips/TIP (11).png",
-  "/tips/TIP (12).png",
-];
-
-function randomTipIndex(exclude = -1) {
-  let idx = Math.floor(Math.random() * TIP_IMAGES.length);
-  if (TIP_IMAGES.length > 1 && idx === exclude)
-    idx = (idx + 1) % TIP_IMAGES.length;
-  return idx;
-}
-
-export default function AnalyzingView2({
-  previewUrl,
-  completedSteps,
-  currentStep,
-}: Props) {
+export default function AnalyzingView2({ completedSteps, currentStep }: Props) {
   const [dotCount, setDotCount] = useState(1);
-  const [tipIdx, setTipIdx] = useState(() => randomTipIndex());
-  const [tipVisible, setTipVisible] = useState(true);
 
   // Animated ellipsis
   useEffect(() => {
     const id = setInterval(() => setDotCount((c) => (c % 3) + 1), 500);
-    return () => clearInterval(id);
-  }, []);
-
-  // Rotate tip image every 10 seconds with a brief fade transition
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTipVisible(false);
-      setTimeout(() => {
-        setTipIdx((prev) => randomTipIndex(prev));
-        setTipVisible(true);
-      }, 300);
-    }, 10000);
     return () => clearInterval(id);
   }, []);
 
@@ -189,19 +150,7 @@ export default function AnalyzingView2({
         </div>
 
         {/* Tip image — fills available space */}
-        <div className="flex-1 flex items-center justify-center min-h-0 mb-4">
-          <img
-            src={TIP_IMAGES[tipIdx]}
-            alt="분리수거 팁"
-            className="w-full h-full rounded-2xl"
-            style={{
-              objectFit: "contain",
-              maxHeight: "100%",
-              opacity: tipVisible ? 1 : 0,
-              transition: "opacity 0.3s ease",
-            }}
-          />
-        </div>
+        <TipPoster className="flex-1 flex items-center justify-center min-h-0 mb-4" />
 
         {/* Bottom notice */}
         <div className="bg-emerald-50 rounded-xl px-4 py-3 flex items-start gap-2.5 flex-shrink-0">

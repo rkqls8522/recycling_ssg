@@ -19,7 +19,8 @@ export default function MyPageScreen() {
 
   const MOCK_POINTS = 1024;
 
-  const { favorites, favoritesLoading, loadFavorites, logout } = useMypage();
+  const { favorites, favoritesLoading, loadFavorites, logout, handleFavoriteClick } =
+    useMypage();
   const {
     openModal,
     modalOpen,
@@ -170,7 +171,10 @@ export default function MyPageScreen() {
                   return (
                     <div
                       key={item.favorite_id}
-                      className={"flex items-center gap-3 px-4 py-3.5"}
+                      onClick={() => handleFavoriteClick(item)}
+                      className={
+                        "flex items-center gap-3 px-4 py-3.5 cursor-pointer active:bg-muted transition-colors "
+                      }
                     >
                       <div className="flex-1 min-w-0 flex justify-between">
                         <div className="flex items-center gap-2 mb-1">
@@ -189,7 +193,10 @@ export default function MyPageScreen() {
                         </div>
                         <button
                           className="cursor-pointer btn btn-ghost btn-xs text-gray-400"
-                          onClick={() => handleDelete(item.favorite_id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(item.favorite_id);
+                          }}
                           disabled={deleteLoading}
                         >
                           x
