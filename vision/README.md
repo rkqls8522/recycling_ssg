@@ -23,7 +23,7 @@ uv sync --all-packages
 cp vision/.env.example vision/.env   # then set MODEL_PATH to your trained best.pt
 ```
 
-`MODEL_PATH` must point at a checkpoint trained on the project's 86-class
+`MODEL_PATH` must point at a checkpoint trained on the project's 17-class
 taxonomy (`data/train100val/data.yaml`), e.g. a copy of one of the
 `ai/models/yolo/.../runs/<run>/weights/best.pt` experiment outputs. It does
 **not** default to the untrained `weights/yolo26n.pt` COCO checkpoint on

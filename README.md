@@ -50,17 +50,25 @@ React Frontend
 ### 전체 서비스 흐름
 
 ```
-촬영/업로드 → Vision AI 객체 탐지 → 메인 객체 결정 → Confidence 확인
-                                                        │
-             ┌──────────────────────────────────────────┴───────────┐
-             │ Top-1 < 0.5 또는 중앙 객체 없음                          │
-             │  → HTTP 200 RETAKE_REQUIRED (재촬영 안내)               │
-             │  → S3/DB 에 아무것도 저장하지 않음                        │
-             └──────────────────────────────────────────────────────┘
-                                  │ Top-1 >= 0.5
-                                  ▼
+촬영/업로드 → Vision AI 객체 탐지 → 메인 객체 결정
+                                          │
+             ┌────────────────────────────┴───────────┐
+             │ 중앙 객체 없음                              │
+             │  → HTTP 200 RETAKE_REQUIRED (재촬영 안내)   │
+             │  → S3/DB 에 아무것도 저장하지 않음            │
+             └──────────────────────────────────────────┘
+                                          │ 메인 객체 있음
+                                          ▼
    S3 업로드 → images/feedback/feedback_candidates INSERT (1 트랜잭션)
-                                  ▼
+                                          │
+             ┌────────────────────────────┴───────────┐
+             │ Confidence 확인                            │
+             │ Top-1 < 0.5                                │
+             │  → HTTP 200 RETAKE_REQUIRED (재촬영 안내)   │
+             │  → 저장은 위에서 이미 완료(재학습 데이터 수집) │
+             └──────────────────────────────────────────┘
+                                          │ Top-1 >= 0.5
+                                          ▼
              대분류·소분류 + Top-K 후보 + 지역별 배출요일 반환
                                   ▼
                   "위 물건이 맞나요? 아니라면 골라주세요"
@@ -82,7 +90,7 @@ React Frontend
 |---|---|
 | Backend | Python 3.13, FastAPI, SQLAlchemy 2.0, Pydantic v2 |
 | DB | MySQL |
-| Vision AI | Ultralytics YOLO, PyTorch (86 class Object Detection) |
+| Vision AI | Ultralytics YOLO, PyTorch (17 class Object Detection) |
 | Vision LLM | Gemini (`google-genai`) — 후보에 없을 때만 호출 |
 | AI Agent | 분석 컨텍스트 + RAG 지식 기반 Stateless 응답 |
 | Storage | AWS S3 (boto3) / 개발용 로컬 디스크 |
@@ -109,13 +117,15 @@ uv sync --all-packages
 
 1. YOLO 체크포인트를 자동 탐색 (`weights/best.pt` → `ai/models/yolo/*/runs/*/weights/best.pt`)
 2. Vision 서버 기동 후, Backend 가 그 주소를 바라보도록 연결
-3. **개발용 설정 주입** — 로컬 디스크 저장 + 테이블 생성/Master 시딩 자동 실행
+3. **개발용 설정 주입** — S3 이미지 저장(배포와 동일) + 테이블 생성/Master 시딩 자동 실행
    (DB는 항상 `.env`의 MySQL `DATABASE_URL`을 그대로 사용 — 이 스크립트가 덮어쓰지 않음)
 4. 두 서버가 `/health` 200 을 낼 때까지 기다렸다가 준비 완료를 알림
    (로그는 `.dev-logs/`, Ctrl+C 로 둘 다 종료)
 
-MySQL(`DATABASE_URL`)은 `.env`에 항상 설정되어 있어야 합니다. AWS·외부 API 키
-없이도 나머지 흐름은 동작합니다(로컬 디스크 저장 + 실제 YOLO 모델).
+MySQL(`DATABASE_URL`)과 AWS 자격증명(`AWS_*`)은 `.env`에 항상 설정되어 있어야
+합니다 — 이미지는 배포와 동일하게 실제 S3에 저장됩니다. AWS 없이 돌려야 하면
+`STORAGE_BACKEND=local bash scripts/run-dev.sh` 로 로컬 디스크 저장으로 우회할
+수 있습니다(그러면 `images.s3_key` 가 가리키는 파일이 S3 에 없게 됩니다).
 
 ```bash
 bash scripts/run-dev.sh          # Git Bash
@@ -175,7 +185,7 @@ Base URL: `http://<host>/api/v1` · 인증: `Authorization: Bearer <JWT>`
 | 16 | POST | `/api/v1/favorites` | ✓ | 즐겨찾기 등록 (201) |
 | 17 | DELETE | `/api/v1/favorites/{id}` | ✓ | 즐겨찾기 삭제 (204) |
 | 18 | POST | `/internal/v1/predict` | Backend 전용 | YOLO 중앙 객체 + Top-K |
-| 19 | GET | `/internal/v1/classes` | Backend 전용 | Vision taxonomy (86 class) |
+| 19 | GET | `/internal/v1/classes` | Backend 전용 | Vision taxonomy (17 class) |
 
 ### 공통 오류 응답
 
@@ -197,13 +207,13 @@ Base URL: `http://<host>/api/v1` · 인증: `Authorization: Bearer <JWT>`
 
 | 규칙 | 설명 |
 |---|---|
-| **재촬영 분기는 오류가 아님** | Top-1 < 0.5 또는 중앙 객체 미탐지 → **HTTP 200** + `RETAKE_REQUIRED`. 이 경로에서는 S3/DB에 **아무것도 저장하지 않음** |
+| **재촬영 분기는 오류가 아님** | Top-1 < 0.5 또는 중앙 객체 미탐지 → **HTTP 200** + `RETAKE_REQUIRED`. 중앙 객체 미탐지는 S3/DB에 **아무것도 저장하지 않음**; Top-1 < 0.5 는 재학습 데이터 수집을 위해 SUCCESS 와 동일하게 저장하되 `feedback_id` 는 응답에 노출하지 않음 |
 | **저장 순서와 보상 트랜잭션** | S3 업로드 → `images` → `feedback` → `feedback_candidates` 를 한 트랜잭션으로. DB 실패 시 ROLLBACK + **업로드된 S3 객체 보상 삭제** |
 | **외부 API 장애 격리** | 공공데이터 API 실패는 분석을 실패시키지 않고 `disposal_day: null` + `warnings[]` 로 응답 |
 | **class_id 단일 소스** | `data/taxonomy/waste_classes.json` 이 YOLO 클래스 인덱스와 `waste_classes` 테이블이 공유하는 유일한 기준 |
 | **feedback 에 문자열 미저장** | 대/소분류는 `class_id` JOIN 으로 해석. `feedback` 에는 문자열을 저장하지 않음 |
 | **미응답 상태 보존** | 사용자가 아무 응답 없이 이탈하면 `final_class_id`/`is_correct`/`correction_source` 는 **NULL 유지** |
-| **Gemini 는 Fallback 전용** | 일반 분석 과정에서 호출하지 않고 "여기에 없어요" 일 때만 호출. 결과는 86개 class_id 로 제한 |
+| **Gemini 는 Fallback 전용** | 일반 분석 과정에서 호출하지 않고 "여기에 없어요" 일 때만 호출. 결과는 17개 class_id 로 제한 |
 | **대화 미저장** | `/api/v1/chat` 은 Stateless. message/answer 를 DB에 저장하지 않음 |
 | **S3 는 key 만 저장** | 만료되는 Presigned URL 은 DB에 저장 금지 |
 | **업로드 이미지는 항상 재인코딩** | 원본 그대로 저장하지 않고 1920px 이하로 축소 + JPEG(기본)로 재인코딩. Vision 서버와 S3 양쪽에 **같은 처리된 이미지**가 전달됨 |
@@ -255,12 +265,13 @@ cp vision/.env.example  vision/.env
 
 추가로 챙길 것 하나: **학습된 체크포인트를 `weights/best.pt` 로 복사**하세요.
 (`ai/models/yolo/.../runs/<우승 실험>/weights/best.pt`)
-`weights/yolo26n.pt` 는 COCO 사전학습 가중치라 **지정하면 안 됩니다** — 86개 폐기물
+`weights/yolo26n.pt` 는 COCO 사전학습 가중치라 **지정하면 안 됩니다** — 17개 폐기물
 taxonomy 가 아닌 COCO class 인덱스를 반환해 모든 `class_id` 가 조용히 오염됩니다.
 
 > `scripts/run-dev.sh` 로 개발 서버를 띄워도 `DATABASE_URL`(MySQL)은 항상
 > `.env`에서 읽어옵니다. `.env`가 없으면 DB 연결이 안 되니 최소한 `DATABASE_URL`은
-> 채워두세요. 로컬 디스크 저장 + 체크포인트 자동 탐색은 `.env` 없이도 동작합니다.
+> 채워두세요. 이미지 저장도 기본이 S3라 `AWS_*` 도 함께 필요합니다 — `.env` 없이
+> 동작하는 것은 체크포인트 자동 탐색뿐입니다.
 
 ### .env 항목별 설명
 
@@ -299,7 +310,7 @@ taxonomy 가 아닌 COCO class 인덱스를 반환해 모든 `class_id` 가 조�
 
 | 변수 | 설명 |
 |---|---|
-| `STORAGE_BACKEND=local` | S3 대신 로컬 디스크에 저장 (`s3_key` 의미는 동일) |
+| `STORAGE_BACKEND=local` | S3 대신 로컬 디스크에 저장 (`s3_key` 의미는 동일). 기본값은 `s3` |
 | `LOCAL_STORAGE_DIR` | 로컬 저장 경로 (기본 `./.local_storage`) |
 | `AUTO_CREATE_TABLES` / `AUTO_SEED_MASTER_DATA` | 기동 시 테이블 생성 및 지역/폐기물 Master 시딩 |
 
@@ -322,7 +333,7 @@ recycling_ssg/
 │   ├── main.py              /internal/v1/predict, /classes, /health
 │   ├── inference.py         YOLO 로딩, 중앙 메인 객체 선택, Top-K
 │   └── tests/               24개 테스트
-├── data/taxonomy/           regions.json(56) · waste_classes.json(86) ← 단일 소스
+├── data/taxonomy/           regions.json(56) · waste_classes.json(17) ← 단일 소스
 ├── scripts/                 run-dev · stop-dev · smoke-test
 ├── docs/API_SPEC.md         API 명세서 (.docx 동봉)
 ├── docs/API_TEST_COMMANDS.md   19개 API 테스트 명령어 모음

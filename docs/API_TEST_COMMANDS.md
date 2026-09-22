@@ -25,8 +25,9 @@ bash scripts/run-dev.sh
 
 - Backend: `http://127.0.0.1:8000` · Vision: `http://127.0.0.1:8100`
 - Swagger UI: <http://127.0.0.1:8000/docs>
-- DB는 항상 `.env`의 MySQL을 사용합니다(SQLite 아님). AWS/외부 키 없이도 나머지
-  흐름은 동작합니다 (로컬 디스크 저장).
+- DB는 항상 `.env`의 MySQL을 사용합니다(SQLite 아님). 이미지는 `.env`의 AWS
+  자격증명으로 실제 S3에 저장됩니다(배포와 동일). AWS 없이 돌리려면
+  `STORAGE_BACKEND=local bash scripts/run-dev.sh` 로 기동하세요.
 
 ### 0-2. 환경변수 설정
 
@@ -390,10 +391,12 @@ curl.exe -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" 
 {
   "status": "SUCCESS",
   "major_category": "고철류",
-  "minor_category": "철옷걸이",
+  "minor_category": "고철",
+  "class_id": 0,
+  "score": 0.9962,
   "candidate_scores": [
-    { "class_id": 6, "category": "고철류_철옷걸이", "score": 0.6439 },
-    { "class_id": 2, "category": "고철류_기타", "score": 0.0521 }
+    { "class_id": 11, "category": "종이류_종이", "score": 0.0014 },
+    { "class_id": 1, "category": "고철류_비철금속", "score": 0.0003 }
   ],
   "user_region": {
     "region_id": 23,
@@ -409,12 +412,15 @@ curl.exe -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" 
 
 > 공공데이터 API 키가 없으면 **분석은 성공 처리**되고 `disposal_day: null` + `warnings` 에
 > 경고 코드가 담깁니다 (명세 15.1). 키를 설정하면 `disposal_day: "화, 목"` 처럼 채워집니다.
+>
+> `candidate_scores` 는 **Top-1(`class_id`/`score`)을 제외한** 다른 후보만 담습니다 — 모델이
+> 틀렸을 때 사용자에게 보여줄 대안 목록이라, 이미 맞았는지 확인 끝난 Top-1은 다시 넣지 않습니다.
 
 **다음 단계에 쓸 값 저장**
 
 ```bash
 FEEDBACK_ID=1   # 응답의 feedback_id
-CLASS_ID=6      # candidate_scores[0].class_id
+CLASS_ID=0      # 응답의 class_id (Top-1 예측)
 ```
 
 ### 9-B. RETAKE_REQUIRED — 신뢰도 부족 (HTTP 200)
@@ -433,11 +439,15 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   "code": "AI_LOW_CONFIDENCE",
   "message": "분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요.",
   "threshold": 0.5,
+  "score": 0.37,
   "request_id": "..."
 }
 ```
 
-> 이 경로에서는 **S3/DB 에 아무것도 저장하지 않습니다** (feedback_id 없음).
+> 응답 자체는 `feedback_id` 없음(재조회 불가)이지만, **S3/DB 에는 SUCCESS 와
+> 동일하게 저장됩니다** (재학습 데이터 수집 목적). 저장된 `feedback` 행은
+> `final_class_id`/`is_correct`/`correction_source` 가 전부 NULL인 미응답
+> 상태로 남으며, `predicted_score < 0.5` 로 나중에 구분해서 조회할 수 있습니다.
 
 ### 9-C. RETAKE_REQUIRED — 중앙 객체 없음 (HTTP 200)
 
@@ -453,9 +463,13 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   "code": "AI_NO_MAIN_OBJECT",
   "message": "분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요.",
   "threshold": null,
+  "score": null,
   "request_id": "..."
 }
 ```
+
+> 이 경로는 (9-B 와 달리) **S3/DB 에 아무것도 저장하지 않습니다** — 메인
+> 객체를 아예 못 찾아 저장할 예측값(class_id/score/bbox) 자체가 없습니다.
 
 ### 9-D. 오류 케이스
 
@@ -555,7 +569,7 @@ curl -s -X POST "$BACKEND/api/v1/feedback/4/select-candidate" -H "Authorization:
 
 # 400 FEEDBACK_INVALID_CANDIDATE — 해당 분석의 Top-K 후보에 없는 class_id
 curl -s -X POST "$BACKEND/api/v1/feedback/4/select-candidate" -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" -d '{"class_id":85}'
+  -H "Content-Type: application/json" -d '{"class_id":16}'
 ```
 
 ---
@@ -585,16 +599,16 @@ curl -s -X POST "$BACKEND/api/v1/feedback/5/not-in-list" \
 {
   "feedback_id": 5,
   "is_correct": false,
-  "final_class_id": 7,
+  "final_class_id": 0,
   "correction_source": "GEMINI",
   "major_category": "고철류",
-  "minor_category": "프라이팬",
+  "minor_category": "고철",
   "message": "추가 이미지 분석 결과로 수정되었습니다."
 }
 ```
 
 > 키 설정: `.env` 에 `GEMINI_API_KEY=...` 추가 후 서버 재시작.
-> Gemini 결과는 항상 `waste_classes` 의 86개 class_id 중 하나로 제한됩니다.
+> Gemini 결과는 항상 `waste_classes` 의 17개 class_id 중 하나로 제한됩니다.
 > 그 외 오류: `502 GEMINI_UNAVAILABLE` / `502 GEMINI_BAD_RESPONSE` / `504 GEMINI_TIMEOUT` / `502 S3_DOWNLOAD_FAILED`
 
 ---
@@ -811,10 +825,12 @@ curl.exe -s -X POST "$VISION/internal/v1/predict" -H "X-Request-ID: 550e8400-e29
 ```json
 {
   "major_category": "고철류",
-  "minor_category": "철옷걸이",
+  "minor_category": "고철",
+  "class_id": 0,
+  "score": 0.9962,
   "candidate_scores": [
-    { "class_id": 6, "category": "고철류_철옷걸이", "score": 0.6439 },
-    { "class_id": 2, "category": "고철류_기타", "score": 0.0521 }
+    { "class_id": 11, "category": "종이류_종이", "score": 0.0014 },
+    { "class_id": 1, "category": "고철류_비철금속", "score": 0.0003 }
   ],
   "internal_meta": {
     "bbox": { "x1": 0.2485, "y1": 0.2534, "x2": 0.8284, "y2": 0.624 },
@@ -824,7 +840,8 @@ curl.exe -s -X POST "$VISION/internal/v1/predict" -H "X-Request-ID: 550e8400-e29
 }
 ```
 
-> `bbox` 는 0~1 정규화 XYXY, `candidate_scores` 는 score 내림차순입니다.
+> `bbox` 는 0~1 정규화 XYXY. `class_id`/`score` 가 Top-1(실제 예측)이고,
+> `candidate_scores` 는 **Top-1을 제외한** 나머지 후보만 score 내림차순으로 담습니다.
 
 **오류 케이스**
 
@@ -847,20 +864,20 @@ curl -s -X POST "$VISION/internal/v1/predict" -F "image=@empty.jpg;type=image/jp
 ```bash
 curl -s "$VISION/internal/v1/classes"
 
-# 개수만 확인 (86개여야 함)
+# 개수만 확인 (17개여야 함)
 curl -s "$VISION/internal/v1/classes" \
   | .venv/Scripts/python.exe -c "import json,sys;print(len(json.load(sys.stdin)['classes']))"
 ```
 
-**실제 응답** `200 OK` (classes 86개)
+**실제 응답** `200 OK` (classes 17개)
 
 ```json
 {
   "model_version": "B01_yolo_default_baseline_seed42",
   "classes": [
     { "class_id": 0, "major_category": "고철류", "minor_category": "고철" },
-    { "class_id": 6, "major_category": "고철류", "minor_category": "철옷걸이" },
-    { "class_id": 85, "major_category": "형광등", "minor_category": "환형" }
+    { "class_id": 1, "major_category": "고철류", "minor_category": "비철금속" },
+    { "class_id": 16, "major_category": "형광등", "minor_category": "형광등" }
   ]
 }
 ```
@@ -911,7 +928,7 @@ RESULT=$(curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TO
   -F "image=@$IMG;type=image/jpeg")
 echo "$RESULT"
 FEEDBACK_ID=$(echo "$RESULT" | $PY -c "import json,sys;print(json.load(sys.stdin)['feedback_id'])")
-CLASS_ID=$(echo "$RESULT" | $PY -c "import json,sys;print(json.load(sys.stdin)['candidate_scores'][0]['class_id'])")
+CLASS_ID=$(echo "$RESULT" | $PY -c "import json,sys;print(json.load(sys.stdin)['class_id'])")
 
 # 4) "예, 맞아요" 확정
 curl -s -X POST "$BACKEND/api/v1/feedback/$FEEDBACK_ID/confirm" -H "Authorization: Bearer $TOKEN"; echo
@@ -1049,7 +1066,7 @@ curl -s -X POST $BACKEND/api/v1/feedback/$NEW_FB/select-candidate -H "Authorizat
 
 # 400 FEEDBACK_INVALID_CANDIDATE ── 그 분석의 Top-K 에 없는 class_id
 curl -s -X POST $BACKEND/api/v1/feedback/$NEW_FB/select-candidate -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" -d '{"class_id":85}'
+  -H "Content-Type: application/json" -d '{"class_id":16}'
 
 # 403 FEEDBACK_FORBIDDEN ── 다른 계정의 feedback 에 접근
 OTHER=$(curl -s -X POST $BACKEND/api/v1/auth/login -H "Content-Type: application/json" \
@@ -1065,8 +1082,10 @@ curl -s -X POST $BACKEND/api/v1/feedback/$FEEDBACK_ID/confirm -H "Authorization:
 
 ```bash
 # ── 502 S3_DOWNLOAD_FAILED ── 저장된 원본을 지운 뒤 not-in-list 호출
-#    (개발 모드 STORAGE_BACKEND=local 기준)
-find .local_storage -name "*.jpg" -delete
+#    기본(STORAGE_BACKEND=s3): 해당 키만 지운다. images.s3_key 값을 확인해서 쓸 것.
+aws s3 rm "s3://$AWS_S3_BUCKET/$S3_KEY"
+#    STORAGE_BACKEND=local 로 기동한 경우:
+# find .local_storage -name "*.jpg" -delete
 curl -s -X POST $BACKEND/api/v1/feedback/$FEEDBACK_ID/not-in-list -H "Authorization: Bearer $TOKEN"
 
 # ── 404 USER_NOT_FOUND ── 토큰은 유효하지만 사용자 행이 사라진 경우

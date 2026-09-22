@@ -21,7 +21,7 @@ def seeded_feedback(db_session, signup_and_login):
     feedback = Feedback(
         user_id=user_id,
         image_id=image.image_id,
-        predicted_class_id=22,  # 플라스틱류/욕실용품
+        predicted_class_id=14,  # 플라스틱류/플라스틱
         predicted_score=0.81,
         bbox_x1=0.1,
         bbox_y1=0.1,
@@ -32,7 +32,7 @@ def seeded_feedback(db_session, signup_and_login):
     db_session.add(feedback)
     db_session.flush()
 
-    for rank, (class_id, score) in enumerate([(22, 0.81), (15, 0.12), (31, 0.04)], start=1):
+    for rank, (class_id, score) in enumerate([(14, 0.81), (15, 0.12), (11, 0.04)], start=1):
         db_session.add(
             FeedbackCandidate(feedback_id=feedback.feedback_id, class_id=class_id, score=score, rank=rank)
         )
@@ -47,7 +47,7 @@ def test_confirm_feedback(client, seeded_feedback):
     assert resp.status_code == 200
     body = resp.json()
     assert body["is_correct"] is True
-    assert body["final_class_id"] == 22
+    assert body["final_class_id"] == 14
     assert body["correction_source"] is None
 
     already = client.post(f"/api/v1/feedback/{feedback_id}/confirm", headers=headers)
@@ -59,7 +59,7 @@ def test_select_candidate_flow(client, seeded_feedback):
     headers, feedback_id = seeded_feedback
 
     same_as_prediction = client.post(
-        f"/api/v1/feedback/{feedback_id}/select-candidate", json={"class_id": 22}, headers=headers
+        f"/api/v1/feedback/{feedback_id}/select-candidate", json={"class_id": 14}, headers=headers
     )
     assert same_as_prediction.status_code == 400
     assert same_as_prediction.json()["code"] == "FEEDBACK_SAME_AS_PREDICTION"

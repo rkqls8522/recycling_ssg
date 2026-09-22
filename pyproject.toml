@@ -6,6 +6,13 @@ dependencies = [
     "axios>=0.4.0",
     "boto3>=1.43.92",
     "fastapi>=0.141.1",
+    "langchain-core>=1.6.2",
+    "langchain-google-genai>=4.4.0",
+    "langchain-nvidia-ai-endpoints>=1.4.3",
+    "langchain-pinecone>=0.2.13",
+    "langchain-upstage>=0.7.7",
+    "langgraph>=1.2.11",
+    "langsmith>=0.12.2",
     "matplotlib>=3.11.1",
     # torch 2.11.x is not compatible with numpy >= 2.4: its `torch/_dynamo/utils.py`
     # numpy-shim import fails and the surrounding `except ImportError: pass` silently
@@ -16,6 +23,7 @@ dependencies = [
     "pandas>=3.0.5",
     "pillow>=12.3.0",
     "pydantic-settings>=2.15.0",
+    "python-dotenv>=1.2.3",
     "python-multipart>=0.0.32",
     "pyyaml>=6.0.3",
     "torch",
@@ -55,4 +63,5 @@ dev = [
 # B008 flags FastAPI's canonical Depends()/File()/Query() default-argument
 # pattern (used in vision/main.py), which is required, not a bug.
 ignore = ["B008"]
+
 

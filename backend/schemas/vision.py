@@ -24,5 +24,9 @@ class InternalMeta(BaseModel):
 class VisionPredictResponse(BaseModel):
     major_category: str
     minor_category: str
+    # Top-1(실제 예측) class_id/score.
+    class_id: int
+    score: float
+    # Top-1을 제외한 "다른 후보" 목록 (score 내림차순).
     candidate_scores: list[CandidateScoreOut]
     internal_meta: InternalMeta

@@ -35,19 +35,19 @@ def _make_test_jpeg(width: int = 64, height: int = 48) -> bytes:
     PILImage.new("RGB", (width, height), color=(120, 180, 90)).save(buffer, format="JPEG")
     return buffer.getvalue()
 
-PLASTIC_BATHROOM = 77  # 플라스틱류/욕실용품
-PLASTIC_BASKET = 76  # 플라스틱류/바구니
+PLASTIC_MAIN = 14  # 플라스틱류/플라스틱
+PLASTIC_TOY = 15  # 플라스틱류/장난감
 
 
 def _prediction(top_score: float = 0.8123) -> VisionPredictResponse:
     return VisionPredictResponse(
         major_category="플라스틱류",
-        minor_category="욕실용품",
+        minor_category="플라스틱",
+        class_id=PLASTIC_MAIN,
+        score=top_score,
+        # Top-1(PLASTIC_MAIN)을 제외한 "다른 후보"만 담는다.
         candidate_scores=[
-            CandidateScoreOut(
-                class_id=PLASTIC_BATHROOM, category="플라스틱류_욕실용품", score=top_score
-            ),
-            CandidateScoreOut(class_id=PLASTIC_BASKET, category="플라스틱류_바구니", score=0.1211),
+            CandidateScoreOut(class_id=PLASTIC_TOY, category="플라스틱류_장난감", score=0.1211),
         ],
         internal_meta=InternalMeta(
             bbox=BBox(x1=0.25, y1=0.18, x2=0.76, y2=0.88),
@@ -107,7 +107,9 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
 
     assert body["status"] == "SUCCESS"
     assert body["major_category"] == "플라스틱류"
-    assert body["minor_category"] == "욕실용품"
+    assert body["minor_category"] == "플라스틱"
+    assert body["class_id"] == PLASTIC_MAIN
+    assert body["score"] == pytest.approx(0.8123)
     assert body["disposal_day"] == "화, 목"
     assert body["warnings"] == []
     assert isinstance(body["image_id"], int)
@@ -121,11 +123,12 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
         "sgg_name": "강남구",
     }
 
-    # CandidateScore objects, sorted by score desc (SR-07).
+    # CandidateScore objects -- Top-1(class_id/score, 위에서 이미 확인)은 빠지고
+    # "다른 후보"만 남는다, score 내림차순 (SR-07).
     scores = body["candidate_scores"]
-    assert [s["class_id"] for s in scores] == [PLASTIC_BATHROOM, PLASTIC_BASKET]
+    assert [s["class_id"] for s in scores] == [PLASTIC_TOY]
     assert all(set(s) == {"class_id", "category", "score"} for s in scores)
-    assert scores[0]["score"] >= scores[1]["score"]
+    assert scores == sorted(scores, key=lambda s: s["score"], reverse=True)
 
     # Persistence: images + feedback + Top-K snapshot (섹션 19).
     image_row = db_session.get(Image, body["image_id"])
@@ -138,7 +141,7 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
 
     feedback_row = db_session.get(Feedback, body["feedback_id"])
     assert feedback_row.user_id == user_id
-    assert feedback_row.predicted_class_id == PLASTIC_BATHROOM
+    assert feedback_row.predicted_class_id == PLASTIC_MAIN
     assert feedback_row.predicted_score == pytest.approx(0.8123)
     assert feedback_row.model_version == "yolo26n-recycling-test"
     # BBox stored as 0~1 normalized XYXY (섹션 3.3, 20).
@@ -160,9 +163,10 @@ def test_analyze_success_returns_full_contract_and_persists_rows(
         .order_by(FeedbackCandidate.rank)
         .all()
     )
+    # feedback_candidates에는 이제 "다른 후보"만 저장된다 (PLASTIC_MAIN은
+    # feedback.predicted_class_id에 이미 저장됨). rank는 1부터 다시 매김.
     assert [(c.class_id, c.rank) for c in candidates] == [
-        (PLASTIC_BATHROOM, 1),
-        (PLASTIC_BASKET, 2),
+        (PLASTIC_TOY, 1),
     ]
 
 
@@ -187,15 +191,16 @@ def test_analyze_succeeds_with_warning_when_public_api_fails(
     assert isinstance(body["feedback_id"], int)  # analysis still persisted
 
 
-# --- RETAKE_REQUIRED (HTTP 200, no storage) --------------------------------
+# --- RETAKE_REQUIRED (HTTP 200) --------------------------------------------
 
 
-def test_analyze_low_confidence_returns_retake_and_stores_nothing(
+def test_analyze_low_confidence_returns_retake_but_still_persists_rows(
     client, authed_with_region, fake_externals, image_file, db_session: Session
 ):
+    """신뢰도가 낮아도 재학습용 데이터는 SUCCESS 경로와 동일하게 저장하고,
+    사용자 응답은 그대로 RETAKE_REQUIRED(스코어 포함)로 돌려준다."""
     headers, user_id = authed_with_region
     fake_externals["prediction"] = _prediction(top_score=0.42)
-    before = db_session.query(Feedback).filter(Feedback.user_id == user_id).count()
 
     resp = client.post("/api/v1/analyze", files=image_file, headers=headers)
 
@@ -205,11 +210,34 @@ def test_analyze_low_confidence_returns_retake_and_stores_nothing(
     assert body["code"] == "AI_LOW_CONFIDENCE"
     assert body["message"] == "분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요."
     assert body["threshold"] == 0.5
+    assert body["score"] == 0.42
     assert body["request_id"] == resp.headers["X-Request-ID"]
+    # 응답 계약은 그대로 -- image_id/feedback_id는 노출하지 않는다.
+    assert "image_id" not in body
+    assert "feedback_id" not in body
 
-    assert fake_externals["upload"] == []  # no S3 write (섹션 20)
-    after = db_session.query(Feedback).filter(Feedback.user_id == user_id).count()
-    assert after == before  # no feedback row (SR-09)
+    assert len(fake_externals["upload"]) == 1  # S3에는 그대로 업로드됨
+
+    feedback_row = (
+        db_session.query(Feedback).filter(Feedback.user_id == user_id).one()
+    )
+    assert feedback_row.predicted_class_id == PLASTIC_MAIN
+    assert feedback_row.predicted_score == pytest.approx(0.42)
+    # 미응답 상태(NULL triple)로 저장되어 chk_feedback_result_state를 만족한다.
+    assert feedback_row.final_class_id is None
+    assert feedback_row.is_correct is None
+    assert feedback_row.correction_source is None
+
+    image_row = db_session.get(Image, feedback_row.image_id)
+    assert image_row is not None
+    assert image_row.s3_key.startswith("feedback/")
+
+    candidates = (
+        db_session.query(FeedbackCandidate)
+        .filter(FeedbackCandidate.feedback_id == feedback_row.feedback_id)
+        .all()
+    )
+    assert [(c.class_id, c.rank) for c in candidates] == [(PLASTIC_TOY, 1)]
 
 
 def test_analyze_no_main_object_returns_retake_without_threshold(
@@ -231,6 +259,7 @@ def test_analyze_no_main_object_returns_retake_without_threshold(
     assert body["code"] == "AI_NO_MAIN_OBJECT"
     assert body["message"] == "분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요."
     assert body["threshold"] is None
+    assert body["score"] is None
     assert body["request_id"]
 
     assert fake_externals["upload"] == []

@@ -95,54 +95,84 @@ export default function ResultScreen() {
         </div>
 
         {/* Guidelines Card */}
-        <div className="bg-card rounded-2xl border border-border overflow-hidden">
+        <div className="bg-card rounded-2xl border border-border scrollbar-thin overflow-auto ">
           <div className="px-5 pt-5 pb-4 border-b border-border">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
               배출 방법
             </p>
             <h4 className="text-base font-bold text-foreground mt-1">
-              {itemName} 분리배출 안내
+              📍 {itemName} 배출 방법
             </h4>
           </div>
 
-          {/* Steps */}
-          <div className="px-5 py-4 flex flex-col gap-0">
-            {guidelines.steps.map((step, i) => (
-              <div key={i} className="flex gap-3 relative pb-4">
-                {i < guidelines.steps.length - 1 && (
-                  <div className="absolute left-[15px] top-7 bottom-0 w-px bg-border" />
-                )}
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 z-10">
-                  <span className="text-xs font-bold font-mono text-primary">
-                    {i + 1}
-                  </span>
+          {guidelines.nationalRule || guidelines.regionRule ? (
+            <>
+              {/* 전국 공통 기준 (national_rule) */}
+              {guidelines.nationalRule && (
+                <div className="px-5 pt-4 pb-4 border-b border-border">
+                  <p className="text-xs font-bold text-foreground mb-2">
+                    [전국 공통 기준 : {guidelines.nationalRule.source}]
+                  </p>
+                  <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                    {guidelines.nationalRule.method}
+                  </p>
                 </div>
-                <p className="text-sm text-foreground leading-relaxed pt-1">
-                  {step}
-                </p>
-              </div>
-            ))}
-          </div>
+              )}
 
-          {/* Notes */}
-          {guidelines.notes.length > 0 && (
-            <div className="px-5 pb-5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
-                주의사항
-              </p>
-              <div className="flex flex-col gap-2">
-                {guidelines.notes.map((note, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <span className="text-amber-500 text-xs mt-0.5 flex-shrink-0 font-bold">
-                      !
-                    </span>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {note}
+              {/* 지자체 추가 안내 (region_rule) */}
+              {guidelines.regionRule && (
+                <div className="px-5 pt-4 pb-5 bg-amber-50">
+                  <p className="text-xs font-bold text-amber-800 mb-2">
+                    ⚠️ {guidelines.regionRule.region} 추가 안내
+                  </p>
+                  <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-line mb-2">
+                    {guidelines.regionRule.method}
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Steps — RAG 데이터가 없을 때(mock/구식 흐름)의 폴백 렌더링 */}
+              <div className="px-5 py-4 flex flex-col gap-0">
+                {guidelines.steps.map((step, i) => (
+                  <div key={i} className="flex gap-3 relative pb-4">
+                    {i < guidelines.steps.length - 1 && (
+                      <div className="absolute left-[15px] top-7 bottom-0 w-px bg-border" />
+                    )}
+                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 z-10">
+                      <span className="text-xs font-bold font-mono text-primary">
+                        {i + 1}
+                      </span>
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed pt-1">
+                      {step}
                     </p>
                   </div>
                 ))}
               </div>
-            </div>
+
+              {/* Notes */}
+              {guidelines.notes.length > 0 && (
+                <div className="px-5 pb-5">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">
+                    주의사항
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {guidelines.notes.map((note, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className="text-amber-500 text-xs mt-0.5 flex-shrink-0 font-bold">
+                          !
+                        </span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {note}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Special instructions */}

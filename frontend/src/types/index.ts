@@ -49,6 +49,15 @@ export interface DisposalGuideline {
   specialInstructions?: string;
   source: string;
   sourceUrl: string;
+  // RAG(node2) 결과를 "전국 공통 기준" / "지자체 추가 안내"로 나눠 보여주기 위한 구조화 필드.
+  // /analyze(RAG 연동) 흐름에서만 채워짐 — mock이나 /disposal/schedule 폴백 흐름에서는 null/undefined.
+  nationalRule?: { source: string; method: string } | null;
+  regionRule?: {
+    region: string;
+    method: string;
+    sourceLabel: string;
+    sourceUrl: string;
+  } | null;
 }
 
 export type Screen = "auth" | "region" | "home" | "classifying" | "result";
@@ -124,13 +133,31 @@ export interface CandidateScore {
   score: number;
 }
 
+export interface NationalRule {
+  source: string;
+  method: string | null;
+}
+
+export interface RegionRule {
+  region: string;
+  source_url: string;
+  exception_type: string;
+  method: string;
+}
+
 export interface AnalyzeSuccessBody {
   status: "SUCCESS";
   major_category: string;
   minor_category: string;
+  // Top-1(실제 예측) class_id/score. major_category/minor_category와 같은 대상.
+  class_id: number;
+  score: number;
+  // Top-1을 제외한 "다른 후보" 목록 (모델이 틀렸을 때 사용자에게 보여줄 대안).
   candidate_scores: CandidateScore[];
   user_region: RegionInfo;
   disposal_day: string | null;
+  national_rule: NationalRule | null;
+  region_rule: RegionRule | null;
   image_id: number;
   feedback_id: number;
   warnings: string[];
@@ -141,6 +168,9 @@ export interface AnalyzeRetakeBody {
   code: string;
   message: string;
   threshold?: number;
+  // AI_LOW_CONFIDENCE일 때 실제 Top-1 신뢰도 점수 (threshold 미만이라 재촬영을
+  // 요구한 바로 그 값). AI_NO_MAIN_OBJECT는 null.
+  score?: number | null;
   request_id: string;
 }
 
@@ -181,7 +211,16 @@ export interface FeedbackNotInListResponse {
   correction_source: "GEMINI";
   major_category: string;
   minor_category: string;
+  disposal_day: string | null;
+  national_rule: NationalRule | null;
+  region_rule: RegionRule | null;
   message: string;
+}
+
+export interface ChatResponse {
+  feedback_id: number;
+  answer: string;
+  warnings: string[];
 }
 
 export type RegionItem = {

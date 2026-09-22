@@ -30,8 +30,64 @@ export const FALLBACK_GUIDELINE: DisposalGuideline = {
   sourceUrl: "",
 };
 
-// GET /api/v1/disposal/schedule 응답 → 화면에서 쓰는 DisposalGuideline으로 변환
-// (백엔드는 steps/notes 같은 세부 목록을 주지 않고 disposal_method 한 줄만 주므로, 그 한 줄을 첫 스텝으로 사용)
+// POST /api/v1/analyze 응답의 national_rule/region_rule(RAG 서비스 node2 결과)
+// → 화면에서 쓰는 DisposalGuideline으로 변환.
+// national_rule은 전국 공통 배출요령, region_rule은 있을 때만(경기도 지자체 예외) 추가로 얹는다.
+// URL에서 "hscity.go.kr" 같은 호스트명만 뽑아낸다 (표시용, 실패하면 원본 문자열 그대로).
+function hostnameOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+export function buildGuidelineFromAnalyze(
+  data: AnalyzeSuccessBody,
+): DisposalGuideline {
+  const steps: string[] = [];
+  const notes: string[] = [];
+
+  const nationalRule =
+    data.national_rule?.method != null
+      ? { source: data.national_rule.source, method: data.national_rule.method }
+      : null;
+  if (nationalRule) {
+    steps.push(nationalRule.method);
+  }
+
+  const regionRule = data.region_rule
+    ? {
+        region: data.region_rule.region,
+        method: data.region_rule.method,
+        sourceLabel: `${data.region_rule.region}청 홈페이지 — ${hostnameOf(data.region_rule.source_url)}`,
+        sourceUrl: data.region_rule.source_url,
+      }
+    : null;
+  if (regionRule) {
+    notes.push(
+      `[${regionRule.region} 지자체 예외 · ${data.region_rule!.exception_type}] ${regionRule.method}`,
+    );
+  }
+
+  if (!nationalRule && !regionRule) {
+    return FALLBACK_GUIDELINE;
+  }
+
+  return {
+    steps: steps.length > 0 ? steps : ["지역 기준에 따라 배출해주세요."],
+    notes,
+    collectionDays: data.disposal_day ?? "정보 없음",
+    source: regionRule?.region ?? nationalRule?.source ?? "기후에너지환경부",
+    sourceUrl: regionRule?.sourceUrl ?? "",
+    nationalRule,
+    regionRule,
+  };
+}
+
+// GET /api/v1/disposal/schedule 응답 → 화면에서 쓰는 DisposalGuideline으로 변환.
+// (피드백으로 재분류된 class_id에 대해 배출정보를 다시 조회하는 useFeedback.tsx 전용 —
+// /analyze 흐름 자체는 위 buildGuidelineFromAnalyze를 쓰고 이 함수는 호출하지 않는다.)
 export function mapDisposalSchedule(
   d: DisposalScheduleResponse,
 ): DisposalGuideline {
@@ -50,18 +106,19 @@ export function buildAnalyzeResult(
   regionCode: string,
   guidelines: DisposalGuideline,
 ): ClassificationResult {
-  const top1 = data.candidate_scores[0];
+  // Top-1(실제 예측)은 이제 최상위 class_id/score 필드에 있다 — candidate_scores는
+  // Top-1을 제외한 "다른 후보"만 담고 있으므로 더 이상 [0]을 쓰지 않는다.
   return {
     itemName: data.minor_category,
     itemCategory: data.major_category,
-    itemCategoryEn: top1 ? String(top1.class_id) : "unknown",
-    confidence: top1 ? Math.round(top1.score * 100) : 100,
+    itemCategoryEn: String(data.class_id),
+    confidence: Math.round(data.score * 100),
     confidenceLevel: "high",
     guidelines,
     regionCode,
     regionName: `${data.user_region.sido_name} ${data.user_region.sgg_name}`,
     feedbackId: data.feedback_id,
-    classId: top1?.class_id,
+    classId: data.class_id,
     candidateScores: data.candidate_scores,
   };
 }
@@ -119,12 +176,6 @@ export function useAnalyze() {
     false,
   );
 
-  const { refetch: disposalRequest } = useAxios<DisposalScheduleResponse>(
-    "",
-    { method: "get" },
-    false,
-  );
-
   // 실제 /api/v1/analyze 호출 — useAxios로 요청하고, SUCCESS면 이어서 배출정보(/disposal/schedule)까지 조회한다.
   async function runRealAnalyze(
     onProgress: (stepIndex: number) => void,
@@ -145,20 +196,9 @@ export function useAnalyze() {
         return { status: "RETAKE_REQUIRED", retakeMessage: data.message };
       }
 
-      const top1 = data.candidate_scores[0];
-      let guidelines = FALLBACK_GUIDELINE;
-      if (top1) {
-        try {
-          const schedule = await disposalRequest({
-            url: "/api/v1/disposal/schedule",
-            params: { class_id: top1.class_id },
-            headers: authHeaders(),
-          });
-          guidelines = mapDisposalSchedule(schedule);
-        } catch {
-          // 배출정보 조회가 실패해도 분석 결과 자체는 보여준다
-        }
-      }
+      // /analyze 응답에 이미 RAG 서비스(node2)가 채운 national_rule/region_rule이
+      // 실려 있으므로, 별도로 /disposal/schedule을 다시 호출하지 않고 바로 사용한다.
+      const guidelines = buildGuidelineFromAnalyze(data);
 
       return {
         status: "SUCCESS",

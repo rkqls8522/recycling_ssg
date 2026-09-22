@@ -1,0 +1,1182 @@
+{
+  "title": "재활용품 분리배출 품목 사전",
+  "source": {
+    "organization": "기후에너지환경부 (환경부)",
+    "document": "재활용품 분리배출 가이드라인 (부록)",
+    "url": "https://mcee.go.kr/home/web/board/read.do;jsessionid=uZYI4ry0XESaBsq9kM2nAG7khbKgaHegmPHpnioI.mehome1?pagerOffset=20&maxPageItems=10&maxIndexPages=10&searchKey=&searchValue=&menuId=10181&orgCd=&boardMasterId=54&boardCategoryId=&boardId=875840&decorator="
+  },
+  "category_definitions": {
+    "종이": "종이류 배출방법을 준수하여 배출",
+    "종이팩": "종이팩 배출방법을 준수하여 배출",
+    "금속캔": "금속캔 배출방법을 준수하여 분리수거함으로 배출",
+    "고철": "고철류 배출방법을 준수하여 분리수거함으로 배출",
+    "유리병": "유리병류 배출방법을 준수하여 분리수거함으로 배출",
+    "플라스틱": "플라스틱 용기류 배출방법을 준수하여 분리수거함으로 배출",
+    "비닐": "비닐류(필름류) 배출방법을 준수하여 배출",
+    "발포합성": "발포합성수지(스티로폼) 배출방법을 준수하여 배출",
+    "의류": "의류 및 원단류 배출방법을 준수하여 배출",
+    "가전제품": "대형/소형 폐가전제품 배출방법을 준수하여 배출",
+    "대형": "대형폐기물 배출방법을 준수하여 배출",
+    "음식물": "음식물류폐기물 배출방법을 준수하여 배출",
+    "유해": "유해폐기물 배출방법을 준수하여 배출",
+    "불연성종량제": "불에 타지 않는 폐기물이며 불연성폐기물 배출 방법을 참조하여 배출",
+    "종량제봉투": "재활용이 어려운 폐기물로서 쓰레기종량제 봉투로 배출",
+    "전용함": "지역 내 비치된 해당 제품의 전용수거함으로 배출",
+    "전문시설": "판매처, 구입처 또는 전문처리시설을 통해 처리 또는 배출",
+    "주의": "안전에 주의를 기울여 처리해야 하는 폐기물",
+    "재질별분리": "단일 재질은 성분 확인 후 재질별 분리배출, 복합 재질은 최대한 분해 후 재질별 배출"
+  },
+  "classification_note": "major_category/minor_category fields added per project taxonomy (12 categories). Items with no clear match to the project's recyclable-item taxonomy were excluded from this file.",
+  "project_taxonomy": {
+    "고철류": [
+      "고철",
+      "골프채",
+      "비철금속",
+      "전기프라이팬",
+      "주전자",
+      "철옷걸이",
+      "프라이팬"
+    ],
+    "나무": [
+      "기타",
+      "나무행거",
+      "도마",
+      "액자",
+      "장식품",
+      "주걱",
+      "주방용품",
+      "포장재"
+    ],
+    "도기류": [
+      "그릇류",
+      "뚝배기",
+      "받침",
+      "병",
+      "장식품",
+      "주전자",
+      "컵",
+      "항아리",
+      "화분"
+    ],
+    "비닐": [
+      "과자봉지",
+      "리필용기",
+      "봉투",
+      "에어캡",
+      "일회용덮개",
+      "포장제"
+    ],
+    "스티로폼": [
+      "네모트레이",
+      "보호재",
+      "스티로폼",
+      "포장용기"
+    ],
+    "유리병": [
+      "맥주병",
+      "물병",
+      "박카스병",
+      "소주병",
+      "음료수병",
+      "주방용기"
+    ],
+    "의류": [
+      "레깅스",
+      "면의류",
+      "상의",
+      "외투",
+      "원피스",
+      "하의",
+      "합성섬유"
+    ],
+    "종이류": [
+      "노트",
+      "상자류",
+      "신문지",
+      "신발상자",
+      "음료수곽",
+      "종이봉투",
+      "책자",
+      "포장상자"
+    ],
+    "캔류": [
+      "캔",
+      "스팸류",
+      "통조림캔"
+    ],
+    "페트병": [
+      "일회용음료수잔",
+      "페트병"
+    ],
+    "플라스틱류": [
+      "대용량플라스틱통",
+      "밀폐용기",
+      "바구니",
+      "욕실용품",
+      "장남감"
+    ],
+    "형광등": [
+      "전구",
+      "형광등"
+    ]
+  },
+  "dictionary": [
+    {
+      "initial": "가",
+      "items": [
+        {
+          "item": "골판지",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류로 배출",
+          "major_category": "종이류",
+          "minor_category": "상자류",
+          "byeolpyo1_item": "골판지상자 등",
+          "byeolpyo1_method": "- 비닐코팅 부분, 상자에 붙어있는 테이프·철핀, 알루미늄박 등을 제거하고 접어서 배출\n- 야외 별도 보관 장소마련 등 다른 종이류와 섞이지 않게 배출\n※ 비해당품목: 택배용 보냉 상자류 등 내부에 알루미늄박, 비닐 등이 부착되어 종이와 분리되지 않는 상자류"
+        },
+        {
+          "item": "공구류(철)",
+          "category": [
+            "고철",
+            "종량제봉투"
+          ],
+          "method": "다른 재질이 많이 섞인 제품은 분리해서 배출하며, 분리가 어렵다면 쓰레기 종량제 봉투로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "광고전단지",
+          "category": [
+            "종이",
+            "종량제봉투"
+          ],
+          "method": "종이류로 배출 (단, 비닐코팅된 종이는 쓰레기종량제 봉투 배출)",
+          "major_category": "종이류",
+          "minor_category": "신문지"
+        },
+        {
+          "item": "구두, 샌들, 슬리퍼",
+          "category": [
+            "의류",
+            "종량제봉투"
+          ],
+          "method": "의류 및 원단류 배출 방법을 참고하여 배출하거나 종량제 봉투로 배출",
+          "major_category": "의류",
+          "minor_category": "합성섬유",
+          "byeolpyo1_item": "의류, 잡화",
+          "byeolpyo1_method": "- 지자체 또는 민간 재활용사업자가 비치한 폐의류 전용수거함에 배출하거나 문전수거 지역 등에서는 물기에 젖지 않도록 마대 등에 담거나 묶어서 대문 앞 배출\n※ 비해당 품목: 이불, 베개, 방석, 인형, 골프가방, 매트류, 가죽 부츠, 롱부츠, 바퀴 달린 가방, 인라인 스케이트, 해지거나 오염된 의류/잡화 등"
+        },
+        {
+          "item": "국자",
+          "category": [
+            "고철",
+            "플라스틱",
+            "종량제봉투"
+          ],
+          "method": "금속·비금속 국자는 고철, 플라스틱 국자는 플라스틱, 나무 국자는 종량제 봉투로 배출",
+          "details": [
+            {
+              "target": "금속, 비금속 국자",
+              "category": "고철"
+            },
+            {
+              "target": "플라스틱 국자",
+              "category": "플라스틱"
+            },
+            {
+              "target": "나무 국자",
+              "category": "종량제봉투"
+            }
+          ],
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "그릇",
+          "category": [
+            "불연성종량제",
+            "고철",
+            "플라스틱"
+          ],
+          "method": "도자기·유리그릇은 불연성종량제, 금속·비금속그릇은 고철, 플라스틱 그릇은 플라스틱으로 배출",
+          "details": [
+            {
+              "target": "도자기·유리그릇",
+              "category": "불연성종량제"
+            },
+            {
+              "target": "금속, 비금속그릇",
+              "category": "고철"
+            },
+            {
+              "target": "플라스틱 그릇",
+              "category": "플라스틱"
+            }
+          ],
+          "major_category": "도기류",
+          "minor_category": "그릇류"
+        }
+      ]
+    },
+    {
+      "initial": "나",
+      "items": [
+        {
+          "item": "나사(못)",
+          "category": [
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "낫",
+          "category": [
+            "고철",
+            "종량제봉투"
+          ],
+          "method": "고철로 배출하되, 가능하다면 손잡이 부분(나무재질 등)을 분리하여 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "내열식기류",
+          "category": [
+            "불연성종량제"
+          ],
+          "method": "불연성폐기물로 배출",
+          "major_category": "도기류",
+          "minor_category": "그릇류"
+        }
+      ]
+    },
+    {
+      "initial": "다",
+      "items": [
+        {
+          "item": "도끼",
+          "category": [
+            "고철",
+            "종량제봉투"
+          ],
+          "method": "고철로 배출하되, 가능하다면 손잡이 부분(나무재질 등)을 분리하여 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "도마",
+          "category": [
+            "종량제봉투",
+            "플라스틱"
+          ],
+          "method": "나무도마는 종량제봉투, 플라스틱 도마는 플라스틱으로 배출",
+          "details": [
+            {
+              "target": "나무도마",
+              "category": "종량제봉투"
+            },
+            {
+              "target": "플라스틱 도마",
+              "category": "플라스틱"
+            }
+          ],
+          "major_category": "나무",
+          "minor_category": "도마"
+        },
+        {
+          "item": "도자기류",
+          "category": [
+            "불연성종량제"
+          ],
+          "method": "불연성폐기물로 배출",
+          "major_category": "도기류",
+          "minor_category": "그릇류"
+        },
+        {
+          "item": "뚝배기",
+          "category": [
+            "불연성종량제"
+          ],
+          "method": "불연성폐기물로 배출",
+          "major_category": "도기류",
+          "minor_category": "뚝배기"
+        }
+      ]
+    },
+    {
+      "initial": "라",
+      "items": [
+        {
+          "item": "리코더(플라스틱)",
+          "category": [
+            "플라스틱"
+          ],
+          "method": "플라스틱으로 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "장남감",
+          "byeolpyo1_item": "완구류(전지·전기 미사용)",
+          "byeolpyo1_method": "- 합성수지 용기·트레이류와 함께 배출\n- 함께 배출이 어려운 대형완구는 대형폐기물 처리 등 지자체 조례에 따라 배출\n※ 비해당 품목: 파티완구(가장복, 가발 등), 봉제인형, 플라스틱 이외의 재질이 부착되어 분리할 수 없는 완구류는 종량제봉투 등으로 배출"
+        }
+      ]
+    },
+    {
+      "initial": "마",
+      "items": [
+        {
+          "item": "마요네즈용기",
+          "category": [
+            "플라스틱",
+            "재질별분리"
+          ],
+          "method": "내부를 헹구고 플라스틱 또는 재질에 맞는 분리수거함으로 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "밀폐용기",
+          "byeolpyo1_item": "PET 용기·트레이류(무색 제외), PVC/PE/PP/PS/PSP 용기·트레이류",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출 (물로 헹굴 수 없는 구조의 용기류는 내용물을 비운 후 배출)\n- 부착상표, 부속품 등 본체와 다른 재질은 제거한 후 배출\n- 펌핑용기의 경우 내부 철제 스프링이 부착된 펌프는 제거하여 배출\n※ 해당품목 예시: 음료용기, 식품용기, 세정용기 등"
+        },
+        {
+          "item": "맥주병뚜껑(철, 알루미늄)",
+          "category": [
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "머그컵(도자기류)",
+          "category": [
+            "불연성종량제"
+          ],
+          "method": "불연성폐기물로 배출",
+          "major_category": "도기류",
+          "minor_category": "컵"
+        },
+        {
+          "item": "머플러(목도리)",
+          "category": [
+            "의류"
+          ],
+          "method": "의류 및 원단류 배출 방법을 참고하여 배출",
+          "major_category": "의류",
+          "minor_category": "합성섬유",
+          "byeolpyo1_item": "의류, 잡화",
+          "byeolpyo1_method": "- 지자체 또는 민간 재활용사업자가 비치한 폐의류 전용수거함에 배출하거나 문전수거 지역 등에서는 물기에 젖지 않도록 마대 등에 담거나 묶어서 대문 앞 배출\n※ 비해당 품목: 이불, 베개, 방석, 인형, 골프가방, 매트류, 가죽 부츠, 롱부츠, 바퀴 달린 가방, 인라인 스케이트, 해지거나 오염된 의류/잡화 등"
+        },
+        {
+          "item": "메가폰(플라스틱)",
+          "category": [
+            "플라스틱"
+          ],
+          "method": "플라스틱으로 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "장남감",
+          "byeolpyo1_item": "완구류(전지·전기 미사용)",
+          "byeolpyo1_method": "- 합성수지 용기·트레이류와 함께 배출\n- 함께 배출이 어려운 대형완구는 대형폐기물 처리 등 지자체 조례에 따라 배출\n※ 비해당 품목: 파티완구(가장복, 가발 등), 봉제인형, 플라스틱 이외의 재질이 부착되어 분리할 수 없는 완구류는 종량제봉투 등으로 배출"
+        },
+        {
+          "item": "모자(의류)",
+          "category": [
+            "의류",
+            "종량제봉투"
+          ],
+          "method": "의류 및 원단류 배출 방법을 참고하여 배출하거나 종량제 봉투로 배출",
+          "major_category": "의류",
+          "minor_category": "합성섬유",
+          "byeolpyo1_item": "의류, 잡화",
+          "byeolpyo1_method": "- 지자체 또는 민간 재활용사업자가 비치한 폐의류 전용수거함에 배출하거나 문전수거 지역 등에서는 물기에 젖지 않도록 마대 등에 담거나 묶어서 대문 앞 배출\n※ 비해당 품목: 이불, 베개, 방석, 인형, 골프가방, 매트류, 가죽 부츠, 롱부츠, 바퀴 달린 가방, 인라인 스케이트, 해지거나 오염된 의류/잡화 등"
+        },
+        {
+          "item": "목발",
+          "category": [
+            "대형",
+            "고철",
+            "재질별분리"
+          ],
+          "method": "대형폐기물 또는 고철 등 재질에 맞게 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "못",
+          "category": [
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        }
+      ]
+    },
+    {
+      "initial": "바",
+      "items": [
+        {
+          "item": "백과사전",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류로 배출",
+          "major_category": "종이류",
+          "minor_category": "책자",
+          "byeolpyo1_item": "책자, 노트, 전단지 등",
+          "byeolpyo1_method": "- 비닐 코팅된 종이, 공책의 스프링, 비닐포장지 등은 제거 후 배출"
+        },
+        {
+          "item": "백열전구",
+          "category": [
+            "불연성종량제"
+          ],
+          "method": "불연성폐기물로 배출",
+          "major_category": "형광등",
+          "minor_category": "전구",
+          "byeolpyo1_item": "형광등, LED조명",
+          "byeolpyo1_method": "- 형광등과 LED는 깨지지 않게 하여 형광등수거함에 배출\n- 형광등과 LED가 깨진 경우에는 신문지와 테이프를 이용하여 감싼 후 종량제봉투 또는 특수규격마대 등 지자체 조례에 따라 배출"
+        },
+        {
+          "item": "볼풀공",
+          "category": [
+            "플라스틱"
+          ],
+          "method": "플라스틱으로 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "장남감",
+          "byeolpyo1_item": "완구류(전지·전기 미사용)",
+          "byeolpyo1_method": "- 합성수지 용기·트레이류와 함께 배출\n- 함께 배출이 어려운 대형완구는 대형폐기물 처리 등 지자체 조례에 따라 배출\n※ 비해당 품목: 파티완구(가장복, 가발 등), 봉제인형, 플라스틱 이외의 재질이 부착되어 분리할 수 없는 완구류는 종량제봉투 등으로 배출"
+        },
+        {
+          "item": "분무기(플라스틱)",
+          "category": [
+            "플라스틱"
+          ],
+          "method": "플라스틱으로 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "밀폐용기",
+          "byeolpyo1_item": "PET 용기·트레이류(무색 제외), PVC/PE/PP/PS/PSP 용기·트레이류",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출 (물로 헹굴 수 없는 구조의 용기류는 내용물을 비운 후 배출)\n- 부착상표, 부속품 등 본체와 다른 재질은 제거한 후 배출\n- 펌핑용기의 경우 내부 철제 스프링이 부착된 펌프는 제거하여 배출\n※ 해당품목 예시: 음료용기, 식품용기, 세정용기 등"
+        },
+        {
+          "item": "분유 깡통",
+          "category": [
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "비닐봉지(일회용)",
+          "category": [
+            "비닐"
+          ],
+          "method": "비닐로 배출",
+          "major_category": "비닐",
+          "minor_category": "봉투",
+          "byeolpyo1_item": "비닐포장재, 1회용비닐봉투",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출\n- 흩날리지 않도록 투명 또는 반투명 봉투에 담아 배출\n※ 비해당 품목: 깨끗하게 이물질 제거가 되지 않은 랩필름, 식탁보, 고무장갑, 장판, 돗자리, 섬유류 등"
+        }
+      ]
+    },
+    {
+      "initial": "비",
+      "items": [
+        {
+          "item": "비철금속(알미늄, 스텐류 등)",
+          "category": [
+            "고철"
+          ],
+          "method": "재활용가능자원 분리배출 요령(별표1)에 따라 배출",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)/비철금속(알미늄, 스텐류 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출",
+          "major_category": "고철류",
+          "minor_category": "비철금속"
+        }
+      ]
+    },
+    {
+      "initial": "사",
+      "items": [
+        {
+          "item": "사다리",
+          "category": [
+            "대형",
+            "고철"
+          ],
+          "method": "대형폐기물 또는 고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "사전",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류로 배출",
+          "major_category": "종이류",
+          "minor_category": "책자",
+          "byeolpyo1_item": "책자, 노트, 전단지 등",
+          "byeolpyo1_method": "- 비닐 코팅된 종이, 공책의 스프링, 비닐포장지 등은 제거 후 배출"
+        },
+        {
+          "item": "삽",
+          "category": [
+            "대형",
+            "재질별분리"
+          ],
+          "method": "대형폐기물 또는 재질에 맞게 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "쌀통",
+          "category": [
+            "대형"
+          ],
+          "method": "대형폐기물로 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "대용량플라스틱통",
+          "byeolpyo1_item": "PET 용기·트레이류(무색 제외), PVC/PE/PP/PS/PSP 용기·트레이류",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출 (물로 헹굴 수 없는 구조의 용기류는 내용물을 비운 후 배출)\n- 부착상표, 부속품 등 본체와 다른 재질은 제거한 후 배출\n- 펌핑용기의 경우 내부 철제 스프링이 부착된 펌프는 제거하여 배출\n※ 해당품목 예시: 음료용기, 식품용기, 세정용기 등"
+        },
+        {
+          "item": "쌀포대",
+          "category": [
+            "종이",
+            "재질별분리"
+          ],
+          "method": "종이류 또는 재질에 맞게 배출",
+          "major_category": "종이류",
+          "minor_category": "종이봉투"
+        },
+        {
+          "item": "샴푸용기",
+          "category": [
+            "플라스틱"
+          ],
+          "method": "내부를 헹구고 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "욕실용품",
+          "byeolpyo1_item": "PET 용기·트레이류(무색 제외), PVC/PE/PP/PS/PSP 용기·트레이류",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출 (물로 헹굴 수 없는 구조의 용기류는 내용물을 비운 후 배출)\n- 부착상표, 부속품 등 본체와 다른 재질은 제거한 후 배출\n- 펌핑용기의 경우 내부 철제 스프링이 부착된 펌프는 제거하여 배출\n※ 해당품목 예시: 음료용기, 식품용기, 세정용기 등"
+        },
+        {
+          "item": "서류봉투(갈색 종이)",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류로 배출",
+          "major_category": "종이류",
+          "minor_category": "종이봉투"
+        },
+        {
+          "item": "수첩",
+          "category": [
+            "종이",
+            "재질별분리"
+          ],
+          "method": "종이류 또는 재질에 맞게 배출",
+          "major_category": "종이류",
+          "minor_category": "노트",
+          "byeolpyo1_item": "책자, 노트, 전단지 등",
+          "byeolpyo1_method": "- 비닐 코팅된 종이, 공책의 스프링, 비닐포장지 등은 제거 후 배출"
+        },
+        {
+          "item": "스프레이, 부탄가스",
+          "category": [
+            "금속캔",
+            "주의"
+          ],
+          "method": "금속캔(부탄가스통) 배출방법 참고",
+          "major_category": "캔류",
+          "minor_category": "캔",
+          "byeolpyo1_item": "기타캔류(부탄가스, 살충제용기 등)",
+          "byeolpyo1_method": "- 내용물은 제거한 후 배출\n- 폐페인트, 폐광택제, 폐접착제 등 폭발성과 인화성이 있는 내용물이 남아 있는 캔류는 위험성을 표시하여 내용물이 유출되지 않도록 밀봉하여 생활계 유해폐기물 전용수거함에 배출하거나 지자체가 정하는 방법에 따라 배출\n※ 부탄가스 등 가스용기는 통풍이 잘되는 장소에서 노즐을 눌러 내용물을 제거한 후 배출"
+        },
+        {
+          "item": "식용유용기(플라스틱)",
+          "category": [
+            "플라스틱"
+          ],
+          "method": "모두 사용 후 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "밀폐용기",
+          "byeolpyo1_item": "PET 용기·트레이류(무색 제외), PVC/PE/PP/PS/PSP 용기·트레이류",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출 (물로 헹굴 수 없는 구조의 용기류는 내용물을 비운 후 배출)\n- 부착상표, 부속품 등 본체와 다른 재질은 제거한 후 배출\n- 펌핑용기의 경우 내부 철제 스프링이 부착된 펌프는 제거하여 배출\n※ 해당품목 예시: 음료용기, 식품용기, 세정용기 등"
+        },
+        {
+          "item": "신문지",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류로 배출",
+          "major_category": "종이류",
+          "minor_category": "신문지",
+          "byeolpyo1_item": "신문지",
+          "byeolpyo1_method": "- 물기에 젖지 않도록 하고 반듯하게 펴서 차곡차곡 쌓은 후 묶어서 배출\n- 비닐코팅된 광고지, 비닐류, 기타 오물이 섞이지 않도록 함"
+        }
+      ]
+    },
+    {
+      "initial": "스",
+      "items": [
+        {
+          "item": "스티로폼 완충재",
+          "category": [
+            "발포합성"
+          ],
+          "method": "재활용가능자원 분리배출 요령(별표1)에 따라 배출",
+          "byeolpyo1_item": "스티로폼 완충재",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출\n- 부착상표 등 스티로폼과 다른 재질은 제거한 후 배출\n- TV 등 전자제품 구입 시 완충재로 사용되는 발포합성수지 포장재는 가급적 구입처로 반납\n※ 비해당 품목: 타 재질과 코팅 또는 접착된 발포스티렌, 건축용 내·외장재 스티로폼, 음식물이 묻어있거나 이물질 제거가 어려운 경우",
+          "major_category": "스티로폼",
+          "minor_category": "보호재"
+        }
+      ]
+    },
+    {
+      "initial": "아",
+      "items": [
+        {
+          "item": "아령",
+          "category": [
+            "고철",
+            "재질별분리"
+          ],
+          "method": "고철류 또는 재질에 맞게 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "압력솥",
+          "category": [
+            "고철"
+          ],
+          "method": "고철류로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "애완동물 음식캔",
+          "category": [
+            "금속캔"
+          ],
+          "method": "금속캔으로 배출",
+          "major_category": "캔류",
+          "minor_category": "통조림캔"
+        },
+        {
+          "item": "액자",
+          "category": [
+            "종량제봉투",
+            "대형"
+          ],
+          "method": "종량제 봉투에 담을 수 없는 경우 대형폐기물로 처리",
+          "major_category": "나무",
+          "minor_category": "액자"
+        },
+        {
+          "item": "앨범",
+          "category": [
+            "종량제봉투",
+            "대형"
+          ],
+          "method": "종량제 봉투에 담을 수 없는 경우 대형폐기물로 처리",
+          "major_category": "종이류",
+          "minor_category": "책자",
+          "byeolpyo1_item": "책자, 노트, 전단지 등",
+          "byeolpyo1_method": "- 비닐 코팅된 종이, 공책의 스프링, 비닐포장지 등은 제거 후 배출"
+        },
+        {
+          "item": "역기",
+          "category": [
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "옷걸이(세탁소 흰색 철사)",
+          "category": [
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "철옷걸이"
+        },
+        {
+          "item": "완충재(뽁뽁이)",
+          "category": [
+            "비닐"
+          ],
+          "method": "비닐류로 배출",
+          "major_category": "비닐",
+          "minor_category": "에어캡",
+          "byeolpyo1_item": "비닐포장재, 1회용비닐봉투",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출\n- 흩날리지 않도록 투명 또는 반투명 봉투에 담아 배출\n※ 비해당 품목: 깨끗하게 이물질 제거가 되지 않은 랩필름, 식탁보, 고무장갑, 장판, 돗자리, 섬유류 등"
+        },
+        {
+          "item": "우유팩",
+          "category": [
+            "종이팩"
+          ],
+          "method": "종이팩으로 배출",
+          "major_category": "종이류",
+          "minor_category": "음료수곽",
+          "byeolpyo1_item": "종이팩(살균팩, 멸균팩)",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하고 말린 후 배출\n- 빨대, 비닐 등 종이팩과 다른 재질은 제거한 후 배출\n- 다른 종이류와 혼합되지 않게 종이팩 전용수거함에 배출\n- 종이팩 전용수거함이 없는 경우에는 종이류와 구분할 수 있도록 가급적 끈 등으로 묶어 종이류 수거함으로 배출\n※ 해당품목 예시: 우유팩, 두유팩, 소주팩, 쥬스팩 등"
+        },
+        {
+          "item": "유리병",
+          "category": [
+            "유리병"
+          ],
+          "method": "유리병류로 배출",
+          "major_category": "유리병",
+          "minor_category": "음료수병",
+          "byeolpyo1_item": "음료수병, 기타 병류",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출\n- 유리병이 깨지지 않도록 주의하여 배출\n- 소주, 맥주 등 빈용기보증금 대상 유리병은 소매점 등으로 반납하여 보증금 환급\n※ 비해당품목: 깨진 유리제품, 코팅 및 다양한 색상이 들어간 유리제품, 내열 유리제품, 크리스탈 유리제품, 판유리, 조명기구용 유리류, 사기·도자기류(화분, 그릇 등) 등"
+        },
+        {
+          "item": "유리병 뚜껑(철, 알루미늄)",
+          "category": [
+            "주의",
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "의류",
+          "category": [
+            "의류"
+          ],
+          "method": "의류 및 원단류로 배출",
+          "major_category": "의류",
+          "minor_category": "합성섬유",
+          "byeolpyo1_item": "의류, 잡화",
+          "byeolpyo1_method": "- 지자체 또는 민간 재활용사업자가 비치한 폐의류 전용수거함에 배출하거나 문전수거 지역 등에서는 물기에 젖지 않도록 마대 등에 담거나 묶어서 대문 앞 배출\n※ 비해당 품목: 이불, 베개, 방석, 인형, 골프가방, 매트류, 가죽 부츠, 롱부츠, 바퀴 달린 가방, 인라인 스케이트, 해지거나 오염된 의류/잡화 등"
+        },
+        {
+          "item": "의류건조대",
+          "category": [
+            "고철",
+            "플라스틱",
+            "재질별분리"
+          ],
+          "method": "고철류, 플라스틱류 등 재질에 맞게 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "인형류",
+          "category": [
+            "종량제봉투",
+            "대형"
+          ],
+          "method": "종량제 봉투에 담을 수 없는 경우 대형폐기물로 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "장남감",
+          "byeolpyo1_item": "완구류(전지·전기 미사용)",
+          "byeolpyo1_method": "- 합성수지 용기·트레이류와 함께 배출\n- 함께 배출이 어려운 대형완구는 대형폐기물 처리 등 지자체 조례에 따라 배출\n※ 비해당 품목: 파티완구(가장복, 가발 등), 봉제인형, 플라스틱 이외의 재질이 부착되어 분리할 수 없는 완구류는 종량제봉투 등으로 배출"
+        }
+      ]
+    },
+    {
+      "initial": "음",
+      "items": [
+        {
+          "item": "음료·주류캔, 식료품캔",
+          "category": [
+            "금속캔"
+          ],
+          "method": "재활용가능자원 분리배출 요령(별표1)에 따라 배출",
+          "byeolpyo1_item": "음료·주류캔, 식료품캔",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출\n- 플라스틱 뚜껑 등 금속캔과 다른 재질은 제거한 후 배출\n※ 해당품목 예시: 음료수캔, 맥주캔, 통조림캔 등\n※ 알루미늄 호일은 종량제봉투 등 지자체 조례에 따라 배출",
+          "major_category": "캔류",
+          "minor_category": "캔"
+        }
+      ]
+    },
+    {
+      "initial": "자",
+      "items": [
+        {
+          "item": "잡지",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류로 배출",
+          "major_category": "종이류",
+          "minor_category": "책자",
+          "byeolpyo1_item": "책자, 노트, 전단지 등",
+          "byeolpyo1_method": "- 비닐 코팅된 종이, 공책의 스프링, 비닐포장지 등은 제거 후 배출"
+        },
+        {
+          "item": "장난감류",
+          "category": [
+            "대형",
+            "재질별분리",
+            "종량제봉투"
+          ],
+          "method": "크기에 따라 대형폐기물 또는 재질에 맞게 배출 (여러재질이 섞인 경우 종량제 봉투로 배출)",
+          "major_category": "플라스틱류",
+          "minor_category": "장남감",
+          "byeolpyo1_item": "완구류(전지·전기 미사용)",
+          "byeolpyo1_method": "- 합성수지 용기·트레이류와 함께 배출\n- 함께 배출이 어려운 대형완구는 대형폐기물 처리 등 지자체 조례에 따라 배출\n※ 비해당 품목: 파티완구(가장복, 가발 등), 봉제인형, 플라스틱 이외의 재질이 부착되어 분리할 수 없는 완구류는 종량제봉투 등으로 배출"
+        },
+        {
+          "item": "재떨이",
+          "category": [
+            "불연성종량제",
+            "고철"
+          ],
+          "method": "도자기·유리재떨이는 불연성종량제, 금속류 재떨이는 고철로 배출",
+          "details": [
+            {
+              "target": "도자기·유리재떨이",
+              "category": "불연성종량제"
+            },
+            {
+              "target": "금속류 재떨이",
+              "category": "고철"
+            }
+          ],
+          "major_category": "도기류",
+          "minor_category": "그릇류"
+        },
+        {
+          "item": "전단지",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류로 배출",
+          "major_category": "종이류",
+          "minor_category": "신문지",
+          "byeolpyo1_item": "책자, 노트, 전단지 등",
+          "byeolpyo1_method": "- 비닐 코팅된 종이, 공책의 스프링, 비닐포장지 등은 제거 후 배출"
+        },
+        {
+          "item": "전화번호부",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류로 배출",
+          "major_category": "종이류",
+          "minor_category": "책자",
+          "byeolpyo1_item": "책자, 노트, 전단지 등",
+          "byeolpyo1_method": "- 비닐 코팅된 종이, 공책의 스프링, 비닐포장지 등은 제거 후 배출"
+        },
+        {
+          "item": "젖병(아기용품)",
+          "category": [
+            "플라스틱",
+            "재질별분리"
+          ],
+          "method": "젖병의 몸체와 윗부분의 젖꼭지는 분리하여 재질에 맞게 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "밀폐용기",
+          "byeolpyo1_item": "PET 용기·트레이류(무색 제외), PVC/PE/PP/PS/PSP 용기·트레이류",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출 (물로 헹굴 수 없는 구조의 용기류는 내용물을 비운 후 배출)\n- 부착상표, 부속품 등 본체와 다른 재질은 제거한 후 배출\n- 펌핑용기의 경우 내부 철제 스프링이 부착된 펌프는 제거하여 배출\n※ 해당품목 예시: 음료용기, 식품용기, 세정용기 등"
+        },
+        {
+          "item": "종이상자",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류로 배출",
+          "major_category": "종이류",
+          "minor_category": "상자류",
+          "byeolpyo1_item": "골판지상자 등",
+          "byeolpyo1_method": "- 비닐코팅 부분, 상자에 붙어있는 테이프·철핀, 알루미늄박 등을 제거하고 접어서 배출\n- 야외 별도 보관 장소마련 등 다른 종이류와 섞이지 않게 배출\n※ 비해당품목: 택배용 보냉 상자류 등 내부에 알루미늄박, 비닐 등이 부착되어 종이와 분리되지 않는 상자류"
+        },
+        {
+          "item": "종이팩(우유팩 등)",
+          "category": [
+            "종이팩"
+          ],
+          "method": "내부에 알루미늄박이 붙어 있다면 종량제봉투로 배출",
+          "major_category": "종이류",
+          "minor_category": "음료수곽",
+          "byeolpyo1_item": "종이팩(살균팩, 멸균팩)",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하고 말린 후 배출\n- 빨대, 비닐 등 종이팩과 다른 재질은 제거한 후 배출\n- 다른 종이류와 혼합되지 않게 종이팩 전용수거함에 배출\n- 종이팩 전용수거함이 없는 경우에는 종이류와 구분할 수 있도록 가급적 끈 등으로 묶어 종이류 수거함으로 배출\n※ 해당품목 예시: 우유팩, 두유팩, 소주팩, 쥬스팩 등"
+        },
+        {
+          "item": "주전자(철, 알루미늄)",
+          "category": [
+            "고철"
+          ],
+          "method": "플라스틱 뚜껑 등은 돌려서 제거한 후 배출",
+          "major_category": "고철류",
+          "minor_category": "주전자"
+        },
+        {
+          "item": "종이컵",
+          "category": [
+            "종이"
+          ],
+          "method": "재활용가능자원 분리배출 요령(별표1)에 따라 배출",
+          "byeolpyo1_item": "종이컵",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹군 후 압착하여 봉투에 넣거나 한데 묶어서 배출\n※ 비해당품목: 양면이 코팅된 종이컵\n- 자원순환보증금 대상 1회용컵은 보증금대상사업자 매장, 무인회수기 등 반납처에 반납시 보증금 환급 (내용물을 비우고 뚜껑 등 부속품을 분리하여 물로 헹군 후 반납)",
+          "major_category": "종이류",
+          "minor_category": "음료수곽"
+        }
+      ]
+    },
+    {
+      "initial": "차",
+      "items": [
+        {
+          "item": "찻잔(도자기류)",
+          "category": [
+            "불연성종량제"
+          ],
+          "method": "불연성폐기물로 배출",
+          "major_category": "도기류",
+          "minor_category": "컵"
+        },
+        {
+          "item": "책",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류로 배출",
+          "major_category": "종이류",
+          "minor_category": "책자",
+          "byeolpyo1_item": "책자, 노트, 전단지 등",
+          "byeolpyo1_method": "- 비닐 코팅된 종이, 공책의 스프링, 비닐포장지 등은 제거 후 배출"
+        },
+        {
+          "item": "철사",
+          "category": [
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "철판(가정요리용)",
+          "category": [
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "프라이팬"
+        },
+        {
+          "item": "치킨박스",
+          "category": [
+            "종이",
+            "종량제봉투"
+          ],
+          "method": "기름에 오염된 내부 종이는 종량제봉투로 배출",
+          "major_category": "종이류",
+          "minor_category": "포장상자"
+        },
+        {
+          "item": "치약용기",
+          "category": [
+            "플라스틱",
+            "재질별분리"
+          ],
+          "method": "플라스틱류 또는 재질에 맞게 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "욕실용품",
+          "byeolpyo1_item": "PET 용기·트레이류(무색 제외), PVC/PE/PP/PS/PSP 용기·트레이류",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출 (물로 헹굴 수 없는 구조의 용기류는 내용물을 비운 후 배출)\n- 부착상표, 부속품 등 본체와 다른 재질은 제거한 후 배출\n- 펌핑용기의 경우 내부 철제 스프링이 부착된 펌프는 제거하여 배출\n※ 해당품목 예시: 음료용기, 식품용기, 세정용기 등"
+        }
+      ]
+    },
+    {
+      "initial": "카",
+      "items": [
+        {
+          "item": "캔 따개",
+          "category": [
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        },
+        {
+          "item": "컵",
+          "category": [
+            "불연성종량제",
+            "고철",
+            "플라스틱"
+          ],
+          "method": "도자기·유리 컵은 불연성종량제, 금속·비금속 컵은 고철, 플라스틱컵은 플라스틱으로 배출",
+          "details": [
+            {
+              "target": "도자기·유리 컵",
+              "category": "불연성종량제"
+            },
+            {
+              "target": "금속·비금속 컵",
+              "category": "고철"
+            },
+            {
+              "target": "플라스틱컵",
+              "category": "플라스틱"
+            }
+          ],
+          "major_category": "도기류",
+          "minor_category": "컵"
+        },
+        {
+          "item": "케찹용기",
+          "category": [
+            "플라스틱",
+            "재질별분리"
+          ],
+          "method": "내부를 헹구고 플라스틱 또는 재질에 맞는 분리수거함으로 배출",
+          "major_category": "플라스틱류",
+          "minor_category": "밀폐용기",
+          "byeolpyo1_item": "PET 용기·트레이류(무색 제외), PVC/PE/PP/PS/PSP 용기·트레이류",
+          "byeolpyo1_method": "- 내용물을 비우고 물로 헹구는 등 이물질을 제거하여 배출 (물로 헹굴 수 없는 구조의 용기류는 내용물을 비운 후 배출)\n- 부착상표, 부속품 등 본체와 다른 재질은 제거한 후 배출\n- 펌핑용기의 경우 내부 철제 스프링이 부착된 펌프는 제거하여 배출\n※ 해당품목 예시: 음료용기, 식품용기, 세정용기 등"
+        }
+      ]
+    },
+    {
+      "initial": "타",
+      "items": [
+        {
+          "item": "탁상달력",
+          "category": [
+            "종이"
+          ],
+          "method": "종이류 배출방법을 참고하여 배출",
+          "major_category": "종이류",
+          "minor_category": "책자",
+          "byeolpyo1_item": "책자, 노트, 전단지 등",
+          "byeolpyo1_method": "- 비닐 코팅된 종이, 공책의 스프링, 비닐포장지 등은 제거 후 배출"
+        },
+        {
+          "item": "톱",
+          "category": [
+            "고철"
+          ],
+          "method": "고철류로 배출",
+          "major_category": "고철류",
+          "minor_category": "고철",
+          "byeolpyo1_item": "고철(공기구, 철사, 못 등)",
+          "byeolpyo1_method": "- 이물질이 섞이지 않도록 한 후 봉투에 넣거나 끈으로 묶어서 배출"
+        }
+      ]
+    },
+    {
+      "initial": "파",
+      "items": [
+        {
+          "item": "페트병",
+          "category": [
+            "플라스틱"
+          ],
+          "method": "플라스틱으로 배출",
+          "major_category": "페트병",
+          "minor_category": "페트병",
+          "byeolpyo1_item": "무색 투명한 먹는샘물, 음료 PET병",
+          "byeolpyo1_method": "- 내용물을 깨끗이 비우고 부착상표(라벨) 등을 제거한 후 가능한 압착하여 뚜껑을 닫아 배출\n※ 설탕, 유기물 등이 포함된 음료의 경우 물로 헹군 후 배출"
+        },
+        {
+          "item": "피자박스",
+          "category": [
+            "종이",
+            "종량제봉투"
+          ],
+          "method": "기름에 오염된 내부 종이는 종량제봉투로 배출",
+          "major_category": "종이류",
+          "minor_category": "포장상자"
+        }
+      ]
+    },
+    {
+      "initial": "하",
+      "items": [
+        {
+          "item": "항아리",
+          "category": [
+            "대형"
+          ],
+          "method": "대형폐기물로 처리",
+          "major_category": "도기류",
+          "minor_category": "항아리"
+        },
+        {
+          "item": "형광등",
+          "category": [
+            "전용함"
+          ],
+          "method": "전용수거함으로 배출",
+          "major_category": "형광등",
+          "minor_category": "형광등",
+          "byeolpyo1_item": "형광등, LED조명",
+          "byeolpyo1_method": "- 형광등과 LED는 깨지지 않게 하여 형광등수거함에 배출\n- 형광등과 LED가 깨진 경우에는 신문지와 테이프를 이용하여 감싼 후 종량제봉투 또는 특수규격마대 등 지자체 조례에 따라 배출"
+        },
+        {
+          "item": "화분, 화병",
+          "category": [
+            "불연성종량제",
+            "재질별분리"
+          ],
+          "method": "불연성폐기물로 배출 등 재질에 맞게 배출",
+          "major_category": "도기류",
+          "minor_category": "화분"
+        },
+        {
+          "item": "후라이팬",
+          "category": [
+            "고철"
+          ],
+          "method": "고철로 배출",
+          "major_category": "고철류",
+          "minor_category": "프라이팬"
+        }
+      ]
+    }
+  ],
+  "byeolpyo1_source": {
+    "document": "[별표 1] 분리수거대상 재활용가능자원의 품목 및 분리배출요령",
+    "note": "byeolpyo1_item/byeolpyo1_method fields added where a 세부품목 in 별표1 matches or is closest to an item in this dictionary. Categories with no match in our 12-category project taxonomy (전지류, 전기·전자제품, 타이어, 납축전지, 영농폐기물류, 식용유, 윤활유, 원단류) were not added."
+  }
+}
