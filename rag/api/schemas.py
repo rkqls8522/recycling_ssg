@@ -55,3 +55,14 @@ class ReclassifyResponse(BaseModel):
     minor_category: str | None = None
     disposal_result: DisposalResult | None = None
     needs_retake: bool
+
+
+class ChatNodeRequest(BaseModel):
+    message: str
+    major_category: str
+    minor_category: str
+    user_region: UserRegion
+
+
+class ChatNodeResponse(BaseModel):
+    answer: str

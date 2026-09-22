@@ -217,6 +217,12 @@ export interface FeedbackNotInListResponse {
   message: string;
 }
 
+export interface ChatResponse {
+  feedback_id: number;
+  answer: string;
+  warnings: string[];
+}
+
 export type RegionItem = {
   region_id: number;
   sido_name: string;
