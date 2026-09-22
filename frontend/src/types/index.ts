@@ -171,6 +171,11 @@ export interface AnalyzeRetakeBody {
   // AI_LOW_CONFIDENCE일 때 실제 Top-1 신뢰도 점수 (threshold 미만이라 재촬영을
   // 요구한 바로 그 값). AI_NO_MAIN_OBJECT는 null.
   score?: number | null;
+  // AI_LOW_CONFIDENCE일 때 모델이 (확신은 낮지만) 예측한 대상. 셋이 함께 채워지거나
+  // 함께 null이다. AI_NO_MAIN_OBJECT는 예측 자체가 없으므로 전부 null.
+  class_id?: number | null;
+  major_category?: string | null;
+  minor_category?: string | null;
   // AI_LOW_CONFIDENCE는 SUCCESS와 동일하게 저장되므로 그 행의 feedback_id.
   // AI_NO_MAIN_OBJECT는 저장된 행이 없으므로 null.
   feedback_id?: number | null;

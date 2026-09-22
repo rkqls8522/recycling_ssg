@@ -440,6 +440,9 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   "message": "분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요.",
   "threshold": 0.5,
   "score": 0.37,
+  "class_id": 14,
+  "major_category": "플라스틱류",
+  "minor_category": "플라스틱",
   "feedback_id": 42,
   "request_id": "..."
 }
@@ -465,6 +468,9 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   "message": "분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요.",
   "threshold": 0.5,
   "score": null,
+  "class_id": null,
+  "major_category": null,
+  "minor_category": null,
   "feedback_id": null,
   "request_id": "..."
 }

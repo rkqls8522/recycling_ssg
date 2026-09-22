@@ -135,6 +135,9 @@ def analyze_image(
             message="분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요.",
             threshold=settings.vision_confidence_threshold,
             score=prediction.score,
+            class_id=prediction.class_id,
+            major_category=prediction.major_category,
+            minor_category=prediction.minor_category,
             feedback_id=feedback_row.feedback_id,
             request_id=request_id,
         )

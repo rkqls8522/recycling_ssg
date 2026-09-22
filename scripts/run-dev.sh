@@ -34,14 +34,19 @@ if [ -z "$MODEL_PATH" ]; then
   echo "         학습된 best.pt 를 weights/best.pt 로 복사하거나 MODEL_PATH 로 지정하세요."
   MODEL_PATH="weights/best.pt"
 fi
-MODEL_VERSION="${MODEL_VERSION:-$(basename "$(dirname "$(dirname "$MODEL_PATH")")")}"
+# MODEL_VERSION은 vision/.env 안에서만 수동으로 관리하는 단일 소스다 (사용자가
+# 모델을 바꿀 때마다 직접 수정). 여기서 자동 추론해서 OS 환경변수로 export하면
+# pydantic-settings가 그 값을 vision/.env보다 우선시켜버려서 늘 덮어써진다 --
+# 그래서 절대 export하지 않고, 배너 표시용으로만 vision/.env를 읽는다.
+DISPLAY_MODEL_VERSION="$(grep -E '^MODEL_VERSION=' vision/.env 2>/dev/null | tail -n1 | cut -d= -f2-)"
+DISPLAY_MODEL_VERSION="${DISPLAY_MODEL_VERSION:-(vision/.env 미설정 → 기본값 yolo-recycling-v1)}"
 
 LOG_DIR="$REPO_ROOT/.dev-logs"
 mkdir -p "$LOG_DIR"
 
 echo "=============================================="
 echo " recycling_ssg 개발 서버"
-echo "  Vision  : http://127.0.0.1:8100  (model=$MODEL_VERSION)"
+echo "  Vision  : http://127.0.0.1:8100  (model=$DISPLAY_MODEL_VERSION)"
 echo "  Backend : http://127.0.0.1:8000"
 echo "  API 문서: http://127.0.0.1:8000/docs"
 echo "  로그     : $LOG_DIR/{vision,backend}.log"
@@ -57,8 +62,12 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # --- Vision (:8100) -------------------------------------------------------
-MODEL_PATH="$MODEL_PATH" MODEL_VERSION="$MODEL_VERSION" \
+# --reload-dir 없이 두면 uvicorn이 cwd(저장소 루트) 전체를 감시한다 -- data/,
+# ai/models/ 등 10만 개+ 파일이 걸려 기동이 눈에 띄게 느려진다. vision 코드와
+# taxonomy JSON만 감시하도록 좁힌다.
+MODEL_PATH="$MODEL_PATH" \
   "$PY" -m uvicorn vision.main:app --host 127.0.0.1 --port 8100 --reload \
+  --reload-dir vision --reload-dir data/taxonomy \
   > "$LOG_DIR/vision.log" 2>&1 &
 VISION_PID=$!
 

@@ -211,6 +211,9 @@ def test_analyze_low_confidence_returns_retake_but_still_persists_rows(
     assert body["message"] == "분석 신뢰도가 낮습니다. 물체를 중앙에 선명하게 두고 다시 촬영해주세요."
     assert body["threshold"] == 0.5
     assert body["score"] == 0.42
+    assert body["class_id"] == PLASTIC_MAIN
+    assert body["major_category"] == "플라스틱류"
+    assert body["minor_category"] == "플라스틱"
     assert body["request_id"] == resp.headers["X-Request-ID"]
     # image_id는 여전히 응답에 없지만, feedback_id는 저장된 행을 가리키도록 포함된다.
     assert "image_id" not in body
@@ -263,6 +266,9 @@ def test_analyze_no_main_object_returns_retake_with_threshold_but_no_score(
     assert body["message"] == "분류할 물체를 화면 중앙에 위치시킨 뒤 다시 촬영해주세요."
     assert body["threshold"] == 0.5
     assert body["score"] is None
+    assert body["class_id"] is None
+    assert body["major_category"] is None
+    assert body["minor_category"] is None
     assert body["feedback_id"] is None
     assert body["request_id"]
 
