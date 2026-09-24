@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SAMPLES_DIR = (
-    REPO_ROOT / "ai" / "models" / "yolo" / "01_experiment_augmentation" / "report" / "final_best" / "prediction_samples"
+    REPO_ROOT / "ai" / "models" / "yolo" / "02_experiment_augmentation" / "report" / "final_best" / "prediction_samples"
 )
 
 
@@ -28,7 +28,7 @@ def _find_checkpoint() -> Path | None:
         if candidate.exists():
             return candidate
 
-    runs = REPO_ROOT / "ai" / "models" / "yolo" / "01_experiment_augmentation" / "runs"
+    runs = REPO_ROOT / "ai" / "models" / "yolo" / "02_experiment_augmentation" / "runs"
     if runs.exists():
         found = sorted(runs.glob("*/weights/best.pt"))
         if found:

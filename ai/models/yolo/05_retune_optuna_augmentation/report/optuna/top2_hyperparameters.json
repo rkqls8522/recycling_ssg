@@ -1,0 +1,43 @@
+{
+  "dataset": "17class_train15516_val2201",
+  "selection_rule": "multi-seed([42, 123, 777]) 평균 mAP50-95 상위 2개, 10 epoch 기준",
+  "fixed": {
+    "model": "yolo26n.pt",
+    "imgsz": 640,
+    "batch": 8
+  },
+  "hyperparameters": [
+    {
+      "rank": 1,
+      "label": "hp1",
+      "trial": 2,
+      "multiseed_mAP50_95_mean": 0.840771141678835,
+      "multiseed_mAP50_95_std": 0.008528732063878807,
+      "params": {
+        "optimizer": "SGD",
+        "lr0": 0.008960785365368127,
+        "lrf": 0.15751320499779725,
+        "momentum": 0.8280833552796386,
+        "weight_decay": 2.9375384576328313e-06,
+        "warmup_epochs": 0.2904180608409973,
+        "cos_lr": false
+      }
+    },
+    {
+      "rank": 2,
+      "label": "hp2",
+      "trial": 1,
+      "multiseed_mAP50_95_mean": 0.8365938870339557,
+      "multiseed_mAP50_95_std": 0.011341132713047566,
+      "params": {
+        "optimizer": "SGD",
+        "lr0": 0.00754,
+        "lrf": 0.46951,
+        "momentum": 0.91358,
+        "weight_decay": 6e-05,
+        "warmup_epochs": 4.48054,
+        "cos_lr": true
+      }
+    }
+  ]
+}

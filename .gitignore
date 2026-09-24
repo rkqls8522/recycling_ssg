@@ -55,6 +55,14 @@ runs/
 wandb/
 mlruns/
 
+# 노트북이 필요할 때 다시 만드는 대용량 캐시.
+#   opencv_datasets  : OpenCV 정적 증강 데이터셋 (정책 1개당 약 7,600장 / 7.5GB)
+#   tune_runs        : Optuna trial 중간 checkpoint
+#   .yolo_data_cache : data.zip 해제 캐시
+**/opencv_datasets/
+**/tune_runs/
+**/.yolo_data_cache/
+
 # AI model weights
 *.pt
 *.pth

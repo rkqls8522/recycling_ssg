@@ -1,0 +1,30 @@
+{
+  "selected_trial": 2,
+  "dataset": "17class_train15516_val2201",
+  "selection_rule": "top 3 by single-run mAP50-95 at 10 epoch, re-trained with seeds [42, 123, 777], highest mean mAP50-95",
+  "objective_mAP50_95": 0.840771141678835,
+  "final_15epoch_mAP50_95": 0.8388682474880745,
+  "metrics": {
+    "precision": 0.8697261055708425,
+    "recall": 0.7897932774045691,
+    "f1": 0.8278346591306859,
+    "mAP50": 0.8660723792445273,
+    "mAP50_95": 0.8388682474880745
+  },
+  "params": {
+    "optimizer": "SGD",
+    "lr0": 0.008960785365368127,
+    "lrf": 0.15751320499779725,
+    "momentum": 0.8280833552796386,
+    "weight_decay": 2.9375384576328313e-06,
+    "warmup_epochs": 0.2904180608409973,
+    "cos_lr": false
+  },
+  "fixed": {
+    "model": "yolo26n.pt",
+    "imgsz": 640,
+    "batch": 8,
+    "tune_epochs": 10,
+    "final_epochs": 15
+  }
+}

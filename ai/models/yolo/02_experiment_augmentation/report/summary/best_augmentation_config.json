@@ -1,0 +1,11 @@
+{
+  "best_id": "C11",
+  "best_name": "opencv_horizontal_flip",
+  "checkpoint": "C:\\AIchallengers\\recycling_ssg_project\\recycling_ssg\\ai\\models\\yolo\\02_experiment_augmentation\\runs\\C11_opencv_horizontal_flip_seed42_e10\\weights\\best.pt",
+  "selection_rule": "highest multi-seed mean mAP50-95, then best checkpoint for visualization",
+  "ultralytics_version": "8.4.143",
+  "model_name": "yolo26n.pt",
+  "epochs": 10,
+  "imgsz": 640,
+  "batch": 8
+}

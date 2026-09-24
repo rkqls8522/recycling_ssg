@@ -28,23 +28,47 @@ bash scripts/run-dev.sh
 - DB는 항상 `.env`의 MySQL을 사용합니다(SQLite 아님). AWS/외부 키 없이도 나머지
   흐름은 동작합니다 (로컬 디스크 저장).
 
-### 0-2. 환경변수 설정
+### 0-2. 테스트 이미지 경로에 대하여
+
+아래 명령어들은 `ai/models/yolo/02_experiment_augmentation/report/final_best/prediction_samples/`
+아래의 샘플 이미지를 사용합니다.
+
+**주의**: 이 폴더의 파일명은 고정이 아닙니다. 02번 노트북을 다시 실행하면
+Validation 셋에서 샘플을 새로 뽑아 저장하므로 파일명이 전부 바뀝니다.
+아래 예시에 적힌 파일명이 없다면, 폴더를 열어 실제 파일명으로 바꿔 주세요.
+
+```bash
+SAMPLES=ai/models/yolo/02_experiment_augmentation/report/final_best/prediction_samples
+ls "$SAMPLES"
+```
+
+시나리오별(정상 / 신뢰도 부족 / 중앙 객체 없음)로 알맞은 이미지를 고르는 일이 번거롭다면,
+`scripts/smoke-test.sh` 가 이미 그 선별을 자동으로 합니다.
+폴더의 이미지를 하나씩 Vision 서버에 보내보고 응답에 따라
+`IMG_SUCCESS` / `IMG_LOW_CONF` / `IMG_NO_OBJ` 를 스스로 정하므로,
+특정 파일명에 의존하지 않습니다.
+
+```bash
+bash scripts/smoke-test.sh          # 이미지 선별까지 자동
+```
+
+### 0-3. 환경변수 설정
 
 ```bash
 # Git Bash
 BACKEND=http://127.0.0.1:8000
 VISION=http://127.0.0.1:8100
-IMG="ai/models/yolo/01_experiment_augmentation/report/final_best/prediction_samples/12_X001_C185_0929_4.jpg"
+IMG="ai/models/yolo/02_experiment_augmentation/report/final_best/prediction_samples/12_X001_C185_0929_4.jpg"
 ```
 
 ```powershell
 # PowerShell
 $BACKEND = "http://127.0.0.1:8000"
 $VISION  = "http://127.0.0.1:8100"
-$IMG     = "ai\models\yolo\01_experiment_augmentation\report\final_best\prediction_samples\12_X001_C185_0929_4.jpg"
+$IMG     = "ai\models\yolo\02_experiment_augmentation\report\final_best\prediction_samples\12_X001_C185_0929_4.jpg"
 ```
 
-### 0-3. ⚠️ 셸별 함정 (실제로 겪은 것들)
+### 0-4. ⚠️ 셸별 함정 (실제로 겪은 것들)
 
 | 상황                                          | 증상                                      | 해결                                                           |
 | --------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------- |
@@ -420,7 +444,7 @@ CLASS_ID=6      # candidate_scores[0].class_id
 ### 9-B. RETAKE_REQUIRED — 신뢰도 부족 (HTTP 200)
 
 ```bash
-LOW="ai/models/yolo/01_experiment_augmentation/report/final_best/prediction_samples/12_X001_C015_0131_2.jpg"
+LOW="ai/models/yolo/02_experiment_augmentation/report/final_best/prediction_samples/12_X001_C015_0131_2.jpg"
 curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   -F "image=@$LOW;type=image/jpeg"
 ```
@@ -442,7 +466,7 @@ curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
 ### 9-C. RETAKE_REQUIRED — 중앙 객체 없음 (HTTP 200)
 
 ```bash
-NOOBJ="ai/models/yolo/01_experiment_augmentation/report/final_best/prediction_samples/12_X002_C973_0319_3.jpg"
+NOOBJ="ai/models/yolo/02_experiment_augmentation/report/final_best/prediction_samples/12_X002_C973_0319_3.jpg"
 curl -s -X POST "$BACKEND/api/v1/analyze" -H "Authorization: Bearer $TOKEN" \
   -F "image=@$NOOBJ;type=image/jpeg"
 ```
@@ -893,7 +917,7 @@ curl -s "$VISION/health"
 BACKEND=http://127.0.0.1:8000
 PY=.venv/Scripts/python.exe
 EMAIL="flow-$(date +%s)@example.com"
-IMG="ai/models/yolo/01_experiment_augmentation/report/final_best/prediction_samples/12_X001_C185_0929_4.jpg"
+IMG="ai/models/yolo/02_experiment_augmentation/report/final_best/prediction_samples/12_X001_C185_0929_4.jpg"
 
 # 1) 회원가입 + 로그인
 curl -s -o /dev/null -X POST "$BACKEND/api/v1/auth/signup" -H "Content-Type: application/json" \
@@ -1150,7 +1174,7 @@ curl -s -X POST $BACKEND/api/v1/analyze -H "Authorization: Bearer $TOKEN" -F "im
 ```bash
 # ── 422 VISION_NO_MAIN_OBJECT ── 중앙에 뚜렷한 객체가 없는 이미지
 curl -s -X POST $VISION/internal/v1/predict \
-  -F "image=@ai/models/yolo/01_experiment_augmentation/report/final_best/prediction_samples/12_X002_C973_0319_3.jpg;type=image/jpeg"
+  -F "image=@ai/models/yolo/02_experiment_augmentation/report/final_best/prediction_samples/12_X002_C973_0319_3.jpg;type=image/jpeg"
 
 # ── 400 IMAGE_EMPTY / 400 IMAGE_DECODE_FAILED / 413 / 415 ── Backend 와 동일
 : > empty.jpg

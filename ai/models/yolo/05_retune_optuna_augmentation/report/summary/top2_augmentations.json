@@ -1,0 +1,21 @@
+{
+  "dataset": "17class_train15516_val2201",
+  "epochs": 10,
+  "rank_gap_1_to_2": 0.0075479186323375025,
+  "augmentations": [
+    {
+      "rank": 1,
+      "label": "aug1",
+      "id": "Y14",
+      "name": "yolo_mosaic_mixup_cutmix",
+      "mAP50_95": 0.8584284489510227
+    },
+    {
+      "rank": 2,
+      "label": "aug2",
+      "id": "Y08",
+      "name": "yolo_mosaic",
+      "mAP50_95": 0.8508805303186852
+    }
+  ]
+}

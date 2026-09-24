@@ -25,7 +25,7 @@ winpath() {
   if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi
 }
 
-SAMPLES="${SAMPLES:-$REPO_ROOT/ai/models/yolo/01_experiment_augmentation/report/final_best/prediction_samples}"
+SAMPLES="${SAMPLES:-$REPO_ROOT/ai/models/yolo/02_experiment_augmentation/report/final_best/prediction_samples}"
 
 # 빈 파일 업로드 테스트용 (플랫폼 무관하게 실제 0-byte 파일 사용)
 EMPTY_FILE_RAW="$(mktemp -t empty-XXXXXX.jpg)"
