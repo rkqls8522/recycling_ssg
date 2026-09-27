@@ -8,6 +8,14 @@
 
 - DB 엔진: MySQL 8.0 (Railway 호스팅), 스토리지 엔진 InnoDB
 - 문자셋/Collation: `utf8mb4` / `utf8mb4_unicode_ci` (이모지 포함 모든 유니코드 저장 가능)
+- **`created_at`/`updated_at`은 KST(UTC+9)로 저장됩니다.** ORM을 거치는 INSERT/UPDATE는
+  `backend/models/timestamps.py::now_kst()`가 Python에서 KST로 직접 찍고,
+  ORM을 거치지 않는 직접 SQL INSERT(목업 데이터 등)는 `server_default=func.now()`
+  폴백이 쓰이는데, `backend/core/database.py`가 커넥션마다
+  `SET time_zone = '+09:00'`을 실행해둬서 이 경우에도 동일하게 KST로 찍힙니다.
+  API 응답(`UtcDatetime`, `backend/schemas/common.py`)은 이 KST 값을 UTC로
+  환산해 `...Z` 형식으로 내보내므로 API 계약(섹션 3.3)에는 영향이 없습니다 —
+  MySQL 클라이언트로 직접 조회할 때 보기 편하게 하기 위한 저장 방식입니다.
 - 연결 정보(호스트/포트/비밀번호)는 절대 이 문서에 적지 않습니다 — 루트 `.env`의
   `DATABASE_URL` 하나로만 관리합니다.
 - 테이블 7개: `users`, `regions`, `waste_classes`, `images`, `feedback`,
@@ -302,6 +310,20 @@ erDiagram
 ---
 
 ## 10. 최근 변경 이력
+
+**2026-09-22: `created_at`/`updated_at` 저장 시간대 UTC → KST 전환**
+- `users`/`feedback`/`favorites` 세 테이블의 `created_at`/`updated_at`이
+  MySQL Workbench 등에서 볼 때 실제 시각보다 9시간 느리게 보이는 문제(UTC로
+  저장되고 있었음)를 KST로 저장하도록 변경
+- `backend/models/timestamps.py`의 `utcnow()` → `now_kst()`로 교체(Python
+  쪽 기본값), `backend/core/database.py` 엔진에 `SET time_zone='+09:00'`
+  커넥션 설정 추가(MySQL `NOW()` 폴백 — 목업 데이터처럼 ORM을 거치지 않는
+  직접 INSERT용)
+- `backend/schemas/common.py`의 `_to_utc_iso8601()`도 "naive 값 = KST"로
+  가정을 맞춰서 API 응답은 여전히 정확한 UTC + `Z`로 나가도록 유지 (API
+  계약 불변, DB 저장 방식만 변경)
+- 이미 쌓여있던 기존 행(feedback 18개, users 10개, favorites 1개)은 저장된
+  숫자에 +9시간을 더하는 1회성 UPDATE로 마이그레이션 완료
 
 **2026-09-18: 폐기물 소분류 86개 → 17개 병합**
 - 대분류 12개(고철류/나무/도기류/비닐/스티로폼/유리병/의류/종이류/캔류/페트병/

@@ -343,7 +343,7 @@ uv run pytest tests/ -q
 ⑩ 확신도가 낮으면(<0.5)
         │   → ⑨에서 저장은 이미 끝난 상태로, AnalyzeRetakeResponse 형식으로
         │     "재촬영해주세요"(AI_LOW_CONFIDENCE) 응답, 끝
-        │     (재학습 데이터 수집 목적 — feedback_id는 응답에 노출 안 함)
+        │     (재학습 데이터 수집 목적 — 저장된 행의 feedback_id도 응답에 포함)
         │   확신도가 충분하면 → 다음 단계 계속
         │
 ⑪ services/disposal_service.py 가 "이 지역 + 이 폐기물"의 배출 요일을 조회

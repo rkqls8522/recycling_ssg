@@ -207,7 +207,7 @@ Base URL: `http://<host>/api/v1` · 인증: `Authorization: Bearer <JWT>`
 
 | 규칙 | 설명 |
 |---|---|
-| **재촬영 분기는 오류가 아님** | Top-1 < 0.5 또는 중앙 객체 미탐지 → **HTTP 200** + `RETAKE_REQUIRED`. 중앙 객체 미탐지는 S3/DB에 **아무것도 저장하지 않음**; Top-1 < 0.5 는 재학습 데이터 수집을 위해 SUCCESS 와 동일하게 저장하되 `feedback_id` 는 응답에 노출하지 않음 |
+| **재촬영 분기는 오류가 아님** | Top-1 < 0.5 또는 중앙 객체 미탐지 → **HTTP 200** + `RETAKE_REQUIRED`. 중앙 객체 미탐지는 S3/DB에 **아무것도 저장하지 않음**(`feedback_id: null`); Top-1 < 0.5 는 재학습 데이터 수집을 위해 SUCCESS 와 동일하게 저장하고 `feedback_id` 도 응답에 포함됨 |
 | **저장 순서와 보상 트랜잭션** | S3 업로드 → `images` → `feedback` → `feedback_candidates` 를 한 트랜잭션으로. DB 실패 시 ROLLBACK + **업로드된 S3 객체 보상 삭제** |
 | **외부 API 장애 격리** | 공공데이터 API 실패는 분석을 실패시키지 않고 `disposal_day: null` + `warnings[]` 로 응답 |
 | **class_id 단일 소스** | `data/taxonomy/waste_classes.json` 이 YOLO 클래스 인덱스와 `waste_classes` 테이블이 공유하는 유일한 기준 |

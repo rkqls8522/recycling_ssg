@@ -14,6 +14,12 @@ if not settings.database_url.startswith("sqlite"):
     # only ever used by the pytest suite (see backend/tests/conftest.py).
     _engine_kwargs["pool_size"] = settings.db_pool_size
     _engine_kwargs["max_overflow"] = settings.db_max_overflow
+    # Pin the MySQL session timezone to KST so MySQL's own NOW() -- the
+    # server_default fallback on every timestamp column, hit whenever a row
+    # is inserted outside the ORM (raw SQL, mock data) -- matches the
+    # Python-side default (models.timestamps.now_kst) instead of whatever
+    # timezone the remote Railway server happens to be in.
+    _engine_kwargs["connect_args"] = {"init_command": "SET time_zone = '+09:00'"}
 
 engine = create_engine(settings.database_url, **_engine_kwargs)
 

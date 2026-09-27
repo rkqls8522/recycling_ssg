@@ -7,16 +7,22 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 
+from models.timestamps import KST
+
 
 def _to_utc_iso8601(value: datetime) -> str:
     """Serializes datetimes as ``2026-09-11T09:00:00Z`` (섹션 3.3).
 
-    Naive values are assumed to be UTC: everything written by this service
-    is stamped with ``models.timestamps.utcnow``, and emitting an explicit
-    ``Z`` keeps clients from re-interpreting the value as local time.
+    Naive values are assumed to be KST: everything written by this service
+    (including mock data inserted directly via SQL, which falls back to
+    MySQL's own ``NOW()`` -- see core/database.py's session timezone) is
+    stamped as KST (``models.timestamps.now_kst``) so it reads correctly at
+    a glance in a MySQL client. The API contract itself is unaffected --
+    this still converts to real UTC and emits an explicit ``Z`` so clients
+    never have to guess the wire format.
     """
     if value.tzinfo is None:
-        value = value.replace(tzinfo=UTC)
+        value = value.replace(tzinfo=KST)
     return value.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
