@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 recycling_ssg 공통 Object Detection 전처리 스크립트
-- 입력: data/train100val/Training, data/train100val/Validation, data/train100val/data.yaml
+- 입력: data/생활폐기물image_10000_2000_500/{Training,Validation}
 - 출력: data/processed/
-- USE_DAMAGED_DATA=False: 원형(clean) 데이터만 전처리, 클래스별 최대 100장
-- USE_DAMAGED_DATA=True: clean+damaged 합계 클래스별 100장 목표
+- 클래스 기준: data/taxonomy/waste_classes.json (17개)
+- USE_DAMAGED_DATA=False: 원형(clean) 데이터만 전처리
+- USE_DAMAGED_DATA=True: clean+damaged를 함께 전처리
+- TRAIN_IMAGES_PER_CLASS=None: 클래스당 상한 없이 후보 전체 사용
 - damaged 사용 시 clean 80 + damaged 20을 우선 목표로 하고 부족분은 서로 보충
 - damaged는 일부/상당/완전파손에서 가능한 한 균등 샘플링
 - bbox clip 기준은 MAX_BBOX_CLIP_RATIO 변수로 조절
@@ -18,9 +20,9 @@ recycling_ssg 공통 Object Detection 전처리 스크립트
 # 이 노트북은 **YOLO + Faster R-CNN 공통 전처리**용입니다.
 # 
 # ## 입력
-# - `data/train100val/Training/`
-# - `data/train100val/Validation/`
-# - `data/train100val/data.yaml`
+# - `data/생활폐기물image_10000_2000_500/Training/{clean,damaged}/`
+# - `data/생활폐기물image_10000_2000_500/Validation/`
+# - `data/taxonomy/waste_classes.json`  (클래스 기준)
 # 
 # ## 출력
 # - `data/processed/images/train`, `data/processed/images/val`
@@ -69,24 +71,30 @@ import yaml
 MAX_BBOX_CLIP_RATIO = 0.10
 
 # 한 클래스당 Training 목표 이미지 수입니다.
-TRAIN_IMAGES_PER_CLASS = 100
+# None 이면 상한 없이 품질검사를 통과한 후보를 전부 사용합니다.
+# 최종 데이터셋은 이미 클래스별 수량이 조정되어 있으므로 None 이 기본입니다.
+TRAIN_IMAGES_PER_CLASS = None
 
 # ------------------------------------------------------------
 # 핵심 스위치
 # False: 원형(clean) 데이터만 스캔/전처리합니다.
 # True : 원형 + 파손 데이터를 함께 스캔/전처리합니다.
 # ------------------------------------------------------------
-USE_DAMAGED_DATA = False
+USE_DAMAGED_DATA = True
 
 # 파손 데이터를 함께 사용할 때의 '선호 목표'입니다.
 # 우선 clean 80 + damaged 20을 맞추고, 한쪽이 부족하면 다른 쪽이 보충합니다.
 PREFERRED_DAMAGE_IMAGES_PER_CLASS = 20
 
-# 파손 데이터는 아래 3단계에서 최대한 균등하게 뽑습니다.
+# Training 아래에서 파손 데이터를 담고 있는 폴더입니다.
+#
+# 예전 데이터셋은 `damaged/일부파손`, `damaged/상당파손`, `damaged/완전파손`
+# 처럼 파손 단계별로 폴더가 나뉘어 있었습니다. 최종 데이터셋은 `damaged` 하나로
+# 평평하고, 파손 단계는 폴더가 아니라 라벨 JSON 의 `Bounding[].DAMAGE` 필드에
+# 들어 있습니다(예: "일부훼손"). 그래서 폴더는 하나로 두고, 단계는 JSON 에서
+# 읽어 manifest 의 damage_level 컬럼에 기록합니다.
 DAMAGE_VARIANTS = [
-    "damaged/일부파손",
-    "damaged/상당파손",
-    "damaged/완전파손",
+    "damaged",
 ]
 
 CLEAN_VARIANT = "clean"
@@ -105,7 +113,7 @@ CROSS_SPLIT_DUPLICATE_POLICY = "drop_val"
 # 같은 split 내부의 exact duplicate(SHA-1 동일)는 1장만 후보로 남깁니다.
 DROP_WITHIN_SPLIT_DUPLICATES = True
 
-# 한 이미지 안에 서로 다른 86개 클래스가 2개 이상 존재하면 이미지 전체를 제외합니다.
+# 한 이미지 안에 서로 다른 클래스가 2개 이상 존재하면 이미지 전체를 제외합니다.
 DROP_MULTI_CLASS_IMAGES = True
 
 # 같은 클래스 bbox가 여러 개 있어도 유지합니다.
@@ -120,6 +128,21 @@ STRICT_TRAIN_QUOTA = False
 # 기존 processed 결과를 지우고 새로 생성할지 여부
 OVERWRITE_OUTPUT = True
 
+
+def preferred_clean_per_class():
+    """클래스당 clean 목표 장수. 상한이 없으면 None(제한 없음)을 돌려줍니다.
+
+    TRAIN_IMAGES_PER_CLASS 가 None 일 때 뺄셈을 하면 TypeError 가 나므로,
+    출력/기록에서 이 값을 쓸 때는 항상 이 함수를 거칩니다.
+    """
+    if TRAIN_IMAGES_PER_CLASS is None:
+        return None
+
+    if not USE_DAMAGED_DATA:
+        return TRAIN_IMAGES_PER_CLASS
+
+    return TRAIN_IMAGES_PER_CLASS - PREFERRED_DAMAGE_IMAGES_PER_CLASS
+
 # ## 1. 프로젝트 경로
 
 # 이 파일은 recycling_ssg/ai/preprocessing/ 아래에 위치합니다.
@@ -127,10 +150,13 @@ OVERWRITE_OUTPUT = True
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 # 실제 프로젝트 구조 기준 입력 경로
-SOURCE_ROOT = PROJECT_ROOT / "data" / "train100val"
+SOURCE_ROOT = PROJECT_ROOT / "data" / "생활폐기물image_10000_2000_500"
 TRAIN_ROOT = SOURCE_ROOT / "Training"
 VAL_ROOT = SOURCE_ROOT / "Validation"
-SOURCE_DATA_YAML = SOURCE_ROOT / "data.yaml"
+
+# 최종 데이터셋 폴더에는 data.yaml 이 없습니다.
+# 프로젝트가 이미 쓰고 있는 taxonomy 를 클래스 기준으로 삼습니다.
+TAXONOMY_JSON = PROJECT_ROOT / "data" / "taxonomy" / "waste_classes.json"
 
 # 출력은 data/processed 아래에 생성
 OUTPUT_ROOT = PROJECT_ROOT / "data" / "processed"
@@ -148,65 +174,71 @@ print("PROJECT_ROOT     :", PROJECT_ROOT)
 print("SOURCE_ROOT      :", SOURCE_ROOT)
 print("TRAIN_ROOT       :", TRAIN_ROOT)
 print("VAL_ROOT         :", VAL_ROOT)
-print("SOURCE_DATA_YAML :", SOURCE_DATA_YAML)
+print("TAXONOMY_JSON    :", TAXONOMY_JSON)
 print("OUTPUT_ROOT      :", OUTPUT_ROOT)
 print("=" * 70)
 
 required_paths = {
     "Training": TRAIN_ROOT,
     "Validation": VAL_ROOT,
-    "data.yaml": SOURCE_DATA_YAML,
+    "waste_classes.json": TAXONOMY_JSON,
 }
 missing = [f"{name}: {path}" for name, path in required_paths.items() if not path.exists()]
 if missing:
     raise FileNotFoundError(
         "필수 입력 경로를 찾지 못했습니다.\n"
         + "\n".join(missing)
-        + "\n\n현재 프로젝트 구조 기준 입력 폴더는 "
-          "recycling_ssg/data/train100val 입니다."
+        + f"\n\n현재 기준 입력 폴더는 {SOURCE_ROOT} 입니다."
     )
 
-# ## 2. 86개 canonical class 정의
+# ## 2. canonical class 정의
 
 # ============================================================
-# 2. 86개 canonical class 정의
-#    data/train100val/data.yaml을 단일 기준(source of truth)으로 사용
+# 2. canonical class 정의
+#    data/taxonomy/waste_classes.json을 단일 기준(source of truth)으로 사용
+#
+#    예전에는 data/train100val/data.yaml의 86개 소분류를 썼습니다. 최종
+#    데이터셋은 17개 클래스로 재구성되어 있고 폴더에 data.yaml이 없으므로,
+#    학습(07번 노트북)과 서빙(vision)에서 이미 쓰고 있는 taxonomy를 기준으로
+#    삼습니다. 그래야 여기서 만든 라벨 id가 모델/서비스와 어긋나지 않습니다.
 # ============================================================
 
-def load_canonical_classes(data_yaml_path: Path) -> list[str]:
-    if not data_yaml_path.exists():
-        raise FileNotFoundError(f"기존 data.yaml을 찾지 못했습니다: {data_yaml_path}")
+def load_canonical_classes(taxonomy_path: Path) -> list[str]:
+    """{"0": ["고철류", "고철"], ...} 형태를 ["고철류/고철", ...]로 바꿉니다."""
+    if not taxonomy_path.exists():
+        raise FileNotFoundError(f"taxonomy 파일을 찾지 못했습니다: {taxonomy_path}")
 
-    with data_yaml_path.open("r", encoding="utf-8-sig") as f:
-        payload = yaml.safe_load(f)
+    payload = json.loads(taxonomy_path.read_text(encoding="utf-8-sig"))
 
-    names = payload.get("names")
-    if names is None:
-        raise ValueError("data.yaml에 names가 없습니다.")
+    if not isinstance(payload, dict) or not payload:
+        raise TypeError("waste_classes.json은 비어 있지 않은 dict여야 합니다.")
 
-    if isinstance(names, list):
-        class_names = [str(x).strip() for x in names]
-    elif isinstance(names, dict):
-        normalized = {int(k): str(v).strip() for k, v in names.items()}
-        expected_ids = list(range(len(normalized)))
-        if sorted(normalized) != expected_ids:
-            raise ValueError(
-                "data.yaml의 class id가 0부터 연속적이지 않습니다: "
-                f"{sorted(normalized)[:10]} ..."
-            )
-        class_names = [normalized[i] for i in expected_ids]
-    else:
-        raise TypeError("data.yaml names는 list 또는 dict여야 합니다.")
+    normalized: dict[int, str] = {}
+    for key, value in payload.items():
+        if isinstance(value, (list, tuple)):
+            name = "/".join(str(part).strip() for part in value)
+        else:
+            name = str(value).strip()
+        normalized[int(key)] = name
 
-    if len(class_names) != 86:
-        raise ValueError(f"클래스 수가 86개가 아닙니다: {len(class_names)}")
-    if len(set(class_names)) != 86:
-        raise ValueError("data.yaml names에 중복 클래스명이 있습니다.")
+    expected_ids = list(range(len(normalized)))
+    if sorted(normalized) != expected_ids:
+        raise ValueError(
+            "class id가 0부터 연속적이지 않습니다: "
+            f"{sorted(normalized)[:10]} ..."
+        )
+
+    class_names = [normalized[i] for i in expected_ids]
+
+    if len(set(class_names)) != len(class_names):
+        raise ValueError("waste_classes.json에 중복 클래스명이 있습니다.")
 
     return class_names
 
 
-CLASS_NAMES = load_canonical_classes(SOURCE_DATA_YAML)
+CLASS_NAMES = load_canonical_classes(TAXONOMY_JSON)
+NUM_CLASSES = len(CLASS_NAMES)
+print(f"[CLASS] canonical class {NUM_CLASSES}개를 {TAXONOMY_JSON.name} 에서 읽었습니다.")
 CLASS_TO_CANONICAL_ID = {name: idx for idx, name in enumerate(CLASS_NAMES)}
 CANONICAL_ID_TO_CLASS = {idx: name for idx, name in enumerate(CLASS_NAMES)}
 
@@ -235,10 +267,10 @@ def make_class_name(major: str, detail: str) -> str:
 
 CLASS_MAPPING = {
     "schema_version": "1.0",
-    "num_classes": 86,
-    "canonical_id_range": [0, 85],
+    "num_classes": NUM_CLASSES,
+    "canonical_id_range": [0, NUM_CLASSES - 1],
     "id_policy": {
-        "canonical": "0..85",
+        "canonical": f"0..{NUM_CLASSES - 1}",
         "yolo": "canonical_id",
         "coco_category_id": "canonical_id + 1",
         "torchvision_faster_rcnn": "0=background, object label=canonical_id+1",
@@ -384,23 +416,41 @@ def xyxy_to_coco(x1, y1, x2, y2):
 
 # ## 4. Training / Validation 데이터 소스 검색
 
+# 라벨/원천 폴더 이름 규칙입니다. 데이터셋 배포본마다 표기가 달라서 둘 다 받습니다.
+#   구버전: "<접두사>_라벨링데이터" / "<접두사>_원천데이터"
+#   최종본: "라벨링 데이터"        / "원천 데이터"      (접두사 없음, 사이에 공백)
+LABEL_DIR_SUFFIXES = ("_라벨링데이터", "라벨링 데이터", "라벨링데이터")
+
+
+def _image_dir_for(label_dir: Path) -> Path | None:
+    """라벨 폴더에 대응하는 원천 폴더를 찾습니다. 없으면 None."""
+    name = label_dir.name
+
+    for suffix in LABEL_DIR_SUFFIXES:
+        if not name.endswith(suffix):
+            continue
+
+        prefix = name[: -len(suffix)]
+        image_suffix = suffix.replace("라벨링", "원천")
+        candidate = label_dir.parent / f"{prefix}{image_suffix}"
+
+        if candidate.is_dir():
+            return candidate
+
+    return None
+
+
 def discover_label_image_pairs(base_dir: Path):
-    """
-    base_dir 아래에서
-      *_라벨링데이터
-      *_원천데이터
-    폴더 쌍을 자동 탐색합니다.
-    """
+    """base_dir 아래에서 라벨링/원천 데이터 폴더 쌍을 자동 탐색합니다."""
     pairs = []
     label_dirs = sorted(
         p for p in base_dir.rglob("*")
-        if p.is_dir() and p.name.endswith("_라벨링데이터")
+        if p.is_dir() and p.name.endswith(LABEL_DIR_SUFFIXES)
     )
 
     for label_dir in label_dirs:
-        prefix = label_dir.name[: -len("_라벨링데이터")]
-        image_dir = label_dir.parent / f"{prefix}_원천데이터"
-        if image_dir.exists():
+        image_dir = _image_dir_for(label_dir)
+        if image_dir is not None:
             pairs.append((label_dir, image_dir))
 
     return pairs
@@ -533,6 +583,19 @@ def extract_bounds(payload: dict) -> list[dict]:
     return bounds or []
 
 
+def bounding_damage_level(bounds: list[dict]) -> str:
+    """라벨 JSON의 DAMAGE 값을 돌려줍니다 (예: "일부훼손", "상당훼손", "완전훼손").
+
+    clean 데이터에는 이 값이 없거나 "없음"으로 들어 있습니다.
+    """
+    for bounding in bounds:
+        value = get_first(bounding, ("DAMAGE", "Damage", "damage"), default="")
+        if value:
+            return str(value).strip()
+
+    return ""
+
+
 def bounding_class_name(bounding: dict) -> str:
     major = get_first(bounding, ("CLASS", "Class", "class"), default="UNKNOWN")
     detail = get_first(bounding, ("DETAILS", "Details", "details"), default="UNKNOWN")
@@ -559,6 +622,7 @@ def preprocess_candidates(samples_df: pd.DataFrame):
             "class_name": "",
             "canonical_id": None,
             "object_count": 0,
+            "damage_level": "",
             "is_within_split_duplicate": False,
             "is_cross_split_duplicate": False,
             "status": "excluded",
@@ -580,6 +644,10 @@ def preprocess_candidates(samples_df: pd.DataFrame):
             bounds = extract_bounds(payload)
             if not bounds:
                 raise ValueError("no_bounding_annotations")
+
+            # 파손 단계는 폴더가 아니라 JSON에 있습니다(예: "일부훼손").
+            # 나중에 파손 단계별 성능을 보고 싶을 때 쓰도록 manifest에 남깁니다.
+            manifest["damage_level"] = bounding_damage_level(bounds)
 
             annotation_class_names = [bounding_class_name(b) for b in bounds]
             unique_classes = sorted(set(annotation_class_names))
@@ -649,6 +717,7 @@ def preprocess_candidates(samples_df: pd.DataFrame):
                 "height": int(height),
                 "class_name": class_name,
                 "canonical_id": canonical_id,
+                "damage_level": manifest["damage_level"],
                 "annotations": final_boxes,
             })
 
@@ -836,7 +905,11 @@ def select_balanced_training_records(
     manifest_df.loc[train_candidate_mask, "exclude_reason"] = ""
 
     preferred_damage = PREFERRED_DAMAGE_IMAGES_PER_CLASS if USE_DAMAGED_DATA else 0
-    preferred_clean = TRAIN_IMAGES_PER_CLASS - preferred_damage
+    preferred_clean = (
+        None
+        if TRAIN_IMAGES_PER_CLASS is None
+        else TRAIN_IMAGES_PER_CLASS - preferred_damage
+    )
 
     for canonical_id, class_name in enumerate(CLASS_NAMES):
         class_records = [r for r in train_records if r["canonical_id"] == canonical_id]
@@ -854,11 +927,24 @@ def select_balanced_training_records(
         damage_available = sum(len(pool) for pool in damage_pools.values())
         class_seed = RANDOM_SEED + canonical_id * 10007
 
-        if not USE_DAMAGED_DATA:
+        # 상한이 없으면 이 클래스의 후보 전체가 곧 목표치입니다.
+        target_total = (
+            clean_available + damage_available
+            if TRAIN_IMAGES_PER_CLASS is None
+            else TRAIN_IMAGES_PER_CLASS
+        )
+
+        if TRAIN_IMAGES_PER_CLASS is None:
+            # ------------------------------------------------
+            # 상한 없음: 품질검사를 통과한 후보를 전부 사용
+            # ------------------------------------------------
+            clean_count = clean_available
+            damage_count = damage_available if USE_DAMAGED_DATA else 0
+        elif not USE_DAMAGED_DATA:
             # ------------------------------------------------
             # 원형 전용: damaged는 아예 사용하지 않음
             # ------------------------------------------------
-            clean_count = min(TRAIN_IMAGES_PER_CLASS, clean_available)
+            clean_count = min(target_total, clean_available)
             damage_count = 0
         else:
             # ------------------------------------------------
@@ -867,7 +953,7 @@ def select_balanced_training_records(
             clean_count = min(preferred_clean, clean_available)
             damage_count = min(preferred_damage, damage_available)
 
-            remaining = TRAIN_IMAGES_PER_CLASS - clean_count - damage_count
+            remaining = target_total - clean_count - damage_count
 
             # damaged가 부족한 경우 clean의 80장 초과 여유분으로 먼저 보충
             if remaining > 0:
@@ -898,37 +984,43 @@ def select_balanced_training_records(
         selected_class = selected_clean + selected_damage
         selected_train.extend(selected_class)
 
-        # 총 100장을 못 채운 경우에만 실제 shortage로 기록
-        total_shortage = TRAIN_IMAGES_PER_CLASS - len(selected_class)
+        # 목표치를 못 채운 경우에만 실제 shortage로 기록
+        # (상한이 없으면 target_total이 곧 후보 수라 shortage는 항상 0입니다)
+        total_shortage = target_total - len(selected_class)
         if total_shortage > 0:
             shortage_rows.append({
                 "canonical_id": canonical_id,
                 "class_name": class_name,
                 "mode": "clean_plus_damaged" if USE_DAMAGED_DATA else "clean_only",
-                "required_total": TRAIN_IMAGES_PER_CLASS,
+                "required_total": target_total,
                 "available_total": clean_available + damage_available,
                 "selected_total": len(selected_class),
                 "shortage": total_shortage,
             })
 
-        actual_damage_counts = Counter(r["variant"] for r in selected_damage)
-        summary_rows.append({
+        # 파손 단계는 폴더가 아니라 JSON에서 읽은 damage_level로 셉니다.
+        actual_damage_counts = Counter(
+            r.get("damage_level") or "미기재" for r in selected_damage
+        )
+        summary_row = {
             "canonical_id": canonical_id,
             "class_name": class_name,
             "use_damaged_data": USE_DAMAGED_DATA,
-            "target_total": TRAIN_IMAGES_PER_CLASS,
+            "target_total": target_total,
             "preferred_clean": preferred_clean,
             "preferred_damaged": preferred_damage,
             "clean_available": clean_available,
             "clean_selected": len(selected_clean),
             "damage_available_total": damage_available,
             "damage_selected_total": len(selected_damage),
-            "damaged_일부파손": actual_damage_counts.get("damaged/일부파손", 0),
-            "damaged_상당파손": actual_damage_counts.get("damaged/상당파손", 0),
-            "damaged_완전파손": actual_damage_counts.get("damaged/완전파손", 0),
             "train_selected_total": len(selected_class),
-            "target_met": len(selected_class) == TRAIN_IMAGES_PER_CLASS,
-        })
+            "target_met": len(selected_class) == target_total,
+        }
+
+        for level, count in sorted(actual_damage_counts.items()):
+            summary_row[f"damaged_{level}"] = count
+
+        summary_rows.append(summary_row)
 
     # 선택된 train만 selected 상태로 변경
     selected_keys = {
@@ -955,7 +1047,7 @@ def select_balanced_training_records(
     shortage_df = pd.DataFrame(shortage_rows)
 
     if STRICT_TRAIN_QUOTA and not shortage_df.empty:
-        print("\n[ERROR] 아래 클래스는 clean(+damaged)을 합쳐도 100장을 충족하지 못합니다.")
+        print("\n[ERROR] 아래 클래스는 clean(+damaged)을 합쳐도 목표치를 충족하지 못합니다.")
         print(shortage_df.to_string(index=False))
         raise ValueError(
             "STRICT_TRAIN_QUOTA=True인데 일부 클래스가 클래스당 100장 quota를 충족하지 못했습니다."
@@ -1056,14 +1148,11 @@ def save_common_outputs(
     common_payload = {
         "schema_version": "1.0",
         "bbox_format": "xyxy_absolute_pixels",
-        "num_classes": 86,
+        "num_classes": NUM_CLASSES,
         "train_sampling": {
             "images_per_class_target": TRAIN_IMAGES_PER_CLASS,
             "use_damaged_data": USE_DAMAGED_DATA,
-            "preferred_clean_per_class": (
-                TRAIN_IMAGES_PER_CLASS - PREFERRED_DAMAGE_IMAGES_PER_CLASS
-                if USE_DAMAGED_DATA else TRAIN_IMAGES_PER_CLASS
-            ),
+            "preferred_clean_per_class": preferred_clean_per_class(),
             "preferred_damaged_per_class": (
                 PREFERRED_DAMAGE_IMAGES_PER_CLASS if USE_DAMAGED_DATA else 0
             ),
@@ -1218,15 +1307,19 @@ EXPORTERS = {
 def validate_outputs(records: list[dict], manifest_df: pd.DataFrame):
     train_records = [r for r in records if r["split"] == "train"]
 
-    # 클래스별 Training은 100장을 초과하면 안 됩니다.
+    # 클래스별 Training은 목표치를 초과하면 안 됩니다.
+    # 상한이 없으면(None) 초과라는 개념 자체가 없으므로 건너뜁니다.
     train_counts = Counter(r["canonical_id"] for r in train_records)
-    over_counts = {
-        CANONICAL_ID_TO_CLASS[class_id]: train_counts.get(class_id, 0)
-        for class_id in range(86)
-        if train_counts.get(class_id, 0) > TRAIN_IMAGES_PER_CLASS
-    }
-    if over_counts:
-        raise ValueError(f"Training 클래스별 100장 초과 오류: {over_counts}")
+    if TRAIN_IMAGES_PER_CLASS is not None:
+        over_counts = {
+            CANONICAL_ID_TO_CLASS[class_id]: train_counts.get(class_id, 0)
+            for class_id in range(NUM_CLASSES)
+            if train_counts.get(class_id, 0) > TRAIN_IMAGES_PER_CLASS
+        }
+        if over_counts:
+            raise ValueError(
+                f"Training 클래스별 {TRAIN_IMAGES_PER_CLASS}장 초과 오류: {over_counts}"
+            )
 
     # 원형 전용 모드에서는 damaged가 단 한 장도 포함되면 안 됩니다.
     if not USE_DAMAGED_DATA:
@@ -1240,20 +1333,23 @@ def validate_outputs(records: list[dict], manifest_df: pd.DataFrame):
                 f"{len(damaged_in_clean_only)}장"
             )
 
-    # STRICT 모드에서는 모든 클래스가 정확히 100장이어야 합니다.
-    if STRICT_TRAIN_QUOTA:
+    # STRICT 모드에서는 모든 클래스가 정확히 목표치여야 합니다.
+    # 상한이 없으면 목표치가 곧 후보 수라 이 검사는 의미가 없습니다.
+    if STRICT_TRAIN_QUOTA and TRAIN_IMAGES_PER_CLASS is not None:
         wrong_counts = {
             CANONICAL_ID_TO_CLASS[class_id]: train_counts.get(class_id, 0)
-            for class_id in range(86)
+            for class_id in range(NUM_CLASSES)
             if train_counts.get(class_id, 0) != TRAIN_IMAGES_PER_CLASS
         }
         if wrong_counts:
-            raise ValueError(f"Training 클래스별 100장 검증 실패: {wrong_counts}")
+            raise ValueError(
+                f"Training 클래스별 {TRAIN_IMAGES_PER_CLASS}장 검증 실패: {wrong_counts}"
+            )
 
     # canonical id 범위
     invalid_ids = [
         r for r in records
-        if r["canonical_id"] not in range(86)
+        if r["canonical_id"] not in range(NUM_CLASSES)
     ]
     if invalid_ids:
         raise ValueError("canonical_id 범위 오류")
@@ -1287,10 +1383,10 @@ def validate_outputs(records: list[dict], manifest_df: pd.DataFrame):
             with path.open("r", encoding="utf-8") as f:
                 coco = json.load(f)
 
-            if len(coco["categories"]) != 86:
+            if len(coco["categories"]) != NUM_CLASSES:
                 raise ValueError(f"COCO category 수 오류: {split}")
 
-            valid_ids = set(range(1, 87))
+            valid_ids = set(range(1, NUM_CLASSES + 1))
             used_ids = {ann["category_id"] for ann in coco["annotations"]}
             if not used_ids.issubset(valid_ids):
                 raise ValueError(f"COCO category id 범위 오류: {split}")
@@ -1314,7 +1410,7 @@ def main():
     print(f"MAX_BBOX_CLIP_RATIO        : {MAX_BBOX_CLIP_RATIO}")
     print(f"TRAIN_IMAGES_PER_CLASS     : {TRAIN_IMAGES_PER_CLASS}")
     print(f"USE_DAMAGED_DATA           : {USE_DAMAGED_DATA}")
-    print(f"PREFERRED_CLEAN_PER_CLASS  : {TRAIN_IMAGES_PER_CLASS - PREFERRED_DAMAGE_IMAGES_PER_CLASS if USE_DAMAGED_DATA else TRAIN_IMAGES_PER_CLASS}")
+    print(f"PREFERRED_CLEAN_PER_CLASS  : {preferred_clean_per_class()}")
     print(f"PREFERRED_DAMAGE_PER_CLASS : {PREFERRED_DAMAGE_IMAGES_PER_CLASS if USE_DAMAGED_DATA else 0}")
     print(f"DAMAGE_VARIANTS            : {DAMAGE_VARIANTS if USE_DAMAGED_DATA else []}")
     print(f"EXPORT_FORMATS             : {EXPORT_FORMATS}")
@@ -1325,7 +1421,10 @@ def main():
         raise ValueError("MAX_BBOX_CLIP_RATIO는 0~1 범위여야 합니다.")
     if PREFERRED_DAMAGE_IMAGES_PER_CLASS < 0:
         raise ValueError("PREFERRED_DAMAGE_IMAGES_PER_CLASS는 0 이상이어야 합니다.")
-    if PREFERRED_DAMAGE_IMAGES_PER_CLASS > TRAIN_IMAGES_PER_CLASS:
+    if (
+        TRAIN_IMAGES_PER_CLASS is not None
+        and PREFERRED_DAMAGE_IMAGES_PER_CLASS > TRAIN_IMAGES_PER_CLASS
+    ):
         raise ValueError(
             "PREFERRED_DAMAGE_IMAGES_PER_CLASS가 TRAIN_IMAGES_PER_CLASS보다 클 수 없습니다."
         )
@@ -1416,10 +1515,10 @@ if __name__ == "__main__":
 # 
 # ```text
 # data/
-# ├─ train100val/                 # 입력 (수정하지 않음)
-# │  ├─ Training/
-# │  ├─ Validation/
-# │  └─ data.yaml
+# ├─ 생활폐기물image_10000_2000_500/   # 입력 (수정하지 않음)
+# │  ├─ Training/clean/
+# │  ├─ Training/damaged/
+# │  └─ Validation/
 # │
 # └─ processed/                    # 출력
 #    ├─ images/
