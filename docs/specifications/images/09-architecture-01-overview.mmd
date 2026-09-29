@@ -1,0 +1,44 @@
+flowchart TB
+    subgraph Client["클라이언트"]
+        FE["React Frontend\n(Vite, :5173/:8443)"]
+    end
+
+    subgraph Backend["Backend — FastAPI (:8000)\n공개 API 17개"]
+        API["api/ 라우터"]
+        CORE["core/ 설정·DB·보안·미들웨어"]
+        SVC["services/ 외부 연동 클라이언트"]
+        AGENT["agent/ Chat 오케스트레이션"]
+        DB_[("MySQL\nRailway")]
+    end
+
+    subgraph Vision["Vision — FastAPI + YOLO (:8100)\n내부 API 2개"]
+        VAPI["/internal/v1/predict\n/internal/v1/classes"]
+        MODEL["YOLO 체크포인트\nweights/best.pt"]
+    end
+
+    subgraph RAG["RAG 서비스 — FastAPI + LangGraph (:8001)\n내부 API 3개, Backend 전용"]
+        RNODE["/rule_node (배출방법 조회)"]
+        CNODE["/chat_node (AI 후속 질문)"]
+        RCNODE["/reclassify (Gemini 재분류 그래프)"]
+        VDB[("Pinecone\nvector index")]
+    end
+
+    FE -- "HTTPS /api/v1/*" --> API
+    API --> CORE
+    API --> SVC
+    API --> AGENT
+    CORE --> DB_
+    SVC -- "HTTP /internal/v1/*\n사설망 전용" --> VAPI
+    SVC -- "HTTP :8001\n사설망 전용" --> RNODE
+    SVC -- " " --> RCNODE
+    AGENT -- "HTTP :8001" --> CNODE
+    VAPI --> MODEL
+    RNODE --> VDB
+    RCNODE --> VDB
+    CNODE --> VDB
+
+    SVC -.->|"S3 업로드/다운로드"| S3[("AWS S3")]
+    SVC -.->|"배출요일 조회"| GOV["행정안전부\n생활쓰레기배출정보 API"]
+    RCNODE -.->|"이미지 분류 LLM"| GEMINI["Google Gemini"]
+    CNODE -.->|"답변 생성 LLM"| GEMINI
+    RNODE -.->|"임베딩"| UPSTAGE["Upstage\nEmbeddings"]

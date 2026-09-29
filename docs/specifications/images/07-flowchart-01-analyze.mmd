@@ -1,0 +1,28 @@
+flowchart TD
+    A([이미지 업로드 요청]) --> B{JWT 유효?}
+    B -- 아니오 --> B1[401 AUTH_*]
+    B -- 예 --> C{users.region_id\nNULL?}
+    C -- 예 --> C1[409 USER_REGION_REQUIRED]
+    C -- 아니오 --> D{업로드 검증\n타입/용량/0바이트}
+    D -- 실패 --> D1[400/413/415]
+    D -- 통과 --> E[디코드 → EXIF 보정\n→ 1920px 축소 → JPEG 재인코딩]
+    E --> F[Vision 서버 predict 호출]
+    F --> G{메인 객체\n탐지됨?}
+    G -- 아니오 --> G1[200 RETAKE_REQUIRED\nAI_NO_MAIN_OBJECT\n저장 없음]
+    G -- 예 --> H[S3 업로드]
+    H --> I[DB 트랜잭션:\nimages → feedback → feedback_candidates]
+    I --> J{트랜잭션\n성공?}
+    J -- 실패 --> J1[ROLLBACK\n+ S3 보상 삭제\n503 DATABASE_ERROR]
+    J -- 성공 --> K{Top-1 score\n>= 0.5?}
+    K -- 아니오 --> K1[200 RETAKE_REQUIRED\nAI_LOW_CONFIDENCE\nfeedback_id 포함\n※ 저장은 이미 완료]
+    K -- 예 --> L["배출요일 조회 (행정안전부, best-effort)"]
+    L --> M["배출방법 규정 조회 (RAG /rule_node, best-effort)"]
+    M --> N[200 SUCCESS\nclass_id/score/candidate_scores\ndisposal_day/national_rule/region_rule\nfeedback_id/warnings]
+
+    style G1 fill:#fff3cd
+    style K1 fill:#fff3cd
+    style N fill:#d4edda
+    style B1 fill:#f8d7da
+    style C1 fill:#f8d7da
+    style D1 fill:#f8d7da
+    style J1 fill:#f8d7da

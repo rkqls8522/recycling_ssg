@@ -1,0 +1,33 @@
+flowchart TD
+    Start([앱 진입]) --> Login[/login\n로그인/회원가입/]
+    Login -- 회원가입 성공 --> Login
+    Login -- 로그인 성공 --> RegionCheck{region\n선택됨?}
+    RegionCheck -- 아니오(신규 가입자) --> Region[/region\n지역 선택/]
+    RegionCheck -- 예 --> Home[/home\n촬영 화면/]
+    Region -- 저장 --> Home
+
+    Home --> Capture{촬영/업로드}
+    Capture --> Analyzing[분석 중\n5단계 진행바 + 팁 카드]
+    Analyzing --> AnalyzeResult{분석 결과}
+    AnalyzeResult -- SUCCESS --> Result[/result\n분류 결과 화면/]
+    AnalyzeResult -- RETAKE_REQUIRED --> Fail[재촬영 안내 화면\n힌트 카드]
+    Fail -- 다시 촬영 --> Home
+
+    Result -- "맞아요" --> Confirm[피드백: confirm]
+    Confirm --> Home
+    Result -- "다른 후보 선택" --> CandidatePicker[하단 시트:\nTop-K 후보 목록]
+    CandidatePicker -- 후보 선택 --> SelectCandidate[피드백: select-candidate]
+    CandidatePicker -- "여기 없어요" --> AgentThinking[AI 심층 분석 화면\n가상 추론 단계 표시]
+    AgentThinking --> NotInList[피드백: not-in-list\nRAG 재분류]
+    NotInList -- 성공 --> Result
+    NotInList -- 실패 --> Fail
+    SelectCandidate --> Result
+
+    Result -- 채팅 아이콘 --> ChatDrawer[하단 드로어:\nAI Agent 채팅]
+    ChatDrawer --> Result
+
+    Home -- 마이페이지 아이콘 --> MyPage[/mypage/]
+    Result -- 즐겨찾기 클릭\n(마이페이지에서) --> Result
+    MyPage -- 지역 변경 --> Region
+    MyPage -- 즐겨찾기 추가/삭제 --> MyPage
+    MyPage -- 로그아웃 --> Login

@@ -1,0 +1,35 @@
+sequenceDiagram
+    actor U as 사용자
+    participant FE as Frontend
+    participant BE as Backend
+    participant DB as MySQL
+    participant S3 as AWS S3
+    participant RAG as RAG 서비스(:8001)
+    participant GEMINI as Google Gemini
+
+    alt 다른 Top-K 후보 선택
+        U->>FE: 후보 목록에서 선택
+        FE->>BE: POST /feedback/{id}/select-candidate { class_id }
+        BE->>DB: class_id가 Top-K 후보에 있는지 검증
+        BE->>DB: UPDATE feedback SET final_class_id, is_correct=false, correction_source='USER'
+        BE-->>FE: 200 { final_class_id, correction_source: USER }
+    else "여기 없어요" (Gemini 재분류)
+        U->>FE: "여기 없어요" 탭
+        FE->>BE: POST /feedback/{id}/not-in-list
+        BE->>S3: 원본 이미지 재다운로드
+        S3-->>BE: image bytes
+        BE->>RAG: POST /reclassify { img_url(base64), user_region }
+        RAG->>RAG: LangGraph: classify(Gemini Vision) → disposal_lookup
+        RAG->>GEMINI: 멀티모달 재분류 프롬프트
+        GEMINI-->>RAG: { major_category, minor_category }
+        RAG->>RAG: rule_lookup으로 national_rule/region_rule 조회
+        alt 재분류 실패/판정 불가
+            RAG-->>BE: { needs_retake: true }
+            BE-->>FE: 200 { status: RETAKE_REQUIRED, code: AI_RECLASSIFY_FAILED }
+        else 재분류 성공
+            RAG-->>BE: { major_category, minor_category, disposal_result }
+            BE->>DB: waste_classes에서 class_id 역조회
+            BE->>DB: UPDATE feedback SET final_class_id, is_correct=false, correction_source='GEMINI'
+            BE-->>FE: 200 { final_class_id, major_category, minor_category, national_rule, region_rule }
+        end
+    end

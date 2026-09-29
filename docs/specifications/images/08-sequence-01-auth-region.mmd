@@ -1,0 +1,17 @@
+sequenceDiagram
+    actor U as 사용자
+    participant FE as Frontend
+    participant BE as Backend
+
+    U->>FE: 이메일/비밀번호 입력 (회원가입)
+    FE->>BE: POST /api/v1/auth/signup
+    BE-->>FE: 201 { user_id, region: null }
+    FE->>BE: POST /api/v1/auth/login
+    BE-->>FE: 200 { access_token, user.region: null }
+    Note over FE: region == null → 지역 선택 화면으로 분기
+    FE->>BE: GET /api/v1/regions (토큰 불필요)
+    BE-->>FE: 200 { items: [...56개] }
+    U->>FE: 시/도 → 시/군/구 선택
+    FE->>BE: PATCH /api/v1/users/me/region { region_id }
+    BE-->>FE: 200 { region: {...} }
+    Note over FE: 이후 /analyze, /disposal, /chat 호출 가능

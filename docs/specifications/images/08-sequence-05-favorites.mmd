@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor U as 사용자
+    participant FE as Frontend
+    participant BE as Backend
+    participant DB as MySQL
+
+    U->>FE: 결과 화면에서 "즐겨찾기 추가"
+    FE->>BE: POST /api/v1/favorites { class_id }
+    BE->>DB: (user_id, class_id) UNIQUE 확인
+    alt 이미 존재
+        BE-->>FE: 409 FAVORITE_ALREADY_EXISTS
+    else 신규
+        BE->>DB: INSERT favorites
+        BE-->>FE: 201 { favorite_id, major_category, minor_category }
+    end
+    U->>FE: 마이페이지 → 즐겨찾기 목록 진입
+    FE->>BE: GET /api/v1/favorites
+    BE-->>FE: 200 { items[] } (최신 등록순)
+    U->>FE: 항목 삭제
+    FE->>BE: DELETE /api/v1/favorites/{favorite_id}
+    BE->>DB: 소유권 확인 후 DELETE
+    BE-->>FE: 204

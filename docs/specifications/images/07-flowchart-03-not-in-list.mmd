@@ -1,0 +1,17 @@
+flowchart TD
+    A([여기 없어요 선택]) --> B[공통 선행 검증 통과]
+    B --> C{region 선택됨?}
+    C -- 아니오 --> C1[409 USER_REGION_REQUIRED]
+    C -- 예 --> D[S3에서 원본 이미지 재다운로드]
+    D --> E{다운로드 성공?}
+    E -- 아니오 --> E1[502 S3_DOWNLOAD_FAILED]
+    E -- 예 --> F[RAG /reclassify 호출\nclassify → disposal_lookup]
+    F --> G{RAG 서비스\n응답 성공?}
+    G -- 실패/타임아웃 --> G1[502 RAG_SERVICE_UNAVAILABLE\n또는 504 RAG_RECLASSIFY_TIMEOUT]
+    G -- 성공 --> H{needs_retake\n== true?}
+    H -- 예 --> H1[200 RETAKE_REQUIRED\nAI_RECLASSIFY_FAILED]
+    H -- 아니오 --> I{반환된 major/minor\n조합이 waste_classes에\n존재?}
+    I -- 아니오 --> I1[502 RAG_BAD_RESPONSE]
+    I -- 예 --> J[feedback UPDATE\nfinal_class_id, is_correct=false,\ncorrection_source=GEMINI]
+    J --> K[배출요일/배출방법 조회]
+    K --> L[200 NotInListResponse]
