@@ -1,6 +1,6 @@
 {
   "selected_trial": 2,
-  "dataset": "17class_train15516_val2201",
+  "dataset": "17class_train7623_val2201",
   "selection_rule": "top 3 by single-run mAP50-95 at 10 epoch, re-trained with seeds [42, 123, 777], highest mean mAP50-95",
   "objective_mAP50_95": 0.840771141678835,
   "final_15epoch_mAP50_95": 0.8388682474880745,

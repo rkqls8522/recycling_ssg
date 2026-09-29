@@ -1,5 +1,5 @@
 {
-  "dataset": "17class_train15516_val2201",
+  "dataset": "17class_train7623_val2201",
   "epochs": 10,
   "rank_gap_1_to_2": 0.0075479186323375025,
   "augmentations": [

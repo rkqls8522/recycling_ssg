@@ -1,6 +1,6 @@
 {
-  "dataset": "17class_train15516_val2201",
-  "selection_rule": "multi-seed([42, 123, 777]) 평균 mAP50-95 상위 2개, 10 epoch 기준",
+  "dataset": "17class_train7623_val2201",
+  "selection_rule": "multi-seed([42, 123, 777]) 평균 mAP50-95 상위 2개 (trial 중복 제거), 10 epoch 기준",
   "fixed": {
     "model": "yolo26n.pt",
     "imgsz": 640,
