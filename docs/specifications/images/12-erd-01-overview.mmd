@@ -1,0 +1,65 @@
+erDiagram
+    REGIONS ||--o{ USERS : "거주 지역(nullable)"
+    USERS ||--o{ FEEDBACK : "분석 요청"
+    USERS ||--o{ FAVORITES : "즐겨찾기"
+    IMAGES ||--|| FEEDBACK : "분석된 이미지(1:1)"
+    WASTE_CLASSES ||--o{ FEEDBACK : "predicted_class_id"
+    WASTE_CLASSES ||--o{ FEEDBACK : "final_class_id(nullable)"
+    WASTE_CLASSES ||--o{ FEEDBACK_CANDIDATES : "class_id"
+    WASTE_CLASSES ||--o{ FAVORITES : "class_id"
+    FEEDBACK ||--o{ FEEDBACK_CANDIDATES : "Top-K 후보 스냅샷"
+
+    REGIONS {
+        int region_id PK
+        varchar sido_name
+        varchar sgg_name
+        datetime created_at
+    }
+    USERS {
+        bigint user_id PK
+        varchar email UK
+        varchar password_hash
+        int region_id FK "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+    WASTE_CLASSES {
+        int class_id PK "YOLO class index와 동일(0~16)"
+        varchar major_category
+        varchar minor_category
+    }
+    IMAGES {
+        bigint image_id PK
+        varchar s3_key
+        varchar content_type
+    }
+    FEEDBACK {
+        bigint feedback_id PK
+        bigint user_id FK
+        bigint image_id FK "UNIQUE(1:1)"
+        int predicted_class_id FK
+        decimal predicted_score
+        int final_class_id FK "nullable"
+        bool is_correct "nullable"
+        enum correction_source "nullable: USER|GEMINI"
+        decimal bbox_x1
+        decimal bbox_y1
+        decimal bbox_x2
+        decimal bbox_y2
+        varchar model_version
+        enum review_status "PENDING|APPROVED|REJECTED"
+        datetime created_at
+        datetime updated_at
+    }
+    FEEDBACK_CANDIDATES {
+        bigint feedback_id "PK, FK"
+        smallint candidate_rank PK
+        int class_id FK
+        decimal score
+    }
+    FAVORITES {
+        bigint favorite_id PK
+        bigint user_id FK
+        int class_id FK
+        datetime created_at
+    }

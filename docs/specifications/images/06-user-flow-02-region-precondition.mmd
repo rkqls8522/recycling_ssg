@@ -1,0 +1,7 @@
+flowchart LR
+    A[회원가입] -->|"region: null"| B[로그인]
+    B -->|"user.region == null?"| C{지역 선택 여부}
+    C -- null --> D[GET /regions\n56개 목록\n토큰 불필요] --> E[PATCH /users/me/region]
+    C -- 있음 --> F[홈 화면 진입]
+    E --> F
+    F -.->|"지역 없이 analyze/disposal/chat 호출 시"| G[409 USER_REGION_REQUIRED\n→ 지역 선택 화면으로 강제 이동]

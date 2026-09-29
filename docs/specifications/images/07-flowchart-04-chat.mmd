@@ -1,0 +1,11 @@
+flowchart TD
+    A([후속 질문 수신]) --> B{feedback 소유권/\nregion 검증}
+    B -- 실패 --> B1[403/404/409]
+    B -- 통과 --> C{user.region\n존재?}
+    C -- 아니오 --> D[RAG 호출 생략]
+    C -- 예 --> E[RAG /chat_node 호출]
+    E --> F{RAG 응답\n성공?}
+    F -- 실패 --> D
+    F -- 성공 --> G[200 answer = RAG 생성 답변\nwarnings 없음]
+    D --> H[결정적 템플릿 답변 생성\n_fallback_answer]
+    H --> I[200 answer = 템플릿 답변\nwarnings: RAG_SERVICE_UNAVAILABLE 등]

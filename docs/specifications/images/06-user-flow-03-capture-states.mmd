@@ -1,0 +1,7 @@
+stateDiagram-v2
+    [*] --> capture
+    capture --> analyzing: 촬영/업로드 완료
+    analyzing --> [*]: SUCCESS → /result로 이동
+    analyzing --> fail: RETAKE_REQUIRED
+    fail --> capture: 다시 촬영
+    capture --> capture: 실시간 뷰파인더\n(OpenCV.js GrabCut으로\n중앙 물체 인식 가이드)

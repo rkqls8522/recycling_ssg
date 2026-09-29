@@ -1,0 +1,30 @@
+<프론트엔드 서버>
+cd frontend
+npm run dev
+
+<백엔드&ai 서버 준비>
+scripts/run-dev.sh
+Get-Content -Path .dev-logs/backend.log -Wait -Tail 20      
+
+<배포서버 준비 과정>
+<rag 서버 준비>
+uv run uvicorn rag.main:app --host 127.0.0.1 --port 8001 --reload
+
+<db서버 준비>
+net start MySQL80
+
+- mysql 접속 root password
+3QNRrqtODxaJcfNUIQU7
+
+- mysql db user(app_user) password
+Lx8Xff4nR3prj8bcV5Vxoa
+
+<db 왕복 시간 체크>
+.venv\Scripts\python.exe -c "import time,pymysql;c=pymysql.connect(host='127.0.0.1',user='app_user',password='Lx8Xff4nR3prj8bcV5Vxoa',database='recycling_ssg');s=time.perf_counter();cur=c.cursor();cur.execute('SELECT 1');cur.fetchone();print(f'{(time.perf_counter()-s)*1000:.2f} ms')"
+
+<caddy 준비>
+C:\caddy\caddy.exe run --config C:\caddy\Caddyfile
+uv run python scripts/warm_rule_cache.py
+
+<cloudflare 터널 준비>
+C:\caddy\cloudflared.exe tunnel --url http://localhost:8080

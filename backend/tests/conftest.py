@@ -21,6 +21,10 @@ os.environ["AUTO_CREATE_TABLES"] = "false"
 os.environ["AUTO_SEED_MASTER_DATA"] = "false"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-not-for-production"
 os.environ["AWS_S3_BUCKET"] = "test-bucket"
+# 재촬영 분기 테스트는 특정 임계값을 전제로 점수를 고른다. 고정하지 않으면
+# 저장소 루트 .env 의 VISION_CONFIDENCE_THRESHOLD 가 새어 들어와, 배포 설정을
+# 바꿀 때마다 테스트가 깨진다.
+os.environ["VISION_CONFIDENCE_THRESHOLD"] = "0.5"
 os.environ.setdefault("GEMINI_API_KEY", "")
 
 import pytest

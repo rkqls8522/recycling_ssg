@@ -1,0 +1,45 @@
+sequenceDiagram
+    actor U as 사용자
+    participant FE as Frontend
+    participant BE as Backend
+    participant VS as Vision(:8100)
+    participant S3 as AWS S3
+    participant DB as MySQL
+    participant RAG as RAG 서비스(:8001)
+    participant GOV as 행정안전부 API
+
+    U->>FE: 촬영/업로드
+    FE->>BE: POST /api/v1/analyze (multipart image)
+    BE->>BE: JWT 검증 + region_id NULL 체크(409 USER_REGION_REQUIRED)
+    BE->>BE: 이미지 검증 → 디코드/EXIF보정/1920px축소/JPEG 재인코딩
+    BE->>VS: POST /internal/v1/predict (재인코딩된 동일 바이트)
+    alt 메인 객체 없음
+        VS-->>BE: 422 VISION_NO_MAIN_OBJECT
+        BE-->>FE: 200 { status: RETAKE_REQUIRED, code: AI_NO_MAIN_OBJECT, feedback_id: null }
+        Note over BE,DB: 저장 없음 (예측값 자체가 없음)
+    else 예측 성공
+        VS-->>BE: 200 { class_id, score, candidate_scores[], bbox, model_version }
+        BE->>S3: 이미지 업로드
+        S3-->>BE: s3_key
+        BE->>DB: BEGIN → images INSERT → feedback INSERT → feedback_candidates INSERT(Top-K)
+        alt DB 실패
+            DB-->>BE: 오류
+            BE->>S3: 보상 삭제(delete_object)
+            BE-->>FE: 503 DATABASE_ERROR
+        else DB 성공
+            DB-->>BE: COMMIT (feedback_id 확정)
+            alt Top-1 score < 0.5
+                BE-->>FE: 200 { status: RETAKE_REQUIRED, code: AI_LOW_CONFIDENCE, feedback_id }
+                Note over BE,DB: 재학습 데이터 수집 목적으로 이미 저장 완료(미응답 상태)
+            else Top-1 score >= 0.5
+                par best-effort 배출요일 조회
+                    BE->>GOV: 배출요일 조회(sgg_name)
+                    GOV-->>BE: disposal_day 또는 실패
+                and best-effort 배출방법 규정 조회
+                    BE->>RAG: POST /rule_node { major/minor_category, ... }
+                    RAG-->>BE: { national_rule, region_rule } 또는 실패
+                end
+                BE-->>FE: 200 { status: SUCCESS, class_id, score, candidate_scores, disposal_day, national_rule, region_rule, feedback_id, warnings[] }
+            end
+        end
+    end
