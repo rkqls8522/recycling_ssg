@@ -23,6 +23,7 @@ ai/
 5. [실험 흐름과 개선 과정](#5-실험-흐름과-개선-과정)
 6. [겪은 문제와 해결](#6-겪은-문제와-해결)
 7. [숫자를 읽을 때의 규칙](#7-숫자를-읽을-때의-규칙)
+8. [신문지 증강 A/B 실험](#신문지-증강-ab-실험)
 
 ---
 
@@ -30,7 +31,7 @@ ai/
 
 | 항목 | 값 |
 |---|---|
-| 가중치 | `weights/best.pt` (= `ai/models/yolo/07_final_training/runs/final_Y08_auto_seed42_e20/weights/best.pt`) |
+| 가중치 | `weights/best.pt` (= `ai/models/yolo/07_final_training/runs/final_Y08_auto_seed42_e20_newsAug/weights/best.pt`) |
 | 베이스 모델 | `yolo26n.pt` |
 | 클래스 | 17개 |
 | 학습 데이터 | 144,315장 (객체 158,590개) |
@@ -38,22 +39,20 @@ ai/
 | epoch / imgsz / batch | 20 / 640 / 8 |
 | 증강 | `mosaic=0.7`, `close_mosaic=4`, 나머지 전부 0 |
 | 하이퍼파라미터 | `optimizer="auto"` (Optuna 튜닝값 미사용) |
-| 신문지(class 10) | 학습 중 증강에서 제외 (아래 주의 참고) |
-| mAP50-95 | **0.8639** |
-| mAP50 | 0.9173 |
-| Precision / Recall / F1 | 0.8911 / 0.8816 / 0.8863 |
+| 신문지(class 10) | **다른 클래스와 동일하게 증강** (`EXCLUDE_NEWSPAPER_FROM_AUG = False`) |
+| mAP50-95 | **0.8676** |
+| mAP50 | 0.9226 |
+| Precision / Recall / F1 | 0.8987 / 0.8971 / 0.8979 |
 | 추론 속도 | **1.33 ms/장** (RTX 4070 Laptop) |
 | 학습 시간 | 약 20시간 |
 
 > `test` 분할은 없습니다. 위 수치는 전부 **val 기준**입니다.
 >
-> **신문지 증강 제외 여부는 파일마다 기록이 엇갈립니다.**
-> `final_result.csv`(09-28 08:22) 는 `newspaper_excluded = True`,
-> `final_decision.json`(09-28 15:17 재생성) 은 `"적용": false` 입니다.
-> 학습 결과 파일이 08:22 로 더 이르고 실행 이름에 `newsNoAug` 가 붙은 사본
-> (`final_result_final_Y08_auto_seed42_e20_newsNoAug.csv`, 내용 동일)이 있는 것으로 보아
-> **실제 학습은 제외한 상태로 돌았고**, 이후 결정 파일만 옵션을 끈 채 다시 생성된 것으로
-> 보입니다. 재현 전에 `selective_aug.py` 적용 여부를 반드시 확인하세요.
+> **신문지 증강 여부는 A/B 로 확정했습니다.** 아래 [신문지 증강 A/B 실험](#신문지-증강-ab-실험) 참고.
+>
+> 과거에 기록이 엇갈렸던 원인도 확인됐습니다. `final_decision.json` 이 `"적용": false` 였던 것은
+> 2차 학습 전 `--dry-run` 이 그 파일을 다시 쓴 탓이고, 1차 학습(09-28 08:22)은 실제로
+> **제외한 상태**가 맞습니다.
 
 ---
 
@@ -467,6 +466,59 @@ def close_mosaic(self, hyp):
 
 ---
 
+## 신문지 증강 A/B 실험
+
+같은 데이터·같은 설정으로 **변수 하나만 바꿔** 20 epoch 씩 두 번 학습했습니다.
+
+```python
+# ai/notebooks/07_final_training.py
+EXCLUDE_NEWSPAPER_FROM_AUG = True    # 1차 — 신문지만 학습 중 증강에서 제외
+EXCLUDE_NEWSPAPER_FROM_AUG = False   # 2차 — 다른 클래스와 동일하게 증강
+```
+
+나머지는 전부 동일합니다 (`Y08 mosaic=0.7` / `close_mosaic=4` / `optimizer=auto` /
+`epochs=20` / `batch=8` / `seed=42` / train 144,315 / val 10,548).
+
+### 결과 — 2차(증강 포함)가 낫습니다
+
+| 지표 | 1차 `newsNoAug` | 2차 `newsAug` | 차이 |
+|---|---|---|---|
+| **mAP50-95** | 0.8638 | **0.8676** | **+0.0038** |
+| mAP50 | 0.9173 | **0.9226** | +0.0053 |
+| Precision | 0.8911 | **0.8987** | +0.0076 |
+| Recall | 0.8816 | **0.8971** | +0.0155 |
+
+클래스별로는 **12개 개선 / 5개 악화**, 예측대로 신문지가 가장 크게 올랐습니다.
+
+| 클래스 | 1차 | 2차 | 차이 |
+|---|---|---|---|
+| **종이류/신문지** | 0.4396 | **0.4765** | **+0.0369** |
+| 종이류/종이 | 0.7094 | 0.7237 | +0.0143 |
+| 도기류/도기 | 0.9394 | 0.9463 | +0.0069 |
+| … | | | |
+| 형광등/형광등 | 0.9017 | 0.8945 | −0.0072 |
+| 고철류/비철금속 | 0.6855 | 0.6796 | −0.0060 |
+
+**신문지를 뺀 16개 클래스 평균은 +0.0017** 로, 우려했던 "다른 클래스 손해"는 없었습니다.
+
+### 해석할 때 주의
+
+- **전체 +0.0038 은 seed 편차(std 0.0085) 범위 안**입니다. 단일 수치로는 유의하다고
+  말하기 어렵고, **4개 지표가 모두 오르고 12/17 클래스가 개선된 방향의 일관성**이 근거입니다.
+- 신문지 +0.0369 는 06-1 실험에서 기대했던 폭(0.41 → 0.77)에 한참 못 미칩니다.
+  그 실험은 신문지가 58장뿐이던 시절이라 1,736장 규모에 그대로 적용한 것이 무리였습니다.
+- **신문지 val 은 16장**이라 이 클래스의 수치 자체가 흔들릴 수 있습니다.
+
+### 결론
+
+"이미 오프라인에서 4배 증강했으니 추가 증강은 과증강"이라는 1차의 판단은
+**틀렸습니다.** 신문지도 다른 클래스와 동일하게 증강하는 것이 낫습니다.
+
+`selective_aug.py` 는 삭제하지 않고 남겨 둡니다. 특정 클래스만 증강에서 빼는 기능
+자체는 유효하고, 이 A/B 의 1차 조건을 재현하려면 필요합니다.
+
+---
+
 ## 재현 방법
 
 ```bash
@@ -474,7 +526,10 @@ def close_mosaic(self, hyp):
 uv run python ai/preprocessing/01_common_detection_preprocess_flexible_damage.py
 
 # 2. 최종 학습 (약 20시간)
-uv run --no-sync python ai/notebooks/07_final_training.py
+#    현재 설정은 EXCLUDE_NEWSPAPER_FROM_AUG = False (2차, 권장)
+#    1차 조건을 재현하려면 07_final_training.py:290 을 True 로 바꾸세요.
+#    run 이름에 newsAug / newsNoAug 태그가 자동으로 붙어 결과가 섞이지 않습니다.
+uv run --no-sync python ai/notebooks/07_final_training.py --log train.log
 
 # 2-1. 중간에 멈췄다면 마무리만
 uv run --no-sync python ai/notebooks/07_finalize.py --deploy
