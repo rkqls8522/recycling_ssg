@@ -1,0 +1,25 @@
+sequenceDiagram
+    actor U as 사용자
+    participant FE as Frontend
+    participant BE as Backend (agent/service.py)
+    participant RAG as RAG 서비스(:8001)
+    participant GEMINI as Google Gemini
+
+    U->>FE: 채팅창에 후속 질문 입력
+    FE->>BE: POST /api/v1/chat { feedback_id, message }
+    BE->>BE: feedback 존재/소유권/region 확인
+    BE->>BE: agent.service.answer_question() 호출
+    alt 사용자 지역 있음
+        BE->>RAG: POST /chat_node { message, major/minor_category, user_region }
+        RAG->>RAG: rule_lookup(national/region rule 조회, 캐시됨)
+        RAG->>GEMINI: 규정 텍스트 + 질문 → 답변 생성 프롬프트
+        GEMINI-->>RAG: 자연어 답변
+        RAG-->>BE: { answer }
+    end
+    alt RAG 응답 있음
+        BE-->>FE: 200 { feedback_id, answer, warnings: [] }
+    else RAG 실패/미설정/지역 없음
+        BE->>BE: _fallback_answer() — 결정적 템플릿 답변 생성
+        BE-->>FE: 200 { feedback_id, answer(템플릿), warnings: ["RAG_SERVICE_UNAVAILABLE"] }
+    end
+    Note over BE: Stateless — message/answer 어디에도 저장하지 않음

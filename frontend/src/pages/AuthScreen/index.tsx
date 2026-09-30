@@ -35,7 +35,7 @@ export default function AuthScreen() {
   const displayError = formError;
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar">
+    <div className="h-full flex flex-col overflow-y-auto no-scrollbar">
       {/* Header */}
       <div className="flex flex-col items-center pt-14 pb-8 px-6">
         <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mb-4 text-primary-foreground shadow-lg">
@@ -82,7 +82,7 @@ export default function AuthScreen() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="px-6 flex flex-col gap-3">
+      <form onSubmit={handleSubmit} className="flex-1 px-6 flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             이메일
@@ -91,7 +91,7 @@ export default function AuthScreen() {
             type="email"
             autoComplete="email"
             placeholder="example@email.com"
-            // value={email}
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3.5 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
           />
@@ -107,7 +107,7 @@ export default function AuthScreen() {
               mode === "login" ? "current-password" : "new-password"
             }
             placeholder="8자 이상"
-            // value={password}
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-3.5 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
           />
@@ -144,7 +144,7 @@ export default function AuthScreen() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 mt-2 bg-primary text-primary-foreground rounded-xl font-semibold text-base shadow-sm active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full py-4 mt-auto mb-20 bg-primary text-primary-foreground rounded-xl font-semibold text-base shadow-sm active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">

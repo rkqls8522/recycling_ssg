@@ -34,10 +34,25 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
         path = request.url.path
         query = f"?{request.url.query}" if request.url.query else ""
-        logger.info("--> %s %s%s [%s]", request.method, path, query, request_id)
+        client = request.client.host if request.client else "-"
+        logger.info(
+            "--> %s %s%s from %s [%s]", request.method, path, query, client, request_id
+        )
 
         start = time.perf_counter()
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception:
+            duration_ms = (time.perf_counter() - start) * 1000
+            logger.exception(
+                "<-- %s %s%s raised an unhandled exception after %.1fms [%s]",
+                request.method,
+                path,
+                query,
+                duration_ms,
+                request_id,
+            )
+            raise
         duration_ms = (time.perf_counter() - start) * 1000
 
         response.headers[REQUEST_ID_HEADER] = request_id

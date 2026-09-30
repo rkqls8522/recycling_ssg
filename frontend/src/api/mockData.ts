@@ -96,21 +96,19 @@ export function getResultMockData(): AnalyzeSuccessBody {
   return {
     status: "SUCCESS",
     major_category: "종이류",
-    minor_category: "종이컵",
+    minor_category: "책",
+    class_id: 8,
+    score: 0.9245,
+    // Top-1(class_id: 8)을 제외한 "다른 후보"만 담는다.
     candidate_scores: [
       {
-        class_id: 41,
-        category: "종이류_종이컵",
-        score: 0.9245,
-      },
-      {
-        class_id: 42,
-        category: "종이류_종이팩",
+        class_id: 9,
+        category: "종이류_박스류",
         score: 0.0512,
       },
       {
-        class_id: 40,
-        category: "종이류_일반종이",
+        class_id: 11,
+        category: "종이류_종이",
         score: 0.0183,
       },
     ],

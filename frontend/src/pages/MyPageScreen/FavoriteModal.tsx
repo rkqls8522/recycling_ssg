@@ -14,11 +14,6 @@ interface Props {
   alreadyRegistered: boolean;
 }
 
-// modalOpen을 포함한 모든 상태를 부모(MyPageScreen)의 단일 useFavorite() 인스턴스에서
-// props로만 받는다 — 이 컴포넌트 안에서 useFavorite()을 다시 호출하면 부모 것과
-// 별개의 state가 생겨서, 여기서 setModalOpen(false)를 호출해도 부모가 들고 있는
-// modalOpen(= 화면에 보이는 modalOpen prop)은 안 바뀌어 모달이 안 닫히는 버그가 난다.
-// (이 컴포넌트 안에서 useFavorite()을 다시 부르면 이 버그가 재발하니 주의)
 export function FavoriteModal({
   modalOpen,
   setModalOpen,

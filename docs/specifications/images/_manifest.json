@@ -1,0 +1,142 @@
+[
+  {
+    "doc": "docs/specifications/06-user-flow.md",
+    "basename": "06-user-flow",
+    "idx": 1,
+    "heading": "2. 전체 흐름도",
+    "start_line": 26,
+    "end_line": 60,
+    "body": "flowchart TD\n    Start([앱 진입]) --> Login[/login\\n로그인/회원가입/]\n    Login -- 회원가입 성공 --> Login\n    Login -- 로그인 성공 --> RegionCheck{region\\n선택됨?}\n    RegionCheck -- 아니오(신규 가입자) --> Region[/region\\n지역 선택/]\n    RegionCheck -- 예 --> Home[/home\\n촬영 화면/]\n    Region -- 저장 --> Home\n\n    Home --> Capture{촬영/업로드}\n    Capture --> Analyzing[분석 중\\n5단계 진행바 + 팁 카드]\n    Analyzing --> AnalyzeResult{분석 결과}\n    AnalyzeResult -- SUCCESS --> Result[/result\\n분류 결과 화면/]\n    AnalyzeResult -- RETAKE_REQUIRED --> Fail[재촬영 안내 화면\\n힌트 카드]\n    Fail -- 다시 촬영 --> Home\n\n    Result -- \"맞아요\" --> Confirm[피드백: confirm]\n    Confirm --> Home\n    Result -- \"다른 후보 선택\" --> CandidatePicker[하단 시트:\\nTop-K 후보 목록]\n    CandidatePicker -- 후보 선택 --> SelectCandidate[피드백: select-candidate]\n    CandidatePicker -- \"여기 없어요\" --> AgentThinking[AI 심층 분석 화면\\n가상 추론 단계 표시]\n    AgentThinking --> NotInList[피드백: not-in-list\\nRAG 재분류]\n    NotInList -- 성공 --> Result\n    NotInList -- 실패 --> Fail\n    SelectCandidate --> Result\n\n    Result -- 채팅 아이콘 --> ChatDrawer[하단 드로어:\\nAI Agent 채팅]\n    ChatDrawer --> Result\n\n    Home -- 마이페이지 아이콘 --> MyPage[/mypage/]\n    Result -- 즐겨찾기 클릭\\n(마이페이지에서) --> Result\n    MyPage -- 지역 변경 --> Region\n    MyPage -- 즐겨찾기 추가/삭제 --> MyPage\n    MyPage -- 로그아웃 --> Login",
+    "slug": "06-user-flow-01-overview"
+  },
+  {
+    "doc": "docs/specifications/06-user-flow.md",
+    "basename": "06-user-flow",
+    "idx": 2,
+    "heading": "3. 필수 선행 조건 흐름 — 지역 선택",
+    "start_line": 66,
+    "end_line": 74,
+    "body": "flowchart LR\n    A[회원가입] -->|\"region: null\"| B[로그인]\n    B -->|\"user.region == null?\"| C{지역 선택 여부}\n    C -- null --> D[GET /regions\\n56개 목록\\n토큰 불필요] --> E[PATCH /users/me/region]\n    C -- 있음 --> F[홈 화면 진입]\n    E --> F\n    F -.->|\"지역 없이 analyze/disposal/chat 호출 시\"| G[409 USER_REGION_REQUIRED\\n→ 지역 선택 화면으로 강제 이동]",
+    "slug": "06-user-flow-02-region-precondition"
+  },
+  {
+    "doc": "docs/specifications/06-user-flow.md",
+    "basename": "06-user-flow",
+    "idx": 3,
+    "heading": "4. 촬영 화면(`PhotoCaptureScreen`) 내부 상태 전이",
+    "start_line": 83,
+    "end_line": 91,
+    "body": "stateDiagram-v2\n    [*] --> capture\n    capture --> analyzing: 촬영/업로드 완료\n    analyzing --> [*]: SUCCESS → /result로 이동\n    analyzing --> fail: RETAKE_REQUIRED\n    fail --> capture: 다시 촬영\n    capture --> capture: 실시간 뷰파인더\\n(OpenCV.js GrabCut으로\\n중앙 물체 인식 가이드)",
+    "slug": "06-user-flow-03-capture-states"
+  },
+  {
+    "doc": "docs/specifications/07-flowchart.md",
+    "basename": "07-flowchart",
+    "idx": 1,
+    "heading": "1. `POST /api/v1/analyze` 처리 순서도",
+    "start_line": 11,
+    "end_line": 40,
+    "body": "flowchart TD\n    A([이미지 업로드 요청]) --> B{JWT 유효?}\n    B -- 아니오 --> B1[401 AUTH_*]\n    B -- 예 --> C{users.region_id\\nNULL?}\n    C -- 예 --> C1[409 USER_REGION_REQUIRED]\n    C -- 아니오 --> D{업로드 검증\\n타입/용량/0바이트}\n    D -- 실패 --> D1[400/413/415]\n    D -- 통과 --> E[디코드 → EXIF 보정\\n→ 1920px 축소 → JPEG 재인코딩]\n    E --> F[Vision 서버 predict 호출]\n    F --> G{메인 객체\\n탐지됨?}\n    G -- 아니오 --> G1[200 RETAKE_REQUIRED\\nAI_NO_MAIN_OBJECT\\n저장 없음]\n    G -- 예 --> H[S3 업로드]\n    H --> I[DB 트랜잭션:\\nimages → feedback → feedback_candidates]\n    I --> J{트랜잭션\\n성공?}\n    J -- 실패 --> J1[ROLLBACK\\n+ S3 보상 삭제\\n503 DATABASE_ERROR]\n    J -- 성공 --> K{Top-1 score\\n>= 0.5?}\n    K -- 아니오 --> K1[200 RETAKE_REQUIRED\\nAI_LOW_CONFIDENCE\\nfeedback_id 포함\\n※ 저장은 이미 완료]\n    K -- 예 --> L[\"배출요일 조회 (행정안전부, best-effort)\"]\n    L --> M[\"배출방법 규정 조회 (RAG /rule_node, best-effort)\"]\n    M --> N[200 SUCCESS\\nclass_id/score/candidate_scores\\ndisposal_day/national_rule/region_rule\\nfeedback_id/warnings]\n\n    style G1 fill:#fff3cd\n    style K1 fill:#fff3cd\n    style N fill:#d4edda\n    style B1 fill:#f8d7da\n    style C1 fill:#f8d7da\n    style D1 fill:#f8d7da\n    style J1 fill:#f8d7da",
+    "slug": "07-flowchart-01-analyze"
+  },
+  {
+    "doc": "docs/specifications/07-flowchart.md",
+    "basename": "07-flowchart",
+    "idx": 2,
+    "heading": "2. 피드백 3종 공통 선행 검증",
+    "start_line": 55,
+    "end_line": 64,
+    "body": "flowchart TD\n    A([피드백 요청\\nconfirm / select-candidate / not-in-list]) --> B{feedback_id\\n존재?}\n    B -- 아니오 --> B1[404 FEEDBACK_NOT_FOUND]\n    B -- 예 --> C{소유자==요청자?}\n    C -- 아니오 --> C1[403 FEEDBACK_FORBIDDEN]\n    C -- 예 --> D{is_correct\\nIS NULL?\\n=미처리}\n    D -- 아니오 --> D1[409 FEEDBACK_ALREADY_COMPLETED]\n    D -- 예 --> E[개별 처리 로직으로 진행]",
+    "slug": "07-flowchart-02-feedback-precheck"
+  },
+  {
+    "doc": "docs/specifications/07-flowchart.md",
+    "basename": "07-flowchart",
+    "idx": 3,
+    "heading": "3. `POST /feedback/{id}/not-in-list` 상세 분기 (RAG 재분류)",
+    "start_line": 70,
+    "end_line": 88,
+    "body": "flowchart TD\n    A([여기 없어요 선택]) --> B[공통 선행 검증 통과]\n    B --> C{region 선택됨?}\n    C -- 아니오 --> C1[409 USER_REGION_REQUIRED]\n    C -- 예 --> D[S3에서 원본 이미지 재다운로드]\n    D --> E{다운로드 성공?}\n    E -- 아니오 --> E1[502 S3_DOWNLOAD_FAILED]\n    E -- 예 --> F[RAG /reclassify 호출\\nclassify → disposal_lookup]\n    F --> G{RAG 서비스\\n응답 성공?}\n    G -- 실패/타임아웃 --> G1[502 RAG_SERVICE_UNAVAILABLE\\n또는 504 RAG_RECLASSIFY_TIMEOUT]\n    G -- 성공 --> H{needs_retake\\n== true?}\n    H -- 예 --> H1[200 RETAKE_REQUIRED\\nAI_RECLASSIFY_FAILED]\n    H -- 아니오 --> I{반환된 major/minor\\n조합이 waste_classes에\\n존재?}\n    I -- 아니오 --> I1[502 RAG_BAD_RESPONSE]\n    I -- 예 --> J[feedback UPDATE\\nfinal_class_id, is_correct=false,\\ncorrection_source=GEMINI]\n    J --> K[배출요일/배출방법 조회]\n    K --> L[200 NotInListResponse]",
+    "slug": "07-flowchart-03-not-in-list"
+  },
+  {
+    "doc": "docs/specifications/07-flowchart.md",
+    "basename": "07-flowchart",
+    "idx": 4,
+    "heading": "4. `POST /api/v1/chat` 답변 생성 분기",
+    "start_line": 94,
+    "end_line": 106,
+    "body": "flowchart TD\n    A([후속 질문 수신]) --> B{feedback 소유권/\\nregion 검증}\n    B -- 실패 --> B1[403/404/409]\n    B -- 통과 --> C{user.region\\n존재?}\n    C -- 아니오 --> D[RAG 호출 생략]\n    C -- 예 --> E[RAG /chat_node 호출]\n    E --> F{RAG 응답\\n성공?}\n    F -- 실패 --> D\n    F -- 성공 --> G[200 answer = RAG 생성 답변\\nwarnings 없음]\n    D --> H[결정적 템플릿 답변 생성\\n_fallback_answer]\n    H --> I[200 answer = 템플릿 답변\\nwarnings: RAG_SERVICE_UNAVAILABLE 등]",
+    "slug": "07-flowchart-04-chat"
+  },
+  {
+    "doc": "docs/specifications/08-sequence-diagram.md",
+    "basename": "08-sequence-diagram",
+    "idx": 1,
+    "heading": "1. 회원가입 ~ 지역 선택 ~ 로그인",
+    "start_line": 12,
+    "end_line": 30,
+    "body": "sequenceDiagram\n    actor U as 사용자\n    participant FE as Frontend\n    participant BE as Backend\n\n    U->>FE: 이메일/비밀번호 입력 (회원가입)\n    FE->>BE: POST /api/v1/auth/signup\n    BE-->>FE: 201 { user_id, region: null }\n    FE->>BE: POST /api/v1/auth/login\n    BE-->>FE: 200 { access_token, user.region: null }\n    Note over FE: region == null → 지역 선택 화면으로 분기\n    FE->>BE: GET /api/v1/regions (토큰 불필요)\n    BE-->>FE: 200 { items: [...56개] }\n    U->>FE: 시/도 → 시/군/구 선택\n    FE->>BE: PATCH /api/v1/users/me/region { region_id }\n    BE-->>FE: 200 { region: {...} }\n    Note over FE: 이후 /analyze, /disposal, /chat 호출 가능",
+    "slug": "08-sequence-01-auth-region"
+  },
+  {
+    "doc": "docs/specifications/08-sequence-diagram.md",
+    "basename": "08-sequence-diagram",
+    "idx": 2,
+    "heading": "2. 이미지 분석 (`POST /api/v1/analyze`)",
+    "start_line": 36,
+    "end_line": 82,
+    "body": "sequenceDiagram\n    actor U as 사용자\n    participant FE as Frontend\n    participant BE as Backend\n    participant VS as Vision(:8100)\n    participant S3 as AWS S3\n    participant DB as MySQL\n    participant RAG as RAG 서비스(:8001)\n    participant GOV as 행정안전부 API\n\n    U->>FE: 촬영/업로드\n    FE->>BE: POST /api/v1/analyze (multipart image)\n    BE->>BE: JWT 검증 + region_id NULL 체크(409 USER_REGION_REQUIRED)\n    BE->>BE: 이미지 검증 → 디코드/EXIF보정/1920px축소/JPEG 재인코딩\n    BE->>VS: POST /internal/v1/predict (재인코딩된 동일 바이트)\n    alt 메인 객체 없음\n        VS-->>BE: 422 VISION_NO_MAIN_OBJECT\n        BE-->>FE: 200 { status: RETAKE_REQUIRED, code: AI_NO_MAIN_OBJECT, feedback_id: null }\n        Note over BE,DB: 저장 없음 (예측값 자체가 없음)\n    else 예측 성공\n        VS-->>BE: 200 { class_id, score, candidate_scores[], bbox, model_version }\n        BE->>S3: 이미지 업로드\n        S3-->>BE: s3_key\n        BE->>DB: BEGIN → images INSERT → feedback INSERT → feedback_candidates INSERT(Top-K)\n        alt DB 실패\n            DB-->>BE: 오류\n            BE->>S3: 보상 삭제(delete_object)\n            BE-->>FE: 503 DATABASE_ERROR\n        else DB 성공\n            DB-->>BE: COMMIT (feedback_id 확정)\n            alt Top-1 score < 0.5\n                BE-->>FE: 200 { status: RETAKE_REQUIRED, code: AI_LOW_CONFIDENCE, feedback_id }\n                Note over BE,DB: 재학습 데이터 수집 목적으로 이미 저장 완료(미응답 상태)\n            else Top-1 score >= 0.5\n                par best-effort 배출요일 조회\n                    BE->>GOV: 배출요일 조회(sgg_name)\n                    GOV-->>BE: disposal_day 또는 실패\n                and best-effort 배출방법 규정 조회\n                    BE->>RAG: POST /rule_node { major/minor_category, ... }\n                    RAG-->>BE: { national_rule, region_rule } 또는 실패\n                end\n                BE-->>FE: 200 { status: SUCCESS, class_id, score, candidate_scores, disposal_day, national_rule, region_rule, feedback_id, warnings[] }\n            end\n        end\n    end",
+    "slug": "08-sequence-02-analyze"
+  },
+  {
+    "doc": "docs/specifications/08-sequence-diagram.md",
+    "basename": "08-sequence-diagram",
+    "idx": 3,
+    "heading": "3. 피드백 — \"다른 후보 선택\" / \"여기 없어요\" (Gemini 재분류)",
+    "start_line": 91,
+    "end_line": 127,
+    "body": "sequenceDiagram\n    actor U as 사용자\n    participant FE as Frontend\n    participant BE as Backend\n    participant DB as MySQL\n    participant S3 as AWS S3\n    participant RAG as RAG 서비스(:8001)\n    participant GEMINI as Google Gemini\n\n    alt 다른 Top-K 후보 선택\n        U->>FE: 후보 목록에서 선택\n        FE->>BE: POST /feedback/{id}/select-candidate { class_id }\n        BE->>DB: class_id가 Top-K 후보에 있는지 검증\n        BE->>DB: UPDATE feedback SET final_class_id, is_correct=false, correction_source='USER'\n        BE-->>FE: 200 { final_class_id, correction_source: USER }\n    else \"여기 없어요\" (Gemini 재분류)\n        U->>FE: \"여기 없어요\" 탭\n        FE->>BE: POST /feedback/{id}/not-in-list\n        BE->>S3: 원본 이미지 재다운로드\n        S3-->>BE: image bytes\n        BE->>RAG: POST /reclassify { img_url(base64), user_region }\n        RAG->>RAG: LangGraph: classify(Gemini Vision) → disposal_lookup\n        RAG->>GEMINI: 멀티모달 재분류 프롬프트\n        GEMINI-->>RAG: { major_category, minor_category }\n        RAG->>RAG: rule_lookup으로 national_rule/region_rule 조회\n        alt 재분류 실패/판정 불가\n            RAG-->>BE: { needs_retake: true }\n            BE-->>FE: 200 { status: RETAKE_REQUIRED, code: AI_RECLASSIFY_FAILED }\n        else 재분류 성공\n            RAG-->>BE: { major_category, minor_category, disposal_result }\n            BE->>DB: waste_classes에서 class_id 역조회\n            BE->>DB: UPDATE feedback SET final_class_id, is_correct=false, correction_source='GEMINI'\n            BE-->>FE: 200 { final_class_id, major_category, minor_category, national_rule, region_rule }\n        end\n    end",
+    "slug": "08-sequence-03-feedback"
+  },
+  {
+    "doc": "docs/specifications/08-sequence-diagram.md",
+    "basename": "08-sequence-diagram",
+    "idx": 4,
+    "heading": "4. AI Agent 후속 질문 (`POST /api/v1/chat`)",
+    "start_line": 138,
+    "end_line": 164,
+    "body": "sequenceDiagram\n    actor U as 사용자\n    participant FE as Frontend\n    participant BE as Backend (agent/service.py)\n    participant RAG as RAG 서비스(:8001)\n    participant GEMINI as Google Gemini\n\n    U->>FE: 채팅창에 후속 질문 입력\n    FE->>BE: POST /api/v1/chat { feedback_id, message }\n    BE->>BE: feedback 존재/소유권/region 확인\n    BE->>BE: agent.service.answer_question() 호출\n    alt 사용자 지역 있음\n        BE->>RAG: POST /chat_node { message, major/minor_category, user_region }\n        RAG->>RAG: rule_lookup(national/region rule 조회, 캐시됨)\n        RAG->>GEMINI: 규정 텍스트 + 질문 → 답변 생성 프롬프트\n        GEMINI-->>RAG: 자연어 답변\n        RAG-->>BE: { answer }\n    end\n    alt RAG 응답 있음\n        BE-->>FE: 200 { feedback_id, answer, warnings: [] }\n    else RAG 실패/미설정/지역 없음\n        BE->>BE: _fallback_answer() — 결정적 템플릿 답변 생성\n        BE-->>FE: 200 { feedback_id, answer(템플릿), warnings: [\"RAG_SERVICE_UNAVAILABLE\"] }\n    end\n    Note over BE: Stateless — message/answer 어디에도 저장하지 않음",
+    "slug": "08-sequence-04-chat"
+  },
+  {
+    "doc": "docs/specifications/08-sequence-diagram.md",
+    "basename": "08-sequence-diagram",
+    "idx": 5,
+    "heading": "5. 즐겨찾기",
+    "start_line": 170,
+    "end_line": 193,
+    "body": "sequenceDiagram\n    actor U as 사용자\n    participant FE as Frontend\n    participant BE as Backend\n    participant DB as MySQL\n\n    U->>FE: 결과 화면에서 \"즐겨찾기 추가\"\n    FE->>BE: POST /api/v1/favorites { class_id }\n    BE->>DB: (user_id, class_id) UNIQUE 확인\n    alt 이미 존재\n        BE-->>FE: 409 FAVORITE_ALREADY_EXISTS\n    else 신규\n        BE->>DB: INSERT favorites\n        BE-->>FE: 201 { favorite_id, major_category, minor_category }\n    end\n    U->>FE: 마이페이지 → 즐겨찾기 목록 진입\n    FE->>BE: GET /api/v1/favorites\n    BE-->>FE: 200 { items[] } (최신 등록순)\n    U->>FE: 항목 삭제\n    FE->>BE: DELETE /api/v1/favorites/{favorite_id}\n    BE->>DB: 소유권 확인 후 DELETE\n    BE-->>FE: 204",
+    "slug": "08-sequence-05-favorites"
+  },
+  {
+    "doc": "docs/specifications/09-service-architecture.md",
+    "basename": "09-service-architecture",
+    "idx": 1,
+    "heading": "1. 전체 구성 — 4개 프로세스",
+    "start_line": 11,
+    "end_line": 56,
+    "body": "flowchart TB\n    subgraph Client[\"클라이언트\"]\n        FE[\"React Frontend\\n(Vite, :5173/:8443)\"]\n    end\n\n    subgraph Backend[\"Backend — FastAPI (:8000)\\n공개 API 17개\"]\n        API[\"api/ 라우터\"]\n        CORE[\"core/ 설정·DB·보안·미들웨어\"]\n        SVC[\"services/ 외부 연동 클라이언트\"]\n        AGENT[\"agent/ Chat 오케스트레이션\"]\n        DB_[(\"MySQL\\nRailway\")]\n    end\n\n    subgraph Vision[\"Vision — FastAPI + YOLO (:8100)\\n내부 API 2개\"]\n        VAPI[\"/internal/v1/predict\\n/internal/v1/classes\"]\n        MODEL[\"YOLO 체크포인트\\nweights/best.pt\"]\n    end\n\n    subgraph RAG[\"RAG 서비스 — FastAPI + LangGraph (:8001)\\n내부 API 3개, Backend 전용\"]\n        RNODE[\"/rule_node (배출방법 조회)\"]\n        CNODE[\"/chat_node (AI 후속 질문)\"]\n        RCNODE[\"/reclassify (Gemini 재분류 그래프)\"]\n        VDB[(\"Pinecone\\nvector index\")]\n    end\n\n    FE -- \"HTTPS /api/v1/*\" --> API\n    API --> CORE\n    API --> SVC\n    API --> AGENT\n    CORE --> DB_\n    SVC -- \"HTTP /internal/v1/*\\n사설망 전용\" --> VAPI\n    SVC -- \"HTTP :8001\\n사설망 전용\" --> RNODE\n    SVC -- \" \" --> RCNODE\n    AGENT -- \"HTTP :8001\" --> CNODE\n    VAPI --> MODEL\n    RNODE --> VDB\n    RCNODE --> VDB\n    CNODE --> VDB\n\n    SVC -.->|\"S3 업로드/다운로드\"| S3[(\"AWS S3\")]\n    SVC -.->|\"배출요일 조회\"| GOV[\"행정안전부\\n생활쓰레기배출정보 API\"]\n    RCNODE -.->|\"이미지 분류 LLM\"| GEMINI[\"Google Gemini\"]\n    CNODE -.->|\"답변 생성 LLM\"| GEMINI\n    RNODE -.->|\"임베딩\"| UPSTAGE[\"Upstage\\nEmbeddings\"]",
+    "slug": "09-architecture-01-overview"
+  },
+  {
+    "doc": "docs/specifications/12-erd.md",
+    "basename": "12-erd",
+    "idx": 1,
+    "heading": "1. 전체 ERD",
+    "start_line": 12,
+    "end_line": 78,
+    "body": "erDiagram\n    REGIONS ||--o{ USERS : \"거주 지역(nullable)\"\n    USERS ||--o{ FEEDBACK : \"분석 요청\"\n    USERS ||--o{ FAVORITES : \"즐겨찾기\"\n    IMAGES ||--|| FEEDBACK : \"분석된 이미지(1:1)\"\n    WASTE_CLASSES ||--o{ FEEDBACK : \"predicted_class_id\"\n    WASTE_CLASSES ||--o{ FEEDBACK : \"final_class_id(nullable)\"\n    WASTE_CLASSES ||--o{ FEEDBACK_CANDIDATES : \"class_id\"\n    WASTE_CLASSES ||--o{ FAVORITES : \"class_id\"\n    FEEDBACK ||--o{ FEEDBACK_CANDIDATES : \"Top-K 후보 스냅샷\"\n\n    REGIONS {\n        int region_id PK\n        varchar sido_name\n        varchar sgg_name\n        datetime created_at\n    }\n    USERS {\n        bigint user_id PK\n        varchar email UK\n        varchar password_hash\n        int region_id FK \"nullable\"\n        datetime created_at\n        datetime updated_at\n    }\n    WASTE_CLASSES {\n        int class_id PK \"YOLO class index와 동일(0~16)\"\n        varchar major_category\n        varchar minor_category\n    }\n    IMAGES {\n        bigint image_id PK\n        varchar s3_key\n        varchar content_type\n    }\n    FEEDBACK {\n        bigint feedback_id PK\n        bigint user_id FK\n        bigint image_id FK \"UNIQUE(1:1)\"\n        int predicted_class_id FK\n        decimal predicted_score\n        int final_class_id FK \"nullable\"\n        bool is_correct \"nullable\"\n        enum correction_source \"nullable: USER|GEMINI\"\n        decimal bbox_x1\n        decimal bbox_y1\n        decimal bbox_x2\n        decimal bbox_y2\n        varchar model_version\n        enum review_status \"PENDING|APPROVED|REJECTED\"\n        datetime created_at\n        datetime updated_at\n    }\n    FEEDBACK_CANDIDATES {\n        bigint feedback_id PK_FK\n        smallint candidate_rank PK\n        int class_id FK\n        decimal score\n    }\n    FAVORITES {\n        bigint favorite_id PK\n        bigint user_id FK\n        int class_id FK\n        datetime created_at\n    }",
+    "slug": "12-erd-01-overview"
+  }
+]

@@ -117,6 +117,8 @@ def test_real_model_predicts_with_spec_shaped_response(real_client):
         return
 
     assert body["major_category"] and body["minor_category"]
+    assert isinstance(body["class_id"], int)
+    assert 0.0 <= body["score"] <= 1.0
     scores = body["candidate_scores"]
     assert scores, "a successful prediction must carry at least one candidate"
     assert [s["score"] for s in scores] == sorted((s["score"] for s in scores), reverse=True)

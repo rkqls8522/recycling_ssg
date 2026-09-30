@@ -11,6 +11,7 @@ import type {
 import { authHeaders } from "@/utils/header";
 import {
   FALLBACK_GUIDELINE,
+  buildGuidelineFromAnalyze,
   mapDisposalSchedule,
 } from "../PhotoCaptureScreen/useAnalyze";
 
@@ -127,17 +128,10 @@ export function useFeedback(
         url: `/api/v1/feedback/${result.feedbackId}/not-in-list`,
         headers: authHeaders(),
       });
-      let gl = FALLBACK_GUIDELINE;
-      try {
-        const schedule = await disposalRequest({
-          url: "/api/v1/disposal/schedule",
-          params: { class_id: res.final_class_id },
-          headers: authHeaders(),
-        });
-        gl = mapDisposalSchedule(schedule);
-      } catch {
-        // 배출정보 조회가 실패해도 재분류 결과 자체는 반영한다
-      }
+      // /not-in-list 응답에 이미 RAG 서비스가 채운 national_rule/region_rule이
+      // 실려 있으므로, /analyze와 동일하게 바로 사용한다 (/disposal/schedule
+      // 재조회 X — 그건 행정안전부 공공데이터라 RAG 지식베이스와 내용이 다르다).
+      const gl = buildGuidelineFromAnalyze(res as unknown as Parameters<typeof buildGuidelineFromAnalyze>[0]);
       setResult((prev) => ({
         ...prev,
         itemName: res.minor_category,

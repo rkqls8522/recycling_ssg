@@ -4,7 +4,7 @@ from sqlalchemy import DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database import Base
-from models.timestamps import utcnow
+from models.timestamps import now_kst
 
 
 class Favorite(Base):
@@ -17,5 +17,5 @@ class Favorite(Base):
         ForeignKey("waste_classes.class_id"), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=now_kst, server_default=func.now(), nullable=False
     )

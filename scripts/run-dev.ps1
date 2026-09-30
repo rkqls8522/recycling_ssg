@@ -2,7 +2,7 @@
 #
 # DB는 항상 저장소 루트 .env 의 DATABASE_URL(MySQL)을 그대로 사용한다 — 이 스크립트가
 # 별도로 덮어쓰지 않는다. 그 외 개발 편의 설정만 기본값을 주입한다:
-#   - 이미지 저장: 로컬 디스크 (.local_storage)  <- STORAGE_BACKEND=local
+#   - 이미지 저장: AWS S3 (배포와 동일)  <- STORAGE_BACKEND=s3
 #   - Vision: 실제 YOLO 체크포인트
 #
 # 사용법:  .\scripts\run-dev.ps1
@@ -60,7 +60,20 @@ if (-not $ModelPath) {
     Write-Host "         학습된 best.pt 를 weights\best.pt 로 복사하거나 MODEL_PATH 로 지정하세요."
     $ModelPath = Join-Path $RepoRoot "weights\best.pt"
 }
-$ModelVersion = Get-ModelVersion $ModelPath
+# MODEL_VERSION 의 단일 소스는 vision/.env 다(run-dev.sh 와 동일한 규칙).
+# 아래 값은 배너에 보여주기 위해서만 읽는다 -- 환경변수로 내보내지 않는다.
+$VisionEnv = Join-Path $RepoRoot "vision\.env"
+$ModelVersion = "(vision/.env 미설정 -> 기본값 yolo-recycling-v1)"
+if (Test-Path $VisionEnv) {
+    $mv = Get-Content $VisionEnv | Where-Object { $_ -match '^MODEL_VERSION=(.+)$' } | Select-Object -Last 1
+    if ($mv -and $mv -match '^MODEL_VERSION=(.+)$') { $ModelVersion = $Matches[1].Trim() }
+}
+
+if (-not (Select-String -Path (Join-Path $RepoRoot ".env") -Pattern '^JWT_SECRET_KEY=.+' -Quiet -ErrorAction SilentlyContinue)) {
+    Write-Host "WARNING: .env 에 JWT_SECRET_KEY 가 없습니다. 서명키가 코드 기본값으로 떨어집니다." -ForegroundColor Yellow
+    Write-Host "         새로 만들어 .env 에 넣으세요:"
+    Write-Host '           python -c "import secrets; print(secrets.token_urlsafe(48))"'
+}
 
 $LogDir = Join-Path $RepoRoot ".dev-logs"
 if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir | Out-Null }
@@ -100,7 +113,10 @@ if ($hadStale) { Start-Sleep -Milliseconds 500 }
 # wrapper powershell 없이 python.exe 를 직접 기동한다: $visionProc.Id 가 곧
 # uvicorn 프로세스 자신이므로, 나중에 Stop-Process 로 확실하게 종료된다(고아 프로세스 방지).
 $env:MODEL_PATH    = $ModelPath
-$env:MODEL_VERSION = $ModelVersion
+# MODEL_VERSION 은 내보내지 않는다. pydantic-settings 는 OS 환경변수를 vision/.env
+# 보다 항상 우선시키므로, 여기서 내보내면 체크포인트를 바꿔도 라벨이 옛 값으로
+# 고정되어 feedback.model_version 에 잘못 기록된다.
+Remove-Item Env:\MODEL_VERSION -ErrorAction SilentlyContinue
 $visionProc = Start-Process -FilePath $Py `
     -ArgumentList @("-m", "uvicorn", "vision.main:app", "--host", "127.0.0.1", "--port", "8100") `
     -WorkingDirectory $RepoRoot `
@@ -114,12 +130,18 @@ $visionProc = Start-Process -FilePath $Py `
 # OS 환경변수를 .env보다 항상 우선시키므로, 상위(부모) 프로세스 환경에 남아있는
 # 값이 있으면 그게 이겨버린다 -- 명시적으로 지워서 항상 .env가 이기게 한다.
 Remove-Item Env:\DATABASE_URL -ErrorAction SilentlyContinue
-$jwtSecret    = if ($env:JWT_SECRET_KEY) { $env:JWT_SECRET_KEY } else { "dev-only-insecure-secret-please-change-me-32bytes+" }
-$storage      = if ($env:STORAGE_BACKEND) { $env:STORAGE_BACKEND } else { "local" }
+# JWT_SECRET_KEY 도 같은 이유로 지운다. 예전에는 아래에서 고정 문자열을 기본값으로
+# 넣었는데, 그 문자열이 공개 저장소의 이 파일에 그대로 들어 있었다 -- .env 에
+# 제대로 된 키를 넣어둬도 OS 환경변수가 이겨서, 누구나 토큰을 위조할 수 있었다.
+# 이제는 항상 .env 의 JWT_SECRET_KEY 가 쓰인다.
+Remove-Item Env:\JWT_SECRET_KEY -ErrorAction SilentlyContinue
+# 이미지는 배포와 동일하게 실제 S3에 저장한다(.env 의 AWS_* 필요). AWS 자격증명
+# 없이 돌려야 하면 $env:STORAGE_BACKEND="local" 을 먼저 설정하고 실행한다 --
+# 다만 그러면 images.s3_key 가 가리키는 파일이 S3 에 없게 된다.
+$storage      = if ($env:STORAGE_BACKEND) { $env:STORAGE_BACKEND } else { "s3" }
 $storageDir   = if ($env:LOCAL_STORAGE_DIR) { $env:LOCAL_STORAGE_DIR } else { "../.local_storage" }
 $visionUrl    = if ($env:VISION_SERVER_BASE_URL) { $env:VISION_SERVER_BASE_URL } else { "http://127.0.0.1:8100/internal/v1" }
 
-$env:JWT_SECRET_KEY         = $jwtSecret
 $env:STORAGE_BACKEND        = $storage
 $env:LOCAL_STORAGE_DIR      = $storageDir
 $env:VISION_SERVER_BASE_URL = $visionUrl

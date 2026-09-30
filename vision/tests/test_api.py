@@ -69,16 +69,28 @@ def test_predict_returns_full_internal_contract(client, stub_model):
     assert resp.status_code == 200, resp.text
     body = resp.json()
 
-    assert set(body) == {"major_category", "minor_category", "candidate_scores", "internal_meta"}
+    assert set(body) == {
+        "major_category",
+        "minor_category",
+        "class_id",
+        "score",
+        "candidate_scores",
+        "internal_meta",
+    }
     assert body["major_category"] == "플라스틱류"
     assert body["minor_category"] == "플라스틱"
+    # Top-1(stub의 첫 candidate)은 별도 필드로 빠지고, candidate_scores에는
+    # 안 담긴다.
+    assert body["class_id"] == 14
+    assert body["score"] == 0.8123
 
     scores = body["candidate_scores"]
-    assert len(scores) == 3
+    assert len(scores) == 2
+    assert [s["class_id"] for s in scores] == [15, 0]
     assert all(set(s) == {"class_id", "category", "score"} for s in scores)
-    # Top-K ordered by score desc (SR-07).
+    # 나머지 후보들도 score 내림차순 (SR-07).
     assert [s["score"] for s in scores] == sorted((s["score"] for s in scores), reverse=True)
-    assert scores[0]["category"] == "플라스틱류_플라스틱"  # 대분류_소분류 형식
+    assert scores[0]["category"] == "플라스틱류_장난감"  # 대분류_소분류 형식
 
     meta = body["internal_meta"]
     assert set(meta) == {"bbox", "model_version", "inference_ms"}

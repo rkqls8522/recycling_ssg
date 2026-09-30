@@ -118,12 +118,15 @@ def predict(image: UploadFile = File(...)) -> PredictResponse:
         ) from exc
 
     top1 = candidates[0]
+    other_candidates = candidates[1:]
     major, minor = category_label(top1["class_id"])
 
     return PredictResponse(
         major_category=major,
         minor_category=minor,
-        candidate_scores=[CandidateScoreOut(**c) for c in candidates],
+        class_id=top1["class_id"],
+        score=top1["score"],
+        candidate_scores=[CandidateScoreOut(**c) for c in other_candidates],
         internal_meta=InternalMetaOut(
             bbox=BBoxOut(x1=main_box.x1, y1=main_box.y1, x2=main_box.x2, y2=main_box.y2),
             model_version=settings.model_version,

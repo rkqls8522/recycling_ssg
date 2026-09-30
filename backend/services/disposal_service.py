@@ -77,3 +77,78 @@ def get_rule_info_or_warn(
     except Exception:
         logger.exception("unexpected rule info lookup failure during analyze")
         return None, None, ["RAG_SERVICE_UNAVAILABLE"]
+
+
+RAG_RECLASSIFY_URL = os.getenv("RAG_RECLASSIFY_URL", "http://localhost:8001/reclassify")
+
+RAG_CHAT_URL = os.getenv("RAG_CHAT_URL", "http://localhost:8001/chat_node")
+
+
+def get_chat_answer_or_warn(
+    *, message: str, major_category: str, minor_category: str, user_region: dict
+) -> tuple[str | None, list[str]]:
+    """RAG 서비스의 챗봇 노드(node4)에 후속 질문 답변을 요청.
+
+    Returns (answer, warnings). Never raises -- get_rule_info_or_warn과 동일한
+    best-effort 패턴. 챗봇은 (구) Gemini 미설정 시에도 결정적 답변으로 계속
+    동작하는 게 기존 설계라서, RAG 서비스가 죽어있는 경우도 똑같이 취급해
+    호출부(agent/service.py)가 폴백 답변으로 대체하게 한다.
+    """
+    try:
+        response = requests.post(
+            RAG_CHAT_URL,
+            json={
+                "message": message,
+                "major_category": major_category,
+                "minor_category": minor_category,
+                "user_region": user_region,
+            },
+            timeout=15,
+        )
+        response.raise_for_status()
+        return response.json().get("answer"), []
+    except requests.RequestException:
+        logger.warning("chat (RAG service) lookup failed, degrading to fallback answer")
+        return None, ["RAG_SERVICE_UNAVAILABLE"]
+    except Exception:
+        logger.exception("unexpected chat (RAG service) failure")
+        return None, ["RAG_SERVICE_UNAVAILABLE"]
+
+
+def reclassify_or_raise(img_url: str, user_region: dict) -> dict:
+    """RAG 서비스의 재분류 그래프(classify -> judge -> disposal_lookup)를 호출.
+
+    POST /api/v1/feedback/{feedback_id}/not-in-list 자체의 핵심 로직이므로
+    (disposal_day/rule 조회처럼 곁다리 정보가 아님) 실패를 warnings 로 감추지
+    않고 AppError 로 전파해 호출부가 사용자에게 실패를 알리게 한다. LLM
+    재분류 + judge 검증 루프를 거치므로 rule_node 조회보다 넉넉한 timeout을 둔다.
+    """
+    try:
+        response = requests.post(
+            RAG_RECLASSIFY_URL,
+            json={"img_url": img_url, "user_region": user_region},
+            timeout=60,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.Timeout as exc:
+        logger.warning("RAG reclassify timed out")
+        raise AppError(
+            status_code=504,
+            code="RAG_RECLASSIFY_TIMEOUT",
+            message="추가 이미지 분석 시간이 초과되었습니다. 다시 시도해주세요.",
+        ) from exc
+    except requests.RequestException as exc:
+        logger.warning("RAG reclassify service unavailable: %s", exc)
+        raise AppError(
+            status_code=502,
+            code="RAG_SERVICE_UNAVAILABLE",
+            message="추가 이미지 분석 서비스에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
+        ) from exc
+    except Exception as exc:
+        logger.exception("unexpected RAG reclassify failure")
+        raise AppError(
+            status_code=502,
+            code="RAG_BAD_RESPONSE",
+            message="추가 이미지 분석 결과를 처리할 수 없습니다.",
+        ) from exc

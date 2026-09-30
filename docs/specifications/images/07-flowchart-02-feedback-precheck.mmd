@@ -1,0 +1,8 @@
+flowchart TD
+    A([피드백 요청\nconfirm / select-candidate / not-in-list]) --> B{feedback_id\n존재?}
+    B -- 아니오 --> B1[404 FEEDBACK_NOT_FOUND]
+    B -- 예 --> C{소유자==요청자?}
+    C -- 아니오 --> C1[403 FEEDBACK_FORBIDDEN]
+    C -- 예 --> D{is_correct\nIS NULL?\n=미처리}
+    D -- 아니오 --> D1[409 FEEDBACK_ALREADY_COMPLETED]
+    D -- 예 --> E[개별 처리 로직으로 진행]

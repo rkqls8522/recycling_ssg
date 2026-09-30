@@ -1,0 +1,8 @@
+{
+  "theme": "neutral",
+  "themeVariables": {
+    "fontFamily": "Malgun Gothic, Segoe UI, sans-serif"
+  },
+  "flowchart": { "htmlLabels": true, "curve": "basis" },
+  "sequence": { "useMaxWidth": false, "wrap": true }
+}

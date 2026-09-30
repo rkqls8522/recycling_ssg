@@ -7,6 +7,7 @@ import { ChatbotIcon, MoveToSourceIcon } from "@/components/common/Icons";
 import AgentThinkingView from "../PhotoCaptureScreen/AgentThinkingView";
 import { useResult } from "./useResult";
 import { useFeedback } from "./useFeedback";
+import { CATEGORY_EMOJI } from "../MyPageScreen/useFavorite";
 
 interface ResultLocationState {
   result: ClassificationResult;
@@ -45,7 +46,7 @@ export default function ResultScreen() {
       setAgentThinkingOpen,
     );
 
-  const { itemName, guidelines, regionName } = result;
+  const { itemName, itemCategory, guidelines, regionName } = result;
 
   useEffect(() => {
     if (!state?.result) {
@@ -69,12 +70,19 @@ export default function ResultScreen() {
           <h2 className="text-base font-bold">분석 결과</h2>
           <p className="text-xs opacity-70">{regionName} 기준</p>
         </div>
-        <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-primary-foreground/30">
-          <img
-            src={imageUrl}
-            alt="분석된 폐기물 사진"
-            className="w-full h-full object-cover"
-          />
+        <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-primary-foreground/30 flex-shrink-0">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt="분석된 폐기물 사진"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            // 즐겨찾기에서 바로 들어온 경우 원본 사진이 없다 — 대분류 이모지로 대체
+            <div className="w-full h-full flex items-center justify-center text-lg bg-primary-foreground/10">
+              {CATEGORY_EMOJI[itemCategory] ?? "♻️"}
+            </div>
+          )}
         </div>
       </div>
 

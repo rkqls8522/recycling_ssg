@@ -149,6 +149,10 @@ export interface AnalyzeSuccessBody {
   status: "SUCCESS";
   major_category: string;
   minor_category: string;
+  // Top-1(실제 예측) class_id/score. major_category/minor_category와 같은 대상.
+  class_id: number;
+  score: number;
+  // Top-1을 제외한 "다른 후보" 목록 (모델이 틀렸을 때 사용자에게 보여줄 대안).
   candidate_scores: CandidateScore[];
   user_region: RegionInfo;
   disposal_day: string | null;
@@ -164,6 +168,17 @@ export interface AnalyzeRetakeBody {
   code: string;
   message: string;
   threshold?: number;
+  // AI_LOW_CONFIDENCE일 때 실제 Top-1 신뢰도 점수 (threshold 미만이라 재촬영을
+  // 요구한 바로 그 값). AI_NO_MAIN_OBJECT는 null.
+  score?: number | null;
+  // AI_LOW_CONFIDENCE일 때 모델이 (확신은 낮지만) 예측한 대상. 셋이 함께 채워지거나
+  // 함께 null이다. AI_NO_MAIN_OBJECT는 예측 자체가 없으므로 전부 null.
+  class_id?: number | null;
+  major_category?: string | null;
+  minor_category?: string | null;
+  // AI_LOW_CONFIDENCE는 SUCCESS와 동일하게 저장되므로 그 행의 feedback_id.
+  // AI_NO_MAIN_OBJECT는 저장된 행이 없으므로 null.
+  feedback_id?: number | null;
   request_id: string;
 }
 
@@ -204,7 +219,16 @@ export interface FeedbackNotInListResponse {
   correction_source: "GEMINI";
   major_category: string;
   minor_category: string;
+  disposal_day: string | null;
+  national_rule: NationalRule | null;
+  region_rule: RegionRule | null;
   message: string;
+}
+
+export interface ChatResponse {
+  feedback_id: number;
+  answer: string;
+  warnings: string[];
 }
 
 export type RegionItem = {

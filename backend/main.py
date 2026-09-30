@@ -28,10 +28,11 @@ from api import (
 from core.config import settings
 from core.database import Base, SessionLocal, engine
 from core.exceptions import register_exception_handlers
+from core.logging_config import configure_logging
 from core.middleware import RequestIDMiddleware
 from db.seed import seed_all
 
-logging.basicConfig(level=logging.INFO)
+configure_logging()
 logger = logging.getLogger(__name__)
 
 
