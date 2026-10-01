@@ -101,7 +101,7 @@ flowchart LR
 |---|---|---|
 | 촬영 · 구도 안내 | 서버 왕복 없이 프레임 단위 피드백 | React, TypeScript, Tailwind, getUserMedia, GrabCut |
 | 고정밀 분류 | 다수 클래스 · 재질 판정 | FastAPI, JWT, PyTorch, YOLO |
-| 분기 · 재분류 | 규칙 / 사용자 확인 / LLM 라우팅, 대화 상태 유지 | LangGraph, Checkpointer, LLM `[모델명]` |
+| 분기 · 재분류 | 규칙 / 사용자 확인 / LLM 라우팅, 대화 상태 유지 | LangGraph, Checkpointer, LLM `gemini-3.8-flash` |
 | 지역 규정 검색 | 지역 메타데이터 필터 + 벡터 검색 | Pinecone, Upstage Embedding |
 | 수거 정보 | 배출 요일 등 구조화된 정보 | 공공데이터포털 행정안전부 생활쓰레기배출정보 API |
 
