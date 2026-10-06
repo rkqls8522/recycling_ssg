@@ -25,7 +25,11 @@ winpath() {
   if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi
 }
 
+# 테스트 이미지 폴더. 둘 다 git 에 올라가지 않는 로컬 폴더이므로, 없으면
+# SAMPLES 환경변수로 직접 지정하세요.
 SAMPLES="${SAMPLES:-$REPO_ROOT/ai/models/yolo/02_experiment_augmentation/report/final_best/prediction_samples}"
+[ -d "$SAMPLES" ] || SAMPLES="$REPO_ROOT/data/processed/images/val"
+SAMPLE_LIMIT="${SAMPLE_LIMIT:-40}"
 
 # 빈 파일 업로드 테스트용 (플랫폼 무관하게 실제 0-byte 파일 사용)
 EMPTY_FILE_RAW="$(mktemp -t empty-XXXXXX.jpg)"
@@ -39,7 +43,8 @@ JSON_BODY_RAW="$(mktemp -t body-XXXXXX.json)"
 JSON_BODY="$(winpath "$JSON_BODY_RAW")"
 write_body() { printf '%s' "$1" > "$JSON_BODY_RAW"; }
 
-trap 'rm -f "$EMPTY_FILE_RAW" "$JSON_BODY_RAW" 2>/dev/null' EXIT
+NO_OBJ_RAW=""
+trap 'rm -f "$EMPTY_FILE_RAW" "$JSON_BODY_RAW" ${NO_OBJ_RAW:+"$NO_OBJ_RAW"} 2>/dev/null' EXIT
 
 PASS=0
 FAIL=0
@@ -109,9 +114,11 @@ IMG_LOW_CONF="${IMG_LOW_CONF:-}"
 IMG_NO_OBJ="${IMG_NO_OBJ:-}"
 
 if [ -d "$SAMPLES" ]; then
+  n=0
   for f in "$SAMPLES"/*.jpg; do
     [ -f "$f" ] || continue
     [ -n "$IMG_SUCCESS" ] && [ -n "$IMG_LOW_CONF" ] && [ -n "$IMG_NO_OBJ" ] && break
+    n=$((n+1)); [ "$n" -gt "$SAMPLE_LIMIT" ] && break
     wf="$(winpath "$f")"
     out="$(curl -s -w $'\n%{http_code}' -X POST "$VISION/internal/v1/predict" \
            -F "image=@$wf;type=image/jpeg" 2>/dev/null)"
@@ -120,12 +127,22 @@ if [ -d "$SAMPLES" ]; then
     if [ "$st" = "422" ]; then
       [ -z "$IMG_NO_OBJ" ] && IMG_NO_OBJ="$wf"
     elif [ "$st" = "200" ]; then
-      score="$(printf '%s' "$bd" | jsonget candidate_scores.0.score)"
+      # Top-1 은 최상위 score 에 있고, candidate_scores 는 Top-1 을 뺀 나머지 후보다.
+      score="$(printf '%s' "$bd" | jsonget score)"
       over="$("$PY" -c "import sys;print('1' if float(sys.argv[1])>=0.5 else '0')" "$score" 2>/dev/null)"
       if [ "$over" = "1" ]; then [ -z "$IMG_SUCCESS" ] && IMG_SUCCESS="$wf"
       else [ -z "$IMG_LOW_CONF" ] && IMG_LOW_CONF="$wf"; fi
     fi
   done
+fi
+
+# 실제 사진에서는 '중앙 객체 없음' 샘플을 찾기 어려우므로, 단색 이미지를 만들어 시도한다.
+if [ -z "$IMG_NO_OBJ" ]; then
+  NO_OBJ_RAW="$(mktemp -t noobj-XXXXXX.jpg)"
+  "$PY" -c "from PIL import Image;Image.new('RGB',(640,480),(128,128,128)).save(r'$(winpath "$NO_OBJ_RAW")','JPEG')" 2>/dev/null
+  st="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$VISION/internal/v1/predict" \
+         -F "image=@$(winpath "$NO_OBJ_RAW");type=image/jpeg" 2>/dev/null)"
+  [ "$st" = "422" ] && IMG_NO_OBJ="$(winpath "$NO_OBJ_RAW")"
 fi
 
 [ -n "$IMG_SUCCESS" ]  && echo "  SUCCESS(>=0.5)     : $(basename "$IMG_SUCCESS")" || echo "  SUCCESS(>=0.5)     : (없음 - 관련 검사를 건너뜁니다)"
@@ -229,8 +246,8 @@ if [ -n "$IMG_SUCCESS" ]; then
   expect_field "status" "SUCCESS"
   FEEDBACK_ID="$(printf '%s' "$BODY" | jsonget feedback_id)"
   IMAGE_ID="$(printf '%s' "$BODY" | jsonget image_id)"
-  CLASS_ID="$(printf '%s' "$BODY" | jsonget candidate_scores.0.class_id)"
-  CLASS_ID2="$(printf '%s' "$BODY" | jsonget candidate_scores.1.class_id)"
+  CLASS_ID="$(printf '%s' "$BODY" | jsonget class_id)"
+  CLASS_ID2="$(printf '%s' "$BODY" | jsonget candidate_scores.0.class_id)"
   printf '        feedback_id=%s image_id=%s top1_class=%s\n' "$FEEDBACK_ID" "$IMAGE_ID" "$CLASS_ID"
 else
   skip "POST /analyze — SUCCESS" "Top-1>=0.5 샘플 없음"
@@ -414,16 +431,24 @@ expect_field "code" "AUTH_REQUIRED"
 
 # ---------- 18~19. Vision 내부 API ----------
 section "18) POST /internal/v1/predict  ·  19) GET /internal/v1/classes"
-check "POST /internal/v1/predict" 200 \
-  -X POST "$VISION/internal/v1/predict" \
-  -H "X-Request-ID: 550e8400-e29b-41d4-a716-446655440000" \
-  -F "image=@$IMG_SUCCESS;type=image/jpeg"
-printf '        top1: %s / %s\n' "$(printf '%s' "$BODY" | jsonget major_category)" "$(printf '%s' "$BODY" | jsonget minor_category)"
-expect_field "internal_meta.model_version" "${MODEL_VERSION:-$(printf '%s' "$BODY" | jsonget internal_meta.model_version)}"
+if [ -n "$IMG_SUCCESS" ]; then
+  check "POST /internal/v1/predict" 200 \
+    -X POST "$VISION/internal/v1/predict" \
+    -H "X-Request-ID: 550e8400-e29b-41d4-a716-446655440000" \
+    -F "image=@$IMG_SUCCESS;type=image/jpeg"
+  printf '        top1: %s / %s\n' "$(printf '%s' "$BODY" | jsonget major_category)" "$(printf '%s' "$BODY" | jsonget minor_category)"
+  expect_field "internal_meta.model_version" "${MODEL_VERSION:-$(printf '%s' "$BODY" | jsonget internal_meta.model_version)}"
+else
+  skip "POST /internal/v1/predict" "Top-1>=0.5 샘플 없음"
+fi
 
-check "POST /internal/v1/predict — 중앙 객체 없음 (422)" 422 \
-  -X POST "$VISION/internal/v1/predict" -F "image=@$IMG_NO_OBJ;type=image/jpeg"
-expect_field "code" "VISION_NO_MAIN_OBJECT"
+if [ -n "$IMG_NO_OBJ" ]; then
+  check "POST /internal/v1/predict — 중앙 객체 없음 (422)" 422 \
+    -X POST "$VISION/internal/v1/predict" -F "image=@$IMG_NO_OBJ;type=image/jpeg"
+  expect_field "code" "VISION_NO_MAIN_OBJECT"
+else
+  skip "POST /internal/v1/predict — 중앙 객체 없음 (422)" "해당 샘플 없음"
+fi
 
 check "POST /internal/v1/predict — 빈 파일 (400)" 400 \
   -X POST "$VISION/internal/v1/predict" -F "image=@$EMPTY_FILE;type=image/jpeg"
