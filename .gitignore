@@ -95,8 +95,10 @@ mlruns/
 # 대용량 시각화 결과만 제외한다.
 #   prediction_samples : 원본 해상도 예측 이미지 (장당 약 1MB)
 #   val_batch*.jpg     : YOLO 검증 배치 모자이크 (라벨/예측)
-**/report/final_best/prediction_samples/
-**/report/final_best/best_validation/val_batch*.jpg
+#   train_batch*.jpg   : YOLO 학습 배치 모자이크 (00/01 train·final_runs 폴더 포함)
+**/prediction_samples/
+**/train_batch*.jpg
+**/val_batch*.jpg
 
 # 증강 데이터셋 생성 로그 (이미지별 1행, 파일당 약 0.4~0.9MB).
 # opencv_datasets 를 다시 만들면 함께 재생성된다.
