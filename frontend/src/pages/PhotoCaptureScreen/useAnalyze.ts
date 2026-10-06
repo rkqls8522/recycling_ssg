@@ -71,7 +71,11 @@ export function buildGuidelineFromAnalyze(
   }
 
   if (!nationalRule && !regionRule) {
-    return FALLBACK_GUIDELINE;
+    // 배출방법(RAG)이 없어도 수거 요일(공공데이터 API)은 따로 받아왔을 수 있으므로 살린다.
+    return {
+      ...FALLBACK_GUIDELINE,
+      collectionDays: data.disposal_day ?? FALLBACK_GUIDELINE.collectionDays,
+    };
   }
 
   return {
