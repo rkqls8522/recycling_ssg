@@ -61,10 +61,11 @@ mlruns/
 # 노트북이 필요할 때 다시 만드는 대용량 캐시.
 #   opencv_datasets  : OpenCV 정적 증강 데이터셋 (정책 1개당 약 7,600장 / 7.5GB)
 #   .yolo_data_cache : data.zip 해제 캐시
-# tune_runs/ 는 무시하지 않는다. trial 의 args.yaml / results.csv 는 작고
-# 재현에 필요하며, 그 안의 checkpoint(*.pt)는 아래 가중치 규칙으로 제외된다.
+#   tune_runs        : Optuna trial 임시 폴더. 정상 trial 은 평가 후 자동 삭제되고
+#                      FAIL trial 잔여물만 남는다. trial 결과는 report/trials.csv 에 있다.
 **/opencv_datasets/
 **/.yolo_data_cache/
+**/tune_runs/
 
 
 # ============================================

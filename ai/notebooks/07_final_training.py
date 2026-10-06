@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""07. 최종 학습 — 20 epoch (07_final_training.ipynb 의 터미널 실행판)
+"""07. 최종 학습 — 20 epoch (터미널 실행용 스크립트)
 
-노트북과 완전히 같은 일을 합니다. 편집기 없이 돌아가므로 VSCode 가 죽어도
+원래 07_final_training.ipynb 를 터미널용으로 옮긴 것이며, 노트북판은 정리하고
+이 스크립트만 남겼습니다. 편집기 없이 돌아가므로 VSCode 가 죽어도
 학습이 끊기지 않습니다.
 
     cd <프로젝트 루트>

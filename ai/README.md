@@ -129,22 +129,20 @@ EXPORT_FORMATS          # ["YOLO", "COCO"]
 | `01_yolo_optuna_RESUME_TOTAL25_KAGGLE_LOCAL.ipynb` | 7,623장 | 86 | 하이퍼파라미터를 맞추면 얼마나 오르나 | **0.5209** (+38%) |
 | `02_yolo_baseline_augmentation_search_paths_updated.ipynb` | 7,624장 | 17 | 어떤 증강이 제일 좋은가 (36종) | 최고 +0.013 |
 | `04_yolo_damaged_data_compare.ipynb` | 15,516장 | 17 | 파손 이미지를 넣으면 어떻게 되나 | B01 0.8670 |
-| `05_yolo_retune_17class_optuna_augmentation.ipynb` | 15,516장 | 17 | 17클래스에서 다시 튜닝하면 | Y14 0.8584 |
+| `05_yolo_retune_17class_optuna_augmentation.ipynb` | 7,623장 | 17 | 17클래스에서 다시 튜닝하면 | Y14 0.8584 |
 | `06_yolo_damaged_data_two_variants.ipynb` | 미기록 | 17 | 파손 비율 2종 비교 | Y08_hp1 0.842 |
-| `07_final_training.ipynb` | 144,315장 | 17 | 확정 설정으로 최종 학습 | **0.8639** |
+| `07_final_training.py` | 144,315장 | 17 | 확정 설정으로 최종 학습 | **0.8639** |
 | `99_results_summary.ipynb` | — | — | 00~07 전체를 한자리에 정리 | 그래프 11종 |
 
 > **03번은 없습니다.** 02번의 2×2 대조에 빠져 있던 `B03`(증강OFF + tuned) 칸을 채우는
 > 노트북이었고, 결과를 02번에 병합한 뒤 `models/yolo/_archive_merged_03_no_aug_tuned/`
 > 로 옮겼습니다. 원본 노트북은 `notebooks/_archive/` 에 있습니다.
 
-### 07번 관련 파일이 여러 개인 이유
+### 07번 관련 파일이 두 개인 이유
 
 | 파일 | 용도 |
 |---|---|
-| `07_final_training.ipynb` | 노트북 원본 |
-| `07_yolo_final_training.ipynb` | 위와 동일 내용 (이름만 다른 사본) |
-| `07_final_training.py` | **터미널 실행판.** VSCode 가 죽어도 20시간 학습이 안 끊깁니다 |
+| `07_final_training.py` | **최종 학습 스크립트.** 터미널에서 돌리므로 VSCode 가 죽어도 20시간 학습이 안 끊깁니다 (노트북판은 같은 내용이라 정리했습니다) |
 | `07_finalize.py` | 학습을 중간에 멈췄을 때 **평가·리포트·가중치 배포만** 따로 수행 |
 
 `07_finalize.py` 가 필요한 이유: Ultralytics 는 `best.pt` 를 val mAP 기록 경신 때마다
@@ -173,7 +171,6 @@ uv run --no-sync python ai/notebooks/07_finalize.py --deploy
 
 | 항목 | 설명 |
 |---|---|
-| `cuda.ipynb` | GPU/CUDA 동작 확인용 |
 | `_archive/` | `00_01.ipynb`(초기 통합본), `03_yolo_no_aug_tuned_B03.ipynb` |
 | `yolo26n.pt`, `weights/` | Ultralytics 가 자동 다운로드한 사전학습 가중치 |
 | `runs/detect/` | Ultralytics 기본 출력 경로로 흘러나온 결과 (실험 산출물 아님) |
