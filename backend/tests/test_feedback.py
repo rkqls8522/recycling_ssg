@@ -80,6 +80,19 @@ def test_select_candidate_flow(client, seeded_feedback):
     assert body["correction_source"] == "USER"
 
 
+def test_select_candidate_accepts_class_id_zero(client, seeded_feedback, db_session):
+    """class_id 0(고철류/고철)은 유효한 클래스라 검증 단계(422)에서 막히면 안 된다."""
+    headers, feedback_id = seeded_feedback
+    db_session.add(FeedbackCandidate(feedback_id=feedback_id, class_id=0, score=0.02, rank=4))
+    db_session.commit()
+
+    resp = client.post(
+        f"/api/v1/feedback/{feedback_id}/select-candidate", json={"class_id": 0}, headers=headers
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["final_class_id"] == 0
+
+
 def test_feedback_not_found_and_forbidden(client, seeded_feedback, signup_and_login):
     _headers, feedback_id = seeded_feedback
 
