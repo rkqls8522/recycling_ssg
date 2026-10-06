@@ -7,7 +7,6 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-*.pyc
 
 # Python build
 build/
@@ -50,79 +49,81 @@ frontend/.vite/
 .local_storage/
 .dev-logs/
 
-# AI training outputs
+
+# ============================================
+# AI Training Outputs
+# ============================================
+
 runs/
 wandb/
 mlruns/
 
 # 노트북이 필요할 때 다시 만드는 대용량 캐시.
 #   opencv_datasets  : OpenCV 정적 증강 데이터셋 (정책 1개당 약 7,600장 / 7.5GB)
-#   tune_runs        : Optuna trial 중간 checkpoint
 #   .yolo_data_cache : data.zip 해제 캐시
+# tune_runs/ 는 무시하지 않는다. trial 의 args.yaml / results.csv 는 작고
+# 재현에 필요하며, 그 안의 checkpoint(*.pt)는 아래 가중치 규칙으로 제외된다.
 **/opencv_datasets/
-**/tune_runs/
 **/.yolo_data_cache/
 
-# AI model weights
+
+# ============================================
+# AI Model Weights / Serialized Artifacts
+# ============================================
+
 *.pt
 *.pth
 *.ckpt
-
-# ONNX
 *.onnx
-
-# TensorRT
 *.engine
 *.trt
-
-# Other serialized AI artifacts
 *.npy
 *.npz
 *.pkl
 *.joblib
 
+# 배포 모델(vision 서비스가 읽는 체크포인트)만 예외로 추적한다.
+!/weights/best.pt
 
-# ============================================
-# Large AI Datasets
-# ============================================
-
-data/
-# data/raw/
-# data/processed/
-# data/train/
-# data/val/
-# data/test/
 
 # ============================================
 # Generated AI Experiment Reports
 # ============================================
 
-# YOLO validation / prediction images and
-# other large final visualization outputs
-**/report/final_best/
+# 그래프·요약 CSV 는 추적하고, 원본 데이터셋 이미지가 그대로 들어간
+# 대용량 시각화 결과만 제외한다.
+#   prediction_samples : 원본 해상도 예측 이미지 (장당 약 1MB)
+#   val_batch*.jpg     : YOLO 검증 배치 모자이크 (라벨/예측)
+**/report/final_best/prediction_samples/
+**/report/final_best/best_validation/val_batch*.jpg
 
-# Detailed OpenCV augmentation generation logs
+# 증강 데이터셋 생성 로그 (이미지별 1행, 파일당 약 0.4~0.9MB).
+# opencv_datasets 를 다시 만들면 함께 재생성된다.
 **/report/summary/opencv_generation_*.csv
-# Large AI datasets/training runs under data/ -- only data/taxonomy/ (the
-# shared regions.json / waste_classes.json the API and Vision service both
-# read) is ever meant to be committed. Everything else under data/ (raw
-# uploads, processed/, train/val splits, etc.) is large and machine-local.
-data/*
-!data/taxonomy/
-!data/taxonomy/**
 
-# Local-only data backup archive (26GB) -- never meant to be pushed on any branch.
+
+# ============================================
+# Large Datasets / Archives
+# ============================================
+
+# data/ 아래는 data/taxonomy/ 만 추적한다 (API·Vision 서비스가 함께 읽는
+# regions.json / waste_classes.json). 원본 업로드, processed/, train/val
+# 분할 등 나머지는 대용량이고 로컬 전용이다.
+# 주의: "data/" 처럼 쓰면 rag/data/ 등 하위 data 폴더까지 무시되고
+# 아래 !data/taxonomy/ 예외도 동작하지 않으므로 "/data/*" 로 쓴다.
+/data/*
+!/data/taxonomy/
+
+# 로컬 전용 데이터 백업 압축본 (26GB). 어떤 브랜치에도 push 하지 않는다.
 /data.zip
-
-
-# ============================================
-# Dataset / Large Archives
-# ============================================
 
 *.zip
 *.tar
 *.tar.gz
 *.7z
+
+# 배포 설정 묶음은 예외로 추적한다.
+!/docs/deployment/caddy.zip
 
 
 # ============================================
@@ -136,5 +137,7 @@ data/*
 
 # ============================================
 # OS
+# ============================================
+
 .DS_Store
 Thumbs.db
