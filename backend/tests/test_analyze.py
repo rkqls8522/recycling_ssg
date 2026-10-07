@@ -89,6 +89,9 @@ def fake_externals(monkeypatch):
     monkeypatch.setattr(
         analyze_api, "get_disposal_info_or_warn", lambda waste_class, region: ("화, 목", [])
     )
+    # RAG 규칙 조회도 실제 :8001 을 부르지 않도록 대체한다 (RAG 상태에 따라
+    # warnings 가 달라져 테스트 결과가 흔들리지 않게).
+    monkeypatch.setattr(analyze_api, "get_rule_info_or_warn", lambda payload: (None, None, []))
     return calls
 
 

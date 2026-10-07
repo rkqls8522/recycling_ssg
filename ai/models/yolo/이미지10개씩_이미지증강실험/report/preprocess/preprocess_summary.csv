@@ -1,0 +1,15 @@
+﻿key,value
+source_zip,C:\ai_challingers\recycling_ssg\data\sample\train9val2.zip
+raw_images,932
+raw_objects,1040
+training_classes,86
+raw_training_images,766
+raw_validation_images,166
+excluded_images,6
+processed_train_images,761
+processed_val_images,165
+processed_train_objects,853
+processed_val_objects,178
+polygon_to_bbox_objects,30
+preprocess_errors,0
+val_classes_without_objects,3

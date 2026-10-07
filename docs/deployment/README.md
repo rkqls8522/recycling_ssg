@@ -134,9 +134,13 @@ bash scripts/run-dev.sh          # 또는 .\scripts\run-dev.ps1 (PowerShell)
 # 3) (선택, 강력 권장) RAG 규칙 조회 캐시 예열 — 첫 요청 지연/일시적 API 429 방지
 uv run python scripts/warm_rule_cache.py --workers 2
 
-# 4) Frontend 정적 빌드
+# 4) Frontend 정적 빌드 → frontend/dist 생성 (Caddy가 이 폴더를 그대로 서빙)
 cd frontend && npm run build && cd ..
 ```
+
+> `frontend/dist/`는 빌드 결과물이라 `.gitignore`로 제외되어 있습니다. clone 직후에는 없으므로
+> **반드시 직접 빌드**해야 하고, 프론트엔드 코드가 바뀔 때마다(브랜치 merge/pull 후 포함) 다시
+> 빌드해야 화면에 반영됩니다. 배포에서는 `npm run dev`(개발 서버, :8443)를 쓰지 않습니다.
 
 ### 3.6 헬스체크
 
@@ -158,6 +162,29 @@ curl http://127.0.0.1:8001/health   # RAG
 ```bash
 bash scripts/smoke-test.sh   # 19개 API 그룹, 100건 검사
 ```
+
+> smoke test는 실제 DB에 `smoke-…@example.com` 테스트 계정과 분석/피드백 기록을 남기고,
+> 분석 이미지를 스토리지(S3)에 올립니다.
+
+### 3.9 서버 가동 체크리스트 (재부팅 후 매번)
+
+최초 설치(§3.1~3.4, §4, §5.1~5.2)가 끝난 PC에서, 재부팅 등으로 서비스를 다시 띄울 때의
+순서입니다. **프로세스 6개 + 캐시 예열 1단계**이며, 각각 별도 터미널에서 실행합니다
+(저장소 루트 기준).
+
+| # | 대상 | 명령 | 확인 |
+|---|---|---|---|
+| 1 | MySQL (:3306) | `net start MySQL80` (관리자 권한, 자동 시작이면 생략) | `Get-Service MySQL80` → Running |
+| 2 | RAG (:8001) | `uv run uvicorn rag.main:app --host 127.0.0.1 --port 8001` | `curl http://127.0.0.1:8001/health` |
+| 3·4 | Vision (:8100) + Backend (:8000) | `bash scripts/run-dev.sh` (로그: `.dev-logs/`) | `curl http://127.0.0.1:8000/ready`, `curl http://127.0.0.1:8100/health` |
+| 5 | RAG 캐시 예열 | `uv run python scripts/warm_rule_cache.py --workers 2` | `curl http://127.0.0.1:8001/cache_info`의 `currsize` > 0 |
+| 6 | Caddy (:8080) | `C:\caddy\caddy.exe run --config C:\caddy\Caddyfile` | `curl http://127.0.0.1:8080/` → 200 (index.html) |
+| 7 | Cloudflare Tunnel | `C:\caddy\cloudflared.exe tunnel --url http://localhost:8080` | 콘솔에 출력된 `https://….trycloudflare.com` 접속 |
+
+- 6번 전에 `frontend/dist`가 있어야 합니다(§3.5의 4번). 코드를 받은 뒤라면 다시 빌드하세요.
+- 서버가 이 저장소의 **작업 폴더 코드를 그대로 실행**하므로, 브랜치 전환·merge·pull 즉시 운영
+  코드가 바뀝니다. 그 뒤에는 3·4번을 재시작하고 프론트엔드를 다시 빌드하세요.
+- 7번(Quick Tunnel)은 실행할 때마다 URL이 바뀝니다. 고정 URL은 §5.4.2.
 
 ---
 
@@ -275,7 +302,7 @@ UNION ALL SELECT 'favorites', COUNT(*) FROM favorites;
 	}
 
 	handle {
-		root * C:/ai_challingers/recycling_ssg/frontend/dist
+		root * C:/<저장소-clone-경로>/frontend/dist
 		try_files {path} /index.html
 		file_server
 	}
@@ -400,6 +427,7 @@ PC를 재부팅해도 서비스가 자동으로 다시 뜹니다. (`cloudflared`
 | Caddy는 떴는데 브라우저에서 빈 화면/404 | `frontend/dist`가 없음 — `cd frontend && npm run build`를 먼저 실행했는지, `Caddyfile`의 `root` 경로가 실제 clone 위치와 일치하는지 확인 |
 | 터널 URL은 열리는데 로그인/분석 등 `/api/...` 요청만 실패 | Backend(:8000)가 안 떠 있거나 Caddy가 `/api/*`를 8000이 아닌 다른 포트로 잘못 프록시 중 — `curl http://127.0.0.1:8000/health`로 Backend 자체가 살아있는지 먼저 확인 |
 | Cloudflare Quick Tunnel URL이 재부팅마다 바뀜 | Quick Tunnel의 정상 동작 — 고정 주소가 필요하면 §5.4.2 Named Tunnel로 전환 |
+| 코드를 고쳤는데 Backend/Vision 응답이 그대로임 (로그에 `WatchFiles detected changes ... Reloading...`만 찍힘) | Windows에서 uvicorn `--reload`가 이전 worker를 종료하지 못하고 계속 응답하는 경우가 있음 — `run-dev.*`로 다시 기동(또는 8000/8100 프로세스 종료 후 재기동) |
 | 서버 재시작 후 이전 모델/코드 버전으로 계속 응답 | 8000/8100 포트에 이전 프로세스가 남아있음 — `run-dev.*`는 기동 전 정리하지만 수동 배포 시엔 `netstat -ano`로 PID 찾아 직접 종료 필요 |
 
 ---

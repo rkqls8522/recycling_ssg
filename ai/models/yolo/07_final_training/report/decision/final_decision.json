@@ -1,0 +1,59 @@
+{
+  "생성시각": "2026-09-29 04:50:10",
+  "취합한_노트북": [
+    "05 재튜닝 (10 epoch)",
+    "06-1 clean (15 epoch)",
+    "06-2 clean+20% damage (15 epoch)"
+  ],
+  "빠진_결과": [],
+  "증강": {
+    "key": "Y08",
+    "name": "yolo_mosaic",
+    "선택이유": "평균 Δ +0.0415 로 1위 (n=3)",
+    "학습인자": {
+      "hsv_h": 0.0,
+      "hsv_s": 0.0,
+      "hsv_v": 0.0,
+      "degrees": 0.0,
+      "translate": 0.0,
+      "scale": 0.0,
+      "shear": 0.0,
+      "perspective": 0.0,
+      "flipud": 0.0,
+      "fliplr": 0.0,
+      "bgr": 0.0,
+      "mosaic": 0.7,
+      "mixup": 0.0,
+      "cutmix": 0.0,
+      "copy_paste": 0.0,
+      "close_mosaic": 4,
+      "augmentations": []
+    }
+  },
+  "하이퍼파라미터": {
+    "label": "auto",
+    "선택이유": "튜닝값이 auto 보다 나은 경우가 없음 (최고 평균 Δ -0.0115)",
+    "params": {}
+  },
+  "학습": {
+    "model": "yolo26n.pt",
+    "epochs": 20,
+    "imgsz": 640,
+    "batch": 8,
+    "close_mosaic": 4,
+    "seed": 42
+  },
+  "데이터": {
+    "path": "C:\\AIchallengers\\recycling_ssg_project\\recycling_ssg\\data\\processed",
+    "train_images": 144315,
+    "val_images": 10548,
+    "이미지_GB": 79.58,
+    "클래스수": 17
+  },
+  "신문지_증강제외": {
+    "적용": false,
+    "class_id": 10,
+    "match": "all",
+    "mix_partner_제외": true
+  }
+}

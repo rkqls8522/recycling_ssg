@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/v1/disposal", tags=["disposal"])
 
 @router.get("/schedule", response_model=DisposalScheduleResponse)
 def get_disposal_schedule(
-    class_id: int = Query(gt=0),
+    class_id: int = Query(ge=0),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> DisposalScheduleResponse:

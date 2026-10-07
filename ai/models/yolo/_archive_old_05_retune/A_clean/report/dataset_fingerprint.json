@@ -1,0 +1,11 @@
+{
+  "stage": "A_clean",
+  "label": "17 클래스 · 파손 없음",
+  "num_classes": 17,
+  "class_names_sha1": "bd761aa5a36617bf",
+  "train_images": 15516,
+  "train_bytes": 8444888104,
+  "val_images": 2201,
+  "val_bytes": 1230747423,
+  "content_sha1": "d69101edc2b2839f"
+}

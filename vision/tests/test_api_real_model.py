@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SAMPLES_DIR = (
-    REPO_ROOT / "ai" / "models" / "yolo" / "01_experiment_augmentation" / "report" / "final_best" / "prediction_samples"
+    REPO_ROOT / "ai" / "models" / "yolo" / "02_experiment_augmentation" / "report" / "final_best" / "prediction_samples"
 )
 
 
@@ -28,7 +28,7 @@ def _find_checkpoint() -> Path | None:
         if candidate.exists():
             return candidate
 
-    runs = REPO_ROOT / "ai" / "models" / "yolo" / "01_experiment_augmentation" / "runs"
+    runs = REPO_ROOT / "ai" / "models" / "yolo" / "02_experiment_augmentation" / "runs"
     if runs.exists():
         found = sorted(runs.glob("*/weights/best.pt"))
         if found:
@@ -47,25 +47,65 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture(scope="module")
 def real_client():
-    os.environ["MODEL_PATH"] = str(CHECKPOINT)
-    os.environ["MODEL_VERSION"] = CHECKPOINT.parent.parent.name if CHECKPOINT else "unknown"
+    """Serve the app against the real checkpoint, then put everything back.
 
+    This fixture swaps the module-level ``settings`` object that three modules
+    already hold a reference to. Without restoring them afterwards the swap
+    leaks into every later test in the same process: a test that does
+    ``monkeypatch.setattr(settings, "top_k", ...)`` patches the *old* object
+    while ``inference`` keeps reading the one left behind here, so the patch
+    silently does nothing. That is exactly what broke
+    ``test_inference_geometry.py`` once a checkpoint became discoverable and
+    these tests stopped being skipped.
+
+    ``MODEL_VERSION`` is deliberately NOT set here — it is configuration
+    (vision/.env, falling back to the ``model_version`` default), and the tests
+    only assert that the served value is non-empty.
+    """
     from vision.core.config import get_settings
-
-    get_settings.cache_clear()
-    fresh = get_settings()
 
     from vision import inference
     from vision import main as vision_main
     from vision.core import config as vision_config
+
+    previous_env = {key: os.environ.get(key) for key in ("MODEL_PATH",)}
+    previous_settings = (
+        vision_config.settings,
+        inference.settings,
+        vision_main.settings,
+    )
+    previous_model = inference._model_singleton
+
+    os.environ["MODEL_PATH"] = str(CHECKPOINT)
+
+    get_settings.cache_clear()
+    fresh = get_settings()
 
     vision_config.settings = fresh
     inference.settings = fresh
     vision_main.settings = fresh
     inference._model_singleton = None  # force a reload with the new path
 
-    with TestClient(vision_main.app) as c:
-        yield c
+    try:
+        with TestClient(vision_main.app) as c:
+            yield c
+    finally:
+        for key, value in previous_env.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+        (
+            vision_config.settings,
+            inference.settings,
+            vision_main.settings,
+        ) = previous_settings
+        inference._model_singleton = previous_model
+
+        # Drop the cached VisionSettings built from the patched MODEL_PATH so
+        # the next reader rebuilds it from vision/.env.
+        get_settings.cache_clear()
 
 
 def test_real_model_loads_and_reports_healthy(real_client):

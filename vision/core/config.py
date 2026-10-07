@@ -21,7 +21,7 @@ class VisionSettings(BaseSettings):
     port: int = 8100
 
     # Point this at your fine-tuned recycling checkpoint, e.g. a copy of
-    # ai/models/yolo/01_experiment_augmentation/runs/<winning_run>/weights/best.pt.
+    # ai/models/yolo/02_experiment_augmentation/runs/<winning_run>/weights/best.pt.
     # Intentionally does NOT default to the untrained COCO weights/yolo26n.pt --
     # that would silently return COCO class indices instead of the 17-class
     # recycling taxonomy and corrupt every downstream class_id.

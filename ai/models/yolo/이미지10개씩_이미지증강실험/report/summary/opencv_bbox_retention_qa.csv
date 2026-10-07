@@ -1,0 +1,6 @@
+﻿policy,input_objects,output_objects,retention_pct
+affine,853,853,100.0
+perspective,853,853,100.0
+horizontal_flip,853,853,100.0
+geometric_combo,853,853,100.0
+mixed_combo,853,853,100.0
