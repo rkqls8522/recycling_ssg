@@ -446,6 +446,6 @@ PC를 재부팅해도 서비스가 자동으로 다시 뜹니다. (`cloudflared`
 ## 10. 참고
 
 - 서비스 아키텍처: [../specifications/09-service-architecture.md](../specifications/09-service-architecture.md)
-- 환경변수 전체 목록: [`../../README.md`](../../README.md#환경-변수)
+- 환경변수 전체 목록: [`docs/DEVELOPMENT.md`](../DEVELOPMENT.md#환경-변수)
 - DB 스키마/시딩 로직: [`../DATABASE_SCHEMA.md`](../DATABASE_SCHEMA.md)
 - 트러블슈팅(환경/실행/RAG/Known Issues): [../troubleshooting/README.md](../troubleshooting/README.md)

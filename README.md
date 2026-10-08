@@ -29,6 +29,7 @@
 - [트러블슈팅](#-트러블슈팅)
 - [성과](#-성과)
 - [한계와 로드맵](#-한계와-로드맵)
+- [개발 · 배포 가이드](#-개발--배포-가이드)
 - [팀](#-팀)
 
 <br>
@@ -283,6 +284,22 @@ PDF → Markdown → 텍스트 정제 → Upstage 임베딩 → Pinecone
 - [ ] **피드백 기반 학습** · Top-K 선택 · '없음' 응답을 보상 신호로 후보 순위와 라우팅 개선
 - [ ] **포인트 제도** · 올바른 배출 인증 시 포인트 적립, 참여 데이터를 학습에 연계
 - [ ] **전국 시군구 확대**
+
+<br>
+
+## 🛠 개발 · 배포 가이드
+
+| 문서 | 내용 |
+|---|---|
+| [개발 안내](docs/DEVELOPMENT.md) | 의존성 설치, 로컬 서버 기동, API 목록, 환경 변수, 테스트, 프로젝트 구조 |
+| [배포 가이드](docs/deployment/README.md) | 개인 PC를 서버로 쓰는 배포 절차 (MySQL · Caddy · Cloudflare Tunnel), 서버 가동 체크리스트 |
+| [API 명세](docs/API_SPEC.md) | 19개 엔드포인트 요청/응답 필드, 오류 코드 |
+| [AI 모델 · 실험](ai/README.md) | YOLO 실험 노트북(00~07), 데이터 전처리, 최종 모델 |
+
+```bash
+uv sync --all-packages        # 의존성 설치 (--all-packages 필수)
+bash scripts/run-dev.sh       # Vision(:8100) + Backend(:8000) 기동
+```
 
 <br>
 
